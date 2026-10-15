@@ -1,0 +1,612 @@
+[
+ {
+  "name": "ACCESS Secure Data Center",
+  "org": "Ozark Tri-County Health Care Consortium",
+  "address": "9050 NE Underground Dr, Kansas City, MO 64161",
+  "phone": "417-451-9450 x207",
+  "web": "www.accessfamilycare.org",
+  "hours": "",
+  "lat": 39.16080559,
+  "lon": -94.46888313
+ },
+ {
+  "name": "Compass Health, Inc.",
+  "org": "Compass Health, Inc",
+  "address": "901 NE Independence Ave, Lees Summit, MO 64086",
+  "phone": "816-966-0900",
+  "web": "",
+  "hours": "40.00",
+  "lat": 38.92899299,
+  "lon": -94.36397196
+ },
+ {
+  "name": "HCC Network - Independence",
+  "org": "Hcc Network",
+  "address": "17611 E US Highway 24, Independence, MO 64056",
+  "phone": "877-344-3572",
+  "web": "https://hccnetwork.org/",
+  "hours": "40.00",
+  "lat": 39.12022033,
+  "lon": -94.36885467
+ },
+ {
+  "name": "Health Partnership Clinic Administration",
+  "org": "Health Partnership Clinic, Inc.",
+  "address": "405 S Clairborne Rd, Suite 2, Olathe, KS 66062",
+  "phone": "913-730-3661",
+  "web": "",
+  "hours": "",
+  "lat": 38.8776131,
+  "lon": -94.78904727
+ },
+ {
+  "name": "Health Partnership Clinic Marketing and Development",
+  "org": "Health Partnership Clinic, Inc.",
+  "address": "405 S Clairborne Rd, Suite 3, Olathe, KS 66062",
+  "phone": "913-730-3661",
+  "web": "",
+  "hours": "",
+  "lat": 38.8776074,
+  "lon": -94.78904819
+ },
+ {
+  "name": "Health Partnership Clinic Olathe Suite 207",
+  "org": "Health Partnership Clinic, Inc.",
+  "address": "407 S Clairborne Rd, Ste 207, Olathe, KS 66062",
+  "phone": "913-648-2266",
+  "web": "",
+  "hours": "40.00",
+  "lat": 38.87705763,
+  "lon": -94.78905305
+ },
+ {
+  "name": "Health Partnership Clinic, Inc.",
+  "org": "Health Partnership Clinic, Inc.",
+  "address": "9119 W 74th St, Ste 210, Overland Park, KS 66204",
+  "phone": "913-432-3334",
+  "web": "hpcjc.com",
+  "hours": "40.00",
+  "lat": 38.99509964,
+  "lon": -94.69264566
+ },
+ {
+  "name": "Health Partnership Clinic, Inc.",
+  "org": "Health Partnership Clinic, Inc.",
+  "address": "407 S Clairborne Rd, Suite 104, Olathe, KS 66062",
+  "phone": "913-648-2266",
+  "web": "www.hpcjc.org",
+  "hours": "57.00",
+  "lat": 38.87701514,
+  "lon": -94.78998973
+ },
+ {
+  "name": "Hope Family Care Center, 3027 Prospect Ave., Kansas City, MO 64128",
+  "org": "Hope Family Care Center Llc",
+  "address": "3027 Prospect Ave, Kansas City, MO 64128",
+  "phone": "816-861-6500",
+  "web": "",
+  "hours": "40.00",
+  "lat": 39.07066891,
+  "lon": -94.55245665
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Ste 200, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "www.kccare.org",
+  "hours": "45.00",
+  "lat": 39.00733311,
+  "lon": -94.55723032
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.01020194,
+  "lon": -94.55743207
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.01020194,
+  "lon": -94.55743207
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "3515 Broadway Blvd, Kansas City, MO 64111",
+  "phone": "816-753-5144",
+  "web": "www.kccare.org",
+  "hours": "51.00",
+  "lat": 39.06336198,
+  "lon": -94.58995067
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "3501 Broadway Blvd, Kansas City, MO 64111",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "40.00",
+  "lat": 39.06361181,
+  "lon": -94.58996508
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "4435 Main St, Suite 1000, Kansas City, MO 64111",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "",
+  "lat": 39.04667986,
+  "lon": -94.5859815
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "3507 Broadway Blvd, Kansas City, MO 64111",
+  "phone": "816-753-5411",
+  "web": "",
+  "hours": "40.00",
+  "lat": 39.06360481,
+  "lon": -94.58995779
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "4601 Independence Ave, Kansas City, MO 64124",
+  "phone": "816-241-6334",
+  "web": "www.kccare.org",
+  "hours": "45.00",
+  "lat": 39.1052697,
+  "lon": -94.52777715
+ },
+ {
+  "name": "Kansas City CARE Clinic - Medical Mobile Unit",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "8.00",
+  "lat": 39.01020194,
+  "lon": -94.55743207
+ },
+ {
+  "name": "Kansas City CARE Clinic - Mobile Unit",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "8.00",
+  "lat": 39.01020194,
+  "lon": -94.55743207
+ },
+ {
+  "name": "MOBILE MEDICAL CLINIC.",
+  "org": "Swope Health Services",
+  "address": "Dr Martin Luther King Junior Blvd, Kansas City, MO 64129",
+  "phone": "816-923-5800",
+  "web": "WWW.SWOPEHEALTH.ORG",
+  "hours": "16.00",
+  "lat": 39.02880797,
+  "lon": -94.50755157
+ },
+ {
+  "name": "MTHM-MU1",
+  "org": "Mercy & Truth Medical Missions, Inc.",
+  "address": "11875 S Sunset Dr, Olathe, KS 66061",
+  "phone": "913-710-4079",
+  "web": "",
+  "hours": "10.00",
+  "lat": 38.91391286,
+  "lon": -94.80240945
+ },
+ {
+  "name": "MTMM-Shawnee",
+  "org": "Mercy & Truth Medical Missions, Inc.",
+  "address": "11644 W 75th St, Suite 103, Overland Park, KS 66214",
+  "phone": "913-248-9965",
+  "web": "https://www.mercyandtruth.com",
+  "hours": "40.00",
+  "lat": 38.99373456,
+  "lon": -94.72089879
+ },
+ {
+  "name": "Mercy and Truth Kansas City, KS",
+  "org": "Mercy & Truth Medical Missions, Inc.",
+  "address": "721 N 31st St, Suite 101, Kansas City, KS 66102",
+  "phone": "913-621-0074",
+  "web": "www.mercyandtruth.com",
+  "hours": "40.00",
+  "lat": 39.11391966,
+  "lon": -94.66397226
+ },
+ {
+  "name": "Mobile Dental Unit #2",
+  "org": "Swope Health Services",
+  "address": "Dr Martin Luther King Junior Blvd, Kansas City, MO 64129",
+  "phone": "816-923-5800",
+  "web": "www.swopehealth.org",
+  "hours": "32.00",
+  "lat": 39.02880797,
+  "lon": -94.50755157
+ },
+ {
+  "name": "Mobile Dental Unit.",
+  "org": "Swope Health Services",
+  "address": "Dr Martin Luther King Junior Blvd, Kansas City, MO 64129",
+  "phone": "816-923-5800",
+  "web": "www.swopehealth.org",
+  "hours": "32.00",
+  "lat": 39.02880797,
+  "lon": -94.50755157
+ },
+ {
+  "name": "Pediatric Mobile Unit",
+  "org": "Swope Health Services",
+  "address": "Dr Martin Luther King Junior Blvd, Kansas City, MO 64129",
+  "phone": "816-923-5800",
+  "web": "",
+  "hours": "30.00",
+  "lat": 39.02880797,
+  "lon": -94.50755157
+ },
+ {
+  "name": "SWOPE HEALTH SERVICES CENTRAL.",
+  "org": "Swope Health Services",
+  "address": "Dr Martin Luther King Junior Blvd, Kansas City, MO 64129",
+  "phone": "816-923-5800",
+  "web": "WWW.SWOPEHEALTH.ORG",
+  "hours": "45.00",
+  "lat": 39.02880797,
+  "lon": -94.50755157
+ },
+ {
+  "name": "SWOPE HEALTH SVCS - WYANDOTTE",
+  "org": "Swope Health Services",
+  "address": "21 N 12th St, Suite 400, Kansas City, KS 66102",
+  "phone": "816-599-5111",
+  "web": "WWW.SWOPEHEALTH.ORG",
+  "hours": "47.50",
+  "lat": 39.10401287,
+  "lon": -94.63900425
+ },
+ {
+  "name": "Samuel Rodgers Health Center - Mobile - 2",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "825 Euclid Ave, Kansas City, MO 64124",
+  "phone": "816-474-4920",
+  "web": "",
+  "hours": "40.00",
+  "lat": 39.10407042,
+  "lon": -94.55715446
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center - East",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "2100 E 9th St, Kansas City, MO 64124",
+  "phone": "816-474-4920",
+  "web": "",
+  "hours": "",
+  "lat": 39.10267638,
+  "lon": -94.55672682
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center - Mobile",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "825 Euclid Ave, Kansas City, MO 64124",
+  "phone": "816-474-4920",
+  "web": "www.rodgershealth.org",
+  "hours": "40.00",
+  "lat": 39.10407042,
+  "lon": -94.55715446
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center Blue Springs School District",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "1501 NW Jefferson St, Blue Springs, MO 64015",
+  "phone": "816-224-1740",
+  "web": "",
+  "hours": "24.00",
+  "lat": 39.03194598,
+  "lon": -94.28198965
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center Cabot Westside",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "2121 Summit St, Kansas City, MO 64108",
+  "phone": "816-471-0900",
+  "web": "",
+  "hours": "40.00",
+  "lat": 39.08722199,
+  "lon": -94.5933248
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center Clay County Family Medicine & Dental",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "800 Haines, Liberty, MO 64068",
+  "phone": "816-595-4200",
+  "web": "www.rodgershealth.org",
+  "hours": "40.00",
+  "lat": 39.25709099,
+  "lon": -94.45149931
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center Downtown Campus",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "825 Euclid Ave, Kansas City, MO 64124",
+  "phone": "816-474-4920",
+  "web": "WWW.RODGERSHEALTH.ORG",
+  "hours": "42.00",
+  "lat": 39.10407042,
+  "lon": -94.55715446
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center J.A. Rogers Family Dental",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "6400 E 23rd St, Kansas City, MO 64129",
+  "phone": "816-418-3670",
+  "web": "",
+  "hours": "8.00",
+  "lat": 39.08375331,
+  "lon": -94.50794749
+ },
+ {
+  "name": "Samuel U. Rodgers Health Center Northland Family Practice",
+  "org": "Samuel U. Rodgers Health Center, Inc",
+  "address": "5330 N Oak Trfy STE 203, Kansas City, MO 64118",
+  "phone": "816-499-4100",
+  "web": "www.rodgershealth.org",
+  "hours": "40.00",
+  "lat": 39.19129606,
+  "lon": -94.57658237
+ },
+ {
+  "name": "Swope Health - Emmanuel Family & Child Development Center",
+  "org": "Swope Health Services",
+  "address": "4736 Prospect Ave, Kansas City, MO 64130",
+  "phone": "816-923-5800",
+  "web": "www.swopehealth.org",
+  "hours": "20.00",
+  "lat": 39.03968495,
+  "lon": -94.55446538
+ },
+ {
+  "name": "Swope Health - Hickman Mills",
+  "org": "Swope Health Services",
+  "address": "6406 E 87th St, Kansas City, MO 64138",
+  "phone": "816-321-3200",
+  "web": "",
+  "hours": "45.00",
+  "lat": 38.96755193,
+  "lon": -94.51356504
+ },
+ {
+  "name": "Swope Health - Operation Breakthrough",
+  "org": "Swope Health Services",
+  "address": "3039 Troost Ave, Kansas City, MO 64109",
+  "phone": "816-321-3791",
+  "web": "www.swopehealth.org",
+  "hours": "24.00",
+  "lat": 39.07105741,
+  "lon": -94.57062728
+ },
+ {
+  "name": "Swope Health - Platte County",
+  "org": "Swope Health Services",
+  "address": "7925 NW 110th St, Kansas City, MO 64153",
+  "phone": "816-923-5800",
+  "web": "",
+  "hours": "24.00",
+  "lat": 39.29127846,
+  "lon": -94.67852844
+ },
+ {
+  "name": "Swope Health - Tenney Pediatrics",
+  "org": "Swope Health Services",
+  "address": "6501 E 87th St, Kansas City, MO 64138",
+  "phone": "816-923-5800",
+  "web": "www.swopehealth.org",
+  "hours": "45.00",
+  "lat": 38.96676864,
+  "lon": -94.51312751
+ },
+ {
+  "name": "Swope Health - University Academy",
+  "org": "Swope Health Services",
+  "address": "6801 Holmes Rd UNIT Clinic, Kansas City, MO 64131",
+  "phone": "816-923-5800",
+  "web": "",
+  "hours": "20.00",
+  "lat": 39.00519321,
+  "lon": -94.57958292
+ },
+ {
+  "name": "Swope Health - West",
+  "org": "Swope Health Services",
+  "address": "4835 State Ave, Kansas City, KS 66102",
+  "phone": "816-923-5800",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.11589183,
+  "lon": -94.69041842
+ },
+ {
+  "name": "Swope Health Belton",
+  "org": "Swope Health Services",
+  "address": "204 E North Ave, Belton, MO 64012",
+  "phone": "816-923-5800",
+  "web": "",
+  "hours": "45.00",
+  "lat": 38.81461493,
+  "lon": -94.53204454
+ },
+ {
+  "name": "Swope Health Independence",
+  "org": "Swope Health Services",
+  "address": "11320 E Truman Rd, Independence, MO 64050",
+  "phone": "816-599-5200",
+  "web": "www.swopehealth.org",
+  "hours": "45.00",
+  "lat": 39.09533241,
+  "lon": -94.44333852
+ },
+ {
+  "name": "Swope Health Services - Maple Woods",
+  "org": "Swope Health Services",
+  "address": "3100 NE 83rd St STE 1001 # 140, Kansas City, MO 64119",
+  "phone": "816-923-5800",
+  "web": "www.swopehealth.org",
+  "hours": "16.00",
+  "lat": 39.24358233,
+  "lon": -94.54152456
+ },
+ {
+  "name": "Swope Health Services - Northland",
+  "org": "Swope Health Services",
+  "address": "2908 NW Vivion Rd, Riverside, MO 64150",
+  "phone": "816-599-5050",
+  "web": "www.swopehealth.org",
+  "hours": "45.00",
+  "lat": 39.17681565,
+  "lon": -94.61611863
+ },
+ {
+  "name": "Vibrant Health - Administration",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St STE 210, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "",
+  "lat": 39.1034263,
+  "lon": -94.6399944
+ },
+ {
+  "name": "Vibrant Health - Central",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 300, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "https://vibrantwyandotte.org/",
+  "hours": "49.00",
+  "lat": 39.10401287,
+  "lon": -94.63900425
+ },
+ {
+  "name": "Vibrant Health - Central #350",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 350, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "https://vibranthealthkc.org/",
+  "hours": "45.00",
+  "lat": 39.10401287,
+  "lon": -94.63900425
+ },
+ {
+  "name": "Vibrant Health - Central, #110",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 110, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.10401292,
+  "lon": -94.63900416
+ },
+ {
+  "name": "Vibrant Health - Central, #200",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 200, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "www.vibranthealthkc.org",
+  "hours": "45.00",
+  "lat": 39.10401292,
+  "lon": -94.63900416
+ },
+ {
+  "name": "Vibrant Health - Central, #201",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 201, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "46.00",
+  "lat": 39.10401292,
+  "lon": -94.63900416
+ },
+ {
+  "name": "Vibrant Health - Children's Campus",
+  "org": "Turner House Clinic, Inc",
+  "address": "444 Minnesota Ave, Kansas City, KS 66101",
+  "phone": "913-342-2552",
+  "web": "https://vibrantwyandotte.org/",
+  "hours": "45.00",
+  "lat": 39.11581845,
+  "lon": -94.62055668
+ },
+ {
+  "name": "Vibrant Health - Cordell D. Meeks, Jr. Clinic",
+  "org": "Turner House Clinic, Inc",
+  "address": "4313 State Ave, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.1160979,
+  "lon": -94.67854906
+ },
+ {
+  "name": "Vibrant Health - Family Health Care",
+  "org": "Turner House Clinic, Inc",
+  "address": "340 Southwest Blvd, Kansas City, KS 66103",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "47.00",
+  "lat": 39.0683063,
+  "lon": -94.61368939
+ },
+ {
+  "name": "Vibrant Health, Central Ste 217",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St STE 217, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "",
+  "lat": 39.1034263,
+  "lon": -94.6399944
+ },
+ {
+  "name": "Vibrant Health, Central Ste 310",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 310, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "47.00",
+  "lat": 39.10401287,
+  "lon": -94.63900425
+ },
+ {
+  "name": "Vibrant Health, Central Ste 320",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St STE 320, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "",
+  "hours": "",
+  "lat": 39.1034263,
+  "lon": -94.6399944
+ },
+ {
+  "name": "Vibrant Health- Central, #100",
+  "org": "Turner House Clinic, Inc",
+  "address": "21 N 12th St, Suite 100, Kansas City, KS 66102",
+  "phone": "913-342-2552",
+  "web": "https://vibranthealthkc.org/",
+  "hours": "47.50",
+  "lat": 39.10401292,
+  "lon": -94.63900416
+ }
+]

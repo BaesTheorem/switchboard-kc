@@ -1,0 +1,10 @@
+.DS_Store
+ios/build/
+ios/*.xcodeproj
+ios/Config/Signing.xcconfig
+# An optional saved API config (key, city id, device id), bundled at build time.
+ios/KC311/Resources/CivicConfig.json
+ios/Config/civic-config.json
+__pycache__/
+outreach/
+push/.env

@@ -1,0 +1,5 @@
+// Copy to Signing.xcconfig (gitignored). Fill in your Apple team id and
+// a reverse-DNS prefix for the bundle id (the app becomes <prefix>.kc311).
+DEVELOPMENT_TEAM = XXXXXXXXXX
+CODE_SIGN_STYLE = Automatic
+BUNDLE_ID_PREFIX = com.example
