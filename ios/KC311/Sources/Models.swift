@@ -272,8 +272,11 @@ struct MapIssue: Identifiable, Hashable, Codable {
     }
 }
 
-enum StatusStage: Int {
-    case received, working, done
+/// MyCivic statuses: "new" when filed, "received" once staff take it,
+/// "assigned" or "referred" while a crew has it, then "resolved" or
+/// "canceled".
+enum StatusStage: Int, CaseIterable {
+    case sent, received, working, done
 
     init(_ status: String) {
         let s = status.lowercased()
@@ -281,9 +284,25 @@ enum StatusStage: Int {
             self = .done
         } else if ["assigned", "referred", "active", "progress", "scheduled"].contains(where: s.contains) {
             self = .working
-        } else {
+        } else if s.contains("received") {
             self = .received
+        } else {
+            self = .sent
         }
+    }
+
+    /// Departments that work a report inside MyCivic (Sidewalks and Curbs,
+    /// for one) record site visits and referrals as staff notes and leave
+    /// the status at "received". A staff note on an open report counts as
+    /// work in progress.
+    init(_ status: String, timeline: [TimelineEntry]) {
+        let s = StatusStage(status)
+        self = s.rawValue < StatusStage.working.rawValue
+            && timeline.contains { $0.title.localizedCaseInsensitiveContains("staff") } ? .working : s
+    }
+
+    var label: String {
+        switch self { case .sent: "Sent"; case .received: "Received"; case .working: "In progress"; case .done: "Done" }
     }
 }
 

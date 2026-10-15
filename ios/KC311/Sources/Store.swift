@@ -30,7 +30,8 @@ final class Store: ObservableObject {
     }
     private func file(_ name: String) -> URL { cacheURL.deletingLastPathComponent().appendingPathComponent(name) }
     /// Raw `get_issue_detail_citizen` rows by report id, with when they were fetched.
-    private var detailCache: [String: [String: Any]] = [:]
+    // Published so the report cards redraw their track when a detail loads.
+    @Published private var detailCache: [String: [String: Any]] = [:]
     private var queueURL: URL {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("queue.json")
@@ -104,6 +105,10 @@ final class Store: ObservableObject {
             myReports = rows.map(MyReport.init)
             myReportsState = .loaded
             if let d = try? JSONSerialization.data(withJSONObject: rows) { try? d.write(to: file("myissues.json")) }
+            // The cards' status track reads staff notes from each open
+            // report's detail. One at a time: the server queues a session anyway.
+            let open = myReports.filter { $0.isOpen && !$0.isUpdateRequest }.map(\.id)
+            Task { for id in open { _ = try? await detail(id) } }
         } catch {
             myReportsState = .failed(error.localizedDescription)
         }

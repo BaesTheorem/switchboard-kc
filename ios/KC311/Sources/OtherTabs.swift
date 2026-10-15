@@ -19,7 +19,7 @@ struct MyReportCard: View {
                         .padding(.horizontal, 8).padding(.vertical, 2).background(Theme.primary, in: Capsule())
                 }
             }
-            StatusTrack(status: r.status)
+            StatusTrack(status: r.status, timeline: store.cachedDetail(r.id)?.timeline ?? [])
             HStack {
                 Text(r.caseNumber.isEmpty ? "Report \(r.id)" : "#\(r.caseNumber)").monospacedDigit()
                 Spacer()
@@ -49,7 +49,7 @@ struct ReportDetailView: View {
                         HStack { StatusChip(status: d.status); Spacer(); if !d.caseNumber.isEmpty { Text("#\(d.caseNumber)").monospacedDigit().foregroundStyle(Theme.onSurfaceVariant).textSelection(.enabled) } }
                         Text(d.subtype.isEmpty ? d.type : d.subtype).font(.title2.weight(.semibold))
                         if !d.address.isEmpty { Label { Text(d.address) } icon: { Icon(name: "location_on", size: 18) }.font(.subheadline) }
-                        StatusTrack(status: d.status)
+                        StatusTrack(status: d.status, timeline: d.timeline)
                         if report.isOpen { RequestUpdateButton(target: report).padding(.top, 4) }
                     }
                     .padding(16).card()
@@ -387,7 +387,7 @@ struct ReportsTab: View {
     }
 
     private func color(_ s: String) -> Color {
-        switch StatusStage(s) { case .received: Theme.open; case .working: Theme.working; case .done: Theme.done }
+        switch StatusStage(s) { case .sent, .received: Theme.open; case .working: Theme.working; case .done: Theme.done }
     }
 }
 
@@ -752,7 +752,7 @@ struct PublicIssueDetail: View {
                         Text(issue.subtype.isEmpty ? issue.type : issue.subtype).font(.title2.weight(.semibold))
                         if !issue.subtype.isEmpty { Text(issue.type).foregroundStyle(Theme.onSurfaceVariant) }
                         Label { Text(issue.address) } icon: { Icon(name: "location_on", size: 18) }.font(.subheadline)
-                        StatusTrack(status: detail?.status ?? issue.status)
+                        StatusTrack(status: detail?.status ?? issue.status, timeline: detail?.timeline ?? [])
                     }
                     .padding(16).frame(maxWidth: .infinity, alignment: .leading).card()
                     if let d = detail {

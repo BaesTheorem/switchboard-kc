@@ -169,7 +169,7 @@ struct ReportTab: View {
                                 Spacer()
                                 Icon(name: "chevron_right", size: 20).foregroundStyle(Theme.onSurfaceVariant)
                             }
-                            StatusTrack(status: r.status)
+                            StatusTrack(status: r.status, timeline: store.cachedDetail(r.id)?.timeline ?? [])
                             HStack {
                                 Text(r.caseNumber.isEmpty ? "Report \(r.id)" : "#\(r.caseNumber)").monospacedDigit()
                                 Spacer()

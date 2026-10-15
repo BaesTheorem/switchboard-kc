@@ -119,35 +119,38 @@ extension String {
     }
 }
 
-/// Status chip and the three-step track (Received, In progress, Done).
+/// Status chip and the four-step track (Sent, Received, In progress, Done).
 struct StatusTrack: View {
     let status: String
+    var timeline: [TimelineEntry] = []
 
     var body: some View {
-        let stage = StatusStage(status)
+        let stage = StatusStage(status, timeline: timeline)
+        let steps = StatusStage.allCases
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 4) {
-                ForEach(0..<3) { i in
+                ForEach(steps.indices, id: \.self) { i in
                     Capsule()
                         .fill(i <= stage.rawValue ? color(stage) : Theme.outlineVariant)
                         .frame(height: 6)
                 }
             }
             HStack {
-                ForEach(Array(["Received", "In progress", "Done"].enumerated()), id: \.offset) { i, label in
-                    Text(label)
+                ForEach(steps.indices, id: \.self) { i in
+                    Text(steps[i].label)
                         .font(.caption.weight(i == stage.rawValue ? .semibold : .regular))
                         .foregroundStyle(i == stage.rawValue ? Theme.onSurface : Theme.onSurfaceVariant)
-                        .frame(maxWidth: .infinity, alignment: i == 0 ? .leading : i == 2 ? .trailing : .center)
+                        .lineLimit(1).minimumScaleFactor(0.8)
+                        .frame(maxWidth: .infinity, alignment: i == 0 ? .leading : i == steps.count - 1 ? .trailing : .center)
                 }
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Status: \(status)")
+        .accessibilityLabel("Status: \(stage.label)")
     }
 
     func color(_ s: StatusStage) -> Color {
-        switch s { case .received: Theme.open; case .working: Theme.working; case .done: Theme.done }
+        switch s { case .sent, .received: Theme.open; case .working: Theme.working; case .done: Theme.done }
     }
 }
 
@@ -155,7 +158,7 @@ struct StatusChip: View {
     let status: String
     var body: some View {
         let stage = StatusStage(status)
-        let color: Color = switch stage { case .received: Theme.open; case .working: Theme.working; case .done: Theme.done }
+        let color: Color = switch stage { case .sent, .received: Theme.open; case .working: Theme.working; case .done: Theme.done }
         Text(status.isEmpty ? "Received" : status.capitalized)
             .font(.caption.weight(.semibold))
             .padding(.horizontal, 10)
