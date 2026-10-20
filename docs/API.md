@@ -273,9 +273,9 @@ call. Otherwise it is hidden. Default: `"private"` when the city `default_share_
 `PRIVATE` and the switch is hidden, else `"public"` [code: `RaiAddNotes_Fr.setDefaultShareOptionValue`].
 KCMO `default_share_options = "PRIVATE"`.
 
-Warning: the effect of `private` is not verified. `get_issue_detail_citizen` returned the
-reporter's name, email and phone for a public report to an unrelated anonymous device
-(section 5). Do not assume that `private` hides contact info.
+Warning: the effect of `private` is not verified. Before a server fix in October 2026,
+`get_issue_detail_citizen` returned the reporter's name, email and phone for a public report
+to an unrelated anonymous device (section 5). Do not assume that `private` hides contact info.
 
 ### 3.6 Photos
 
@@ -398,10 +398,13 @@ Issue object fields (union of probe and `ResponseParser.parseIssues_Object`):
 | `cross_street`, `light_pole_number`, `plate`, `make`, `model`, `color`, `car_details[]`, `inspection_time`, `permit_no`, `permit_type`, `inspection_code`, `commend_info[]`, `crime_info{}`, `assingedWorker[]`, `assingedSupportWorker[]`, `isSupportWorker` | type-specific fields |
 | `last_visited_timestamp`, `new_update_count` | **side effect**: a detail call by this device sets `last_visited_timestamp` [probe: the second call returned the time of the first] |
 
-**Warning (privacy finding) [probe]:** for a public report taken from `reported_issues_list`,
-`get_issue_detail_citizen` (and `reported_issue_detail`) returned the reporter's full name,
-email and phone to an anonymous, unrelated probe device. holds redacted
-copies only. A client must not log, cache or display these fields for other people's reports.
+**Privacy finding, fixed [probe]:** in October 2026, for a public report taken from
+`reported_issues_list`, `get_issue_detail_citizen` (and `reported_issue_detail`) returned the
+reporter's full name, email and phone to an anonymous, unrelated probe device. This was
+reported to Tyler Technologies (TYLSECOPS-7328), and Tyler fixed it. A probe on 2026-10-20
+showed the new behavior: `get_issue_detail_citizen` answers `Report not available.` for a
+report that another device filed, and `reported_issue_detail` returns the `reporter_*` keys
+empty. A client must still not log, cache or display these fields for other people's reports.
 
 ### 5.2 `reported_issue_detail` (detail of a public report)
 
