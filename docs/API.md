@@ -398,6 +398,10 @@ Issue object fields (union of probe and `ResponseParser.parseIssues_Object`):
 | `cross_street`, `light_pole_number`, `plate`, `make`, `model`, `color`, `car_details[]`, `inspection_time`, `permit_no`, `permit_type`, `inspection_code`, `commend_info[]`, `crime_info{}`, `assingedWorker[]`, `assingedSupportWorker[]`, `isSupportWorker` | type-specific fields |
 | `last_visited_timestamp`, `new_update_count` | **side effect**: a detail call by this device sets `last_visited_timestamp` [probe: the second call returned the time of the first] |
 
+**Since that fix, use `reported_issue_detail` for other people's reports.** A probe on
+2026-10-20 with an unrelated device: `get_issue_detail_citizen` answered
+`response_code 1, "Report not available."`, and `reported_issue_detail` returned the report.
+
 **Privacy finding, fixed [probe]:** in October 2026, for a public report taken from
 `reported_issues_list`, `get_issue_detail_citizen` (and `reported_issue_detail`) returned the
 reporter's full name, email and phone to an anonymous, unrelated probe device. This was
@@ -647,7 +651,9 @@ Type 1 has no required check in the app (a radio always has a value).
 
 ## 8. `add_comments_citizen` (add a note or photo to my report). WRITES
 
-Not called. Flat parts [code: `RAIReportDetailActivity.createPostKeyValueJson`]:
+Called twice on 2026-10-20, with exactly the parts below and no file, to ask
+staff to close two reports filed in error [probe]. Flat parts
+[code: `RAIReportDetailActivity.createPostKeyValueJson`]:
 
 | Part | Value |
 | --- | --- |
@@ -668,6 +674,14 @@ does not send a comment that has neither text nor photos.
 Response (top-level envelope): the app checks that `response_message` contains `"success"`
 (case-insensitive). Then `response_data` is an **array** whose `[0]` is the updated issue
 object (section 5.1 fields) [code: `parseStaffCommentAPIControllerResponse`].
+The probe returned `response_code: 0`, `response_message: "Success"`, and the note as a
+new `history_object` entry titled `"Notes Added By Citizen"` [probe]. The JWT `deviceuid`
+must be the id that filed the report.
+
+There is no citizen endpoint that cancels or closes a report. The newest APK (checked
+2026-10-20) names every API call as an `API_*` constant; the report ones are the calls in
+this file plus `delete_report_from_device`, which only removes a report from that
+device's list. A report filed in error needs 311 staff: a note here, a call, or an email.
 The comment box is gated by `citizen_allow_to_send_note` and `hide_add_photos`.
 
 ## 9. `rai_report_rating` (rate a resolved report). WRITES
@@ -700,8 +714,10 @@ Response: `{"response_status":{"response_code":1,"response_message":"..."}}`. `1
 
 ## 11. Open questions
 
-1. Does `report_an_issue` succeed for a `deviceuid` that never called `register_device`?
-   (The reads all do.)
+1. Answered 2026-10-20: `report_an_issue` succeeds for a `deviceuid` that never called
+   `register_device`. The web app never calls it, and three reports filed in error by a
+   test run that day were accepted. One had a photo ZIP built as in section 3.6; its
+   timeline shows "Media Upload By TylerTechKCMO".
 2. Which `SELECTED_SUB_TYPE` keys does the server read, and is the local `Id` needed?
 3. (Map half answered 2026-10-06: a `private` ADA curb report filed 2026-10-05 is missing from
    `reported_issues_map`, while a newer public report of the same type 70 m away is on it.)
