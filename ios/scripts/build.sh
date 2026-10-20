@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build KC 311 for iPhone. Default is an unsigned compile check; --device
+# Build Switchboard KC for iPhone. Default is an unsigned compile check; --device
 # signs for a real iPhone. Regenerates the project from project.yml first.
 set -euo pipefail
 cd "$(dirname "$0")/.."

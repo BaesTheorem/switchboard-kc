@@ -35,7 +35,7 @@ targets:
     info:
       path: KC311/Info.plist
       properties:
-        CFBundleDisplayName: KC 311
+        CFBundleDisplayName: Switchboard
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UILaunchScreen:

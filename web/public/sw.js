@@ -5,8 +5,8 @@
 //   copies of city data.
 // - push: shows the notification the server sent; a tap opens the report.
 
-const VERSION = "20261020T2115";
-const CACHE = `kc311-${VERSION}`;
+const VERSION = "20261020T2208";
+const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",
   "/vendor/beercss/beer.min.css", "/vendor/beercss/material-symbols-outlined.woff2",
@@ -33,7 +33,7 @@ self.addEventListener("install", (e) => {
 
 self.addEventListener("activate", (e) => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (k.startsWith("kc311-") && k !== CACHE) await caches.delete(k);
+    for (const k of await caches.keys()) if (k.startsWith("switchboard-") && k !== CACHE) await caches.delete(k);
     await self.clients.claim();
   })());
 });
@@ -65,8 +65,8 @@ self.addEventListener("fetch", (e) => {
 
 self.addEventListener("push", (e) => {
   let d = {};
-  try { d = e.data?.json() || {}; } catch { d = { title: "KC 311", body: e.data?.text() || "" }; }
-  e.waitUntil(self.registration.showNotification(d.title || "KC 311", {
+  try { d = e.data?.json() || {}; } catch { d = { title: "Switchboard KC", body: e.data?.text() || "" }; }
+  e.waitUntil(self.registration.showNotification(d.title || "Switchboard KC", {
     body: d.body || "A report changed.",
     tag: d.tag || "kc311",
     icon: "/icons/icon-192.png",

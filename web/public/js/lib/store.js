@@ -22,7 +22,7 @@ export const local = {
 let dbp;
 function db() {
   dbp ||= new Promise((resolve, reject) => {
-    const r = indexedDB.open("kc311", 1);
+    const r = indexedDB.open("switchboard", 1);
     r.onupgradeneeded = () => r.result.createObjectStore("kv");
     r.onsuccess = () => resolve(r.result);
     r.onerror = () => reject(r.error);

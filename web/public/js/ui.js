@@ -7,7 +7,7 @@ import { STAGES, stage } from "./models.js";
 
 export function setTitle(text) {
   $("#title").textContent = text;
-  document.title = text === "KC 311" ? "KC 311" : `${text} · KC 311`;
+  document.title = text === "Switchboard KC" ? text : `${text} · Switchboard KC`;
 }
 
 let snackTimer;

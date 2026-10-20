@@ -1,4 +1,6 @@
-# KC 311 push
+# Switchboard KC push
+
+(The Worker keeps its old name, `kc311-push`: shipped iPhone builds call that address.)
 
 A Cloudflare Worker that sends an iPhone push within about a minute when the
 city changes one of that phone's 311 reports. The city sends pushes only to

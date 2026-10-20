@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a signed device copy of KC 311 and install it on the paired iPhone
+# Build a signed device copy of Switchboard KC and install it on the paired iPhone
 # over the network. Not for apps on TestFlight: ship those with testflight.sh.
 set -euo pipefail
 cd "$(dirname "$0")/.."

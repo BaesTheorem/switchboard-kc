@@ -1,6 +1,6 @@
 {
-  "name": "KC 311 (unofficial)",
-  "short_name": "KC 311",
+  "name": "Switchboard KC (unofficial)",
+  "short_name": "Switchboard",
   "description": "Report a problem to Kansas City 311, track your reports, and find city services. Unofficial.",
   "id": "/",
   "start_url": "/#/report",

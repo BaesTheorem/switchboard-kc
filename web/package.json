@@ -1,8 +1,8 @@
 {
-  "name": "kc311-web",
+  "name": "switchboard-kc-web",
   "private": true,
   "type": "module",
-  "description": "Unofficial Kansas City 311 web app and its Cloudflare Worker",
+  "description": "Switchboard KC: an unofficial Kansas City 311 web app and its Cloudflare Worker",
   "license": "MIT",
   "scripts": {
     "dev": "wrangler dev",

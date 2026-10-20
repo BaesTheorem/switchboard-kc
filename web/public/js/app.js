@@ -18,7 +18,7 @@ import { showInviteGate } from "./views/invite.js";
 const v = (name) => () => import(`./views/${name}.js`);
 
 // Report tab
-route("/report", v("report"), { title: "KC 311" });
+route("/report", v("report"), { title: "Switchboard KC" });
 route("/report/what", v("services"), { title: "What is wrong?", parent: "/report" });
 // Services tab
 route("/services", v("services"), { title: "Services" });

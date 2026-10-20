@@ -54,7 +54,7 @@ const wrangler = join(web, "node_modules/.bin/wrangler");
 const run = (args, input) => execFileSync(wrangler, args, { cwd: web, env, input, stdio: input ? ["pipe", "inherit", "inherit"] : "inherit" });
 
 if (dry) {
-  run(["deploy", "--dry-run", "--outdir", "/tmp/kc311-web-dry"]);
+  run(["deploy", "--dry-run", "--outdir", "/tmp/switchboard-kc-dry"]);
   process.exit(0);
 }
 run(["deploy"]);

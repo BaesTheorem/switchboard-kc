@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 import UserNotifications
 
-/// Ticket alerts. The KC 311 push server (push/ in this repo) reads this
+/// Ticket alerts. The Switchboard KC push server (push/ in this repo) reads this
 /// phone's reports every minute and sends a notification when city staff
 /// change one. The app gives it the reports id and the APNs token, nothing else.
 @MainActor
@@ -172,7 +172,7 @@ struct TicketAlertsSection: View {
         } header: {
             Text("Ticket alerts")
         } footer: {
-            Text("The KC 311 alert server checks your reports every minute and sends a notification when city staff change one. It keeps your reports id and this phone's notification token, nothing else. Turn this off to delete them.")
+            Text("The Switchboard KC alert server checks your reports every minute and sends a notification when city staff change one. It keeps your reports id and this phone's notification token, nothing else. Turn this off to delete them.")
         }
     }
 }

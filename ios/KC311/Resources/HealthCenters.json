@@ -92,62 +92,12 @@
  {
   "name": "Kansas City CARE Clinic",
   "org": "Kansas City Care Clinic",
-  "address": "2340 E Meyer Blvd, Ste 200, Kansas City, MO 64132",
-  "phone": "816-753-5144",
-  "web": "www.kccare.org",
-  "hours": "45.00",
-  "lat": 39.00733311,
-  "lon": -94.55723032
- },
- {
-  "name": "Kansas City CARE Clinic",
-  "org": "Kansas City Care Clinic",
-  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
-  "phone": "816-753-5144",
-  "web": "",
-  "hours": "45.00",
-  "lat": 39.01020194,
-  "lon": -94.55743207
- },
- {
-  "name": "Kansas City CARE Clinic",
-  "org": "Kansas City Care Clinic",
-  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
-  "phone": "816-753-5144",
-  "web": "",
-  "hours": "45.00",
-  "lat": 39.01020194,
-  "lon": -94.55743207
- },
- {
-  "name": "Kansas City CARE Clinic",
-  "org": "Kansas City Care Clinic",
   "address": "3515 Broadway Blvd, Kansas City, MO 64111",
   "phone": "816-753-5144",
   "web": "www.kccare.org",
   "hours": "51.00",
   "lat": 39.06336198,
   "lon": -94.58995067
- },
- {
-  "name": "Kansas City CARE Clinic",
-  "org": "Kansas City Care Clinic",
-  "address": "3501 Broadway Blvd, Kansas City, MO 64111",
-  "phone": "816-753-5144",
-  "web": "",
-  "hours": "40.00",
-  "lat": 39.06361181,
-  "lon": -94.58996508
- },
- {
-  "name": "Kansas City CARE Clinic",
-  "org": "Kansas City Care Clinic",
-  "address": "4435 Main St, Suite 1000, Kansas City, MO 64111",
-  "phone": "816-753-5144",
-  "web": "",
-  "hours": "",
-  "lat": 39.04667986,
-  "lon": -94.5859815
  },
  {
   "name": "Kansas City CARE Clinic",
@@ -168,6 +118,56 @@
   "hours": "45.00",
   "lat": 39.1052697,
   "lon": -94.52777715
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.01020194,
+  "lon": -94.55743207
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "4435 Main St, Suite 1000, Kansas City, MO 64111",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "",
+  "lat": 39.04668682,
+  "lon": -94.58598896
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "45.00",
+  "lat": 39.01020194,
+  "lon": -94.55743207
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "3501 Broadway Blvd, Kansas City, MO 64111",
+  "phone": "816-753-5144",
+  "web": "",
+  "hours": "40.00",
+  "lat": 39.06361181,
+  "lon": -94.58996508
+ },
+ {
+  "name": "Kansas City CARE Clinic",
+  "org": "Kansas City Care Clinic",
+  "address": "2340 E Meyer Blvd, Ste 200, Kansas City, MO 64132",
+  "phone": "816-753-5144",
+  "web": "www.kccare.org",
+  "hours": "45.00",
+  "lat": 39.00733311,
+  "lon": -94.55723032
  },
  {
   "name": "Kansas City CARE Clinic - Medical Mobile Unit",
@@ -286,8 +286,8 @@
   "phone": "816-474-4920",
   "web": "",
   "hours": "40.00",
-  "lat": 39.10407042,
-  "lon": -94.55715446
+  "lat": 39.10407741,
+  "lon": -94.55716192
  },
  {
   "name": "Samuel U. Rodgers Health Center - East",
@@ -306,8 +306,8 @@
   "phone": "816-474-4920",
   "web": "www.rodgershealth.org",
   "hours": "40.00",
-  "lat": 39.10407042,
-  "lon": -94.55715446
+  "lat": 39.10407741,
+  "lon": -94.55716192
  },
  {
   "name": "Samuel U. Rodgers Health Center Blue Springs School District",
@@ -346,8 +346,8 @@
   "phone": "816-474-4920",
   "web": "WWW.RODGERSHEALTH.ORG",
   "hours": "42.00",
-  "lat": 39.10407042,
-  "lon": -94.55715446
+  "lat": 39.10407741,
+  "lon": -94.55716192
  },
  {
   "name": "Samuel U. Rodgers Health Center J.A. Rogers Family Dental",

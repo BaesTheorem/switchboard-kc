@@ -74,7 +74,7 @@ async function run() {
   const mod = await r.load();
   if (mine !== seq) return;
   main.replaceChildren();
-  setTitle(r.title || "KC 311");
+  setTitle(r.title || "Switchboard KC");
   const ctx = { tab, path: p, go, back, title: setTitle };
   try {
     cleanup = (await mod.default(main, params, ctx)) || null;

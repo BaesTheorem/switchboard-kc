@@ -85,7 +85,7 @@ export function openSettings() {
 
     <p class="foot muted centered" style="padding:8px 8px 0">Provided by Kansas City Effective Altruism. <a class="primary-text" href="https://www.eakansascity.org" target="_blank" rel="noopener">Come check us out!</a><br><br>
       An unofficial app. It is not made, approved, or supported by the City of Kansas City, Missouri, Tyler Technologies, or the KC Streetcar Authority. For an emergency, call 911.<br><br>
-      <a class="primary-text" href="https://github.com/BaesTheorem/kc311" target="_blank" rel="noopener">Source code</a> · Maps by OpenFreeMap, OpenMapTiles, and OpenStreetMap contributors.</p>
+      <a class="primary-text" href="https://github.com/BaesTheorem/switchboard-kc" target="_blank" rel="noopener">Source code</a> · Maps by OpenFreeMap, OpenMapTiles, and OpenStreetMap contributors.</p>
   </div>`;
 
   const ownerTools = () => {
@@ -173,7 +173,7 @@ export function openSettings() {
         paint();
       });
       h("[data-cpinv]", async () => { await navigator.clipboard?.writeText(newInvite.link); snack("Copied the invite link."); });
-      h("[data-shinv]", () => navigator.share?.({ title: "KC 311 invite", text: "Join KC 311 to report problems to the city:", url: newInvite.link }).catch(() => {}));
+      h("[data-shinv]", () => navigator.share?.({ title: "Switchboard KC invite", text: "Join Switchboard KC to report problems to the city:", url: newInvite.link }).catch(() => {}));
       h("[data-lsinv]", async () => { invites = (await api("admin/invites").catch(() => ({ invites: [] }))).invites; paint(); });
       h("[data-rvinv]", async (e, b) => { await api("admin/invites/revoke", { body: { id: b.dataset.rvinv } }); invites = (await api("admin/invites")).invites; paint(); });
       h("[data-mode]", async (e, b) => { await api("admin/mode", { body: { mode: b.dataset.mode } }).catch((x) => snack(x.message)); S.config = await api("config"); paint(); });
@@ -184,10 +184,10 @@ export function openSettings() {
 
 /** Saves the reports id as a small text file (or shares it), so it can be restored later. */
 async function saveId() {
-  const text = `KC 311 reports id: ${deviceId()}\nSaved ${new Date().toLocaleString()}.\nRestore it in Settings > My reports.\n`;
-  const file = new File([text], "kc311-reports-id.txt", { type: "text/plain" });
+  const text = `Switchboard KC reports id: ${deviceId()}\nSaved ${new Date().toLocaleString()}.\nRestore it in Settings > My reports.\n`;
+  const file = new File([text], "switchboard-kc-reports-id.txt", { type: "text/plain" });
   if (navigator.canShare?.({ files: [file] })) {
-    try { await navigator.share({ files: [file], title: "KC 311 reports id" }); return; } catch { /* fall through */ }
+    try { await navigator.share({ files: [file], title: "Switchboard KC reports id" }); return; } catch { /* fall through */ }
   }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(file);

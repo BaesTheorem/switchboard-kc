@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Archive a Release build of KC 311 and upload it to App Store Connect for
+# Archive a Release build of Switchboard KC and upload it to App Store Connect for
 # TestFlight. The bundled config carries only the key, city id, and app
 # version: never a device id, so each tester's install makes its own and
 # sees only its own reports. Needs the app record to exist in App Store

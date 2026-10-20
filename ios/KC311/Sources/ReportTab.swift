@@ -29,7 +29,7 @@ struct ReportTab: View {
                 .padding(16)
             }
             .background(Theme.surface)
-            .navigationTitle("KC 311")
+            .navigationTitle("Switchboard KC")
             .settingsCog()
             .navigationDestination(for: Step.self) { step in
                 switch step {

@@ -19,7 +19,7 @@ export function showInviteGate(code) {
     el.setAttribute("aria-labelledby", "inv-h");
     render(el, html`<div class="screen stack s20" style="padding-top:calc(48px + var(--safe-top));overflow:auto">
       <img src="/icons/icon-192.png" alt="" width="72" height="72" style="border-radius:16px">
-      <h1 class="title2" id="inv-h">Join this KC 311 server</h1>
+      <h1 class="title2" id="inv-h">Join this Switchboard KC server</h1>
       <p class="sub muted">This server sends reports to the city for invited people only. Enter the invite code you got, or open your invite link.</p>
       <form class="stack s12" id="inv-f">
         <label class="field-label" for="inv-code">Invite code</label>
@@ -30,7 +30,7 @@ export function showInviteGate(code) {
       <div class="card stack s8">
         <p class="sub strong">No invite?</p>
         <p class="foot muted">Call 311 at 816-513-1313, or use the city's own myKCMO app. Anyone can also run their own copy of this app for free: the source code and steps are on GitHub.</p>
-        <a class="link" href="https://github.com/BaesTheorem/kc311#run-your-own-web-server" target="_blank" rel="noopener">How to run your own</a>
+        <a class="link" href="https://github.com/BaesTheorem/switchboard-kc#run-your-own-web-server" target="_blank" rel="noopener">How to run your own</a>
       </div>
       <details class="card">
         <summary class="sub strong" style="cursor:pointer;min-height:44px;display:flex;align-items:center">I run this server</summary>

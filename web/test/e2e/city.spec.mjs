@@ -49,7 +49,7 @@ test("Health and help, and a basic-needs list", async ({ context }) => {
   await page.locator("#back").click();
   await expect(page.locator("#title")).toHaveText("Health and help");
   await page.locator("#back").click();
-  await expect(page.locator("#title")).toHaveText("KC 311");
+  await expect(page.locator("#title")).toHaveText("Switchboard KC");
 });
 
 test("KC Streetcar form: the nearest stop, the report types, and the channels", async ({ context }) => {

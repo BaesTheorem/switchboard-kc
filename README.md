@@ -1,10 +1,11 @@
-# KC 311
+# Switchboard KC
 
 An unofficial client for Kansas City, Missouri 311, with KC Streetcar
 reports added: an iPhone app (`ios/`) and a web app (`web/`) that installs
 from the browser on any phone. Both use the same backend as the city's
 official myKCMO app, and both use stock Material Design 3. iPhone testers get
-the app through TestFlight.
+the app through TestFlight. The project was called KC 311 until October 2026;
+some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
 
 > **Unofficial.** This app is not made, approved, or supported by the City of
 > Kansas City, Missouri, by Tyler Technologies (the maker of myKCMO and the
@@ -73,7 +74,7 @@ foreground, and in background refresh.
 ## How it works
 
 **The API key.** The official Android app (`com.civicapps.kansascitymo`)
-signs each call with an HS256 JWT and a key that ships in the APK. KC 311
+signs each call with an HS256 JWT and a key that ships in the APK. The app
 gets that key by itself (`KeyRefresher.swift`):
 1. It downloads the newest APK from APKPure and unzips its code files.
 2. It finds the strings with the shape of the key, the city id, and the app
@@ -162,7 +163,7 @@ by screen.
 Anyone can run a copy on Cloudflare's free plan, for a household or a
 neighborhood group:
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/kc311/tree/main/web)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/switchboard-kc/tree/main/web)
 
 The button asks for an owner token. Open your server, choose "I run this
 server" on the invite screen, and enter the token. Then make invite links in
@@ -171,7 +172,7 @@ Settings > Owner tools. The steps are in `web/README.md`.
 ## Ticket alerts
 
 Settings > Ticket alerts turns on a notification for each change that city
-staff make to one of your reports, usually within a minute. The KC 311 alert
+staff make to one of your reports, usually within a minute. The alert
 server (`push/`, a Cloudflare Worker) checks your reports every minute. It
 keeps your reports id and this phone's notification token, nothing else.
 Turn the switch off to delete them. A tap on an alert opens the report.

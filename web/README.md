@@ -1,6 +1,6 @@
-# KC 311 on the web
+# Switchboard KC on the web
 
-The web version of the KC 311 app: the same four tabs as the iPhone app
+The web version of Switchboard KC: the same four tabs as the iPhone app
 (Report, Services, Reports, City), in any modern browser. It installs to the
 home screen as an app and has ticket alerts. The iPhone app is in `../ios`.
 
@@ -76,14 +76,16 @@ out when the server answers.
 Limits on every server: 150 reads a minute and 4 reports a minute per person,
 and `SUBMIT_DAILY` reports a day (10 by default). Invite codes are 16
 characters, stored only as SHA-256 hashes; a session names its invite, so
-revoking an invite ends its sessions within a minute.
+revoking an invite ends its sessions within 30 seconds. Invites and the daily
+counts live in one SQLite Durable Object (`worker/ledger.js`), so a one-use
+invite cannot be redeemed twice, even by two requests at the same moment.
 
 ## Run your own server
 
 A server costs nothing on Cloudflare's free plan for a household or a
 neighborhood group.
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/kc311/tree/main/web)
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/switchboard-kc/tree/main/web)
 
 1. Click the button and sign in to Cloudflare.
 2. When it asks for `ADMIN_TOKEN`, paste a long random string. Keep a copy.
@@ -110,10 +112,12 @@ when that file exists.
 Cloudflare KV holds:
 
 - the city key and API base,
-- invite records (a label, the counts, and the code's hash),
 - for ticket alerts: each subscribed reports id with its push addresses, and
   which timeline entries were already sent (times and titles only),
-- a cached copy of the report types, and daily report counts per person.
+- a cached copy of the report types.
+
+The ledger Durable Object holds invite records (a label, the counts, and the
+code's hash) and the daily report count for each person.
 
 It keeps no report text, no address, no photo, and no contact details. The
 app keeps your reports, drafts, and contact details on your device only.
