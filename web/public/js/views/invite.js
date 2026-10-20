@@ -32,6 +32,15 @@ export function showInviteGate(code) {
         <p class="foot muted">Call 311 at 816-513-1313, or use the city's own myKCMO app. Anyone can also run their own copy of this app for free: the source code and steps are on GitHub.</p>
         <a class="link" href="https://github.com/BaesTheorem/kc311#run-your-own-web-server" target="_blank" rel="noopener">How to run your own</a>
       </div>
+      <details class="card">
+        <summary class="sub strong" style="cursor:pointer;min-height:44px;display:flex;align-items:center">I run this server</summary>
+        <form class="stack s8" id="own-f">
+          <label class="caption muted" for="own-token">Owner token (ADMIN_TOKEN)</label>
+          <input class="input code" id="own-token" type="password" autocomplete="current-password" spellcheck="false">
+          <p class="foot error-text" id="own-err" role="alert"></p>
+          <button class="btn tonal" type="submit">Open as the owner</button>
+        </form>
+      </details>
       <p class="foot muted">For an emergency, call 911.</p>
     </div>`);
     document.body.append(el);
@@ -58,6 +67,16 @@ export function showInviteGate(code) {
       }
     };
     el.querySelector("#inv-f").addEventListener("submit", go);
+    // The owner gets in with the server's token, then makes invites in Settings > Owner tools.
+    el.querySelector("#own-f").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = el.querySelector("#own-token").value.trim();
+      local.set("ownerToken", token);
+      const r = await fetch("/api/config", { headers: { "x-admin-token": token } }).then((x) => x.json()).catch(() => null);
+      if (r?.admin) { location.replace("/#/report"); location.reload(); return; }
+      local.del("ownerToken");
+      el.querySelector("#own-err").textContent = "That token is not right.";
+    });
     if (code) go();
     else input.focus();
   });

@@ -164,9 +164,9 @@ neighborhood group:
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/kc311/tree/main/web)
 
-The button asks for an owner token. Open your server, tap the cog, and enter
-the token under Owner tools to make invite links. The steps are in
-`web/README.md`.
+The button asks for an owner token. Open your server, choose "I run this
+server" on the invite screen, and enter the token. Then make invite links in
+Settings > Owner tools. The steps are in `web/README.md`.
 
 ## Ticket alerts
 

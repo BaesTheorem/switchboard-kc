@@ -88,7 +88,7 @@ neighborhood group.
 1. Click the button and sign in to Cloudflare.
 2. When it asks for `ADMIN_TOKEN`, paste a long random string. Keep a copy.
 3. When the deploy is done, open your server's address.
-4. Tap the cog, open **Owner tools**, and paste the `ADMIN_TOKEN`.
+4. On the invite screen, open **I run this server**, and paste the `ADMIN_TOKEN`.
 5. Use the app once as the owner. If the server has no city key yet, it gets one from the city's app.
 6. In **Owner tools**, make an invite link for each person, and send it to them.
 

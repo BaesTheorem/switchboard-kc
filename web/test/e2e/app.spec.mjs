@@ -220,3 +220,16 @@ test("my reports: a reports id with reports shows them, their detail, and the up
   await expect(page.getByText(/Update requests open/)).toBeVisible();
   expect(await axe(page)).toEqual([]);
 });
+
+test("the owner gets past the invite screen with the owner token", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Join this KC 311 server" })).toBeVisible();
+  await page.getByText("I run this server").click();
+  await page.getByLabel("Owner token (ADMIN_TOKEN)").fill("wrong-token");
+  await page.getByRole("button", { name: "Open as the owner" }).click();
+  await expect(page.getByText("That token is not right.")).toBeVisible();
+  await page.getByLabel("Owner token (ADMIN_TOKEN)").fill(OWNER);
+  await page.getByRole("button", { name: "Open as the owner" }).click();
+  await expect(page.getByRole("heading", { name: "Join this KC 311 server" })).toBeHidden({ timeout: 20_000 });
+  await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
+});
