@@ -75,24 +75,33 @@ enum HelpCatalog {
 
 /// The red "Health and help" card shown on the Report and City tabs.
 struct HealthHelpCard: View {
+    /// In a List row, a visible NavigationLink gets a second, system chevron.
+    /// There the link sits hidden behind the card.
+    var inList = false
+
     var body: some View {
-        NavigationLink { HealthHelpView() } label: {
-            HStack(alignment: .top, spacing: 14) {
-                Icon(name: "favorite", size: 28).foregroundStyle(Theme.onErrorContainer)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Health and help").font(.headline).foregroundStyle(Theme.onErrorContainer)
-                    Text("Crisis lines, food and shelter, quitting tobacco, overdose prevention, falls, and more.")
-                        .font(.caption).foregroundStyle(Theme.onErrorContainer.opacity(0.85))
-                        .multilineTextAlignment(.leading)
-                }
-                Spacer(minLength: 0)
-                Icon(name: "chevron_right", size: 20).foregroundStyle(Theme.onErrorContainer)
-            }
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.errorContainer, in: RoundedRectangle(cornerRadius: Theme.Shape.tile, style: .continuous))
+        if inList {
+            card.background(NavigationLink { HealthHelpView() } label: { EmptyView() }.opacity(0))
+        } else {
+            NavigationLink { HealthHelpView() } label: { card }.buttonStyle(.plain)
         }
-        .buttonStyle(.plain)
+    }
+
+    private var card: some View {
+        HStack(alignment: .top, spacing: 14) {
+            Icon(name: "favorite", size: 28).foregroundStyle(Theme.onErrorContainer)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Health and help").font(.headline).foregroundStyle(Theme.onErrorContainer)
+                Text("Crisis lines, food and shelter, quitting tobacco, overdose prevention, falls, and more.")
+                    .font(.caption).foregroundStyle(Theme.onErrorContainer.opacity(0.85))
+                    .multilineTextAlignment(.leading)
+            }
+            Spacer(minLength: 0)
+            Icon(name: "chevron_right", size: 20).foregroundStyle(Theme.onErrorContainer)
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.errorContainer, in: RoundedRectangle(cornerRadius: Theme.Shape.tile, style: .continuous))
     }
 }
 

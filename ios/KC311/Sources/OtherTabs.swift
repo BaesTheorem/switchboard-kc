@@ -443,7 +443,7 @@ struct CityTab: View {
         NavigationStack {
             List {
                 Section {
-                    HealthHelpCard()
+                    HealthHelpCard(inList: true)
                         .listRowInsets(EdgeInsets())
                         .listRowBackground(Color.clear)
                 }
