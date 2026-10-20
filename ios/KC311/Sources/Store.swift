@@ -114,8 +114,11 @@ final class Store: ObservableObject {
         }
     }
 
-    func detail(_ id: String) async throws -> ReportDetail {
-        let obj = try await api.post("get_issue_detail_citizen", fields: ["issue_id": id])
+    /// One report's detail. Since Tyler's October 2026 fix, get_issue_detail_citizen
+    /// opens only this device's reports; other people's reports come from
+    /// reported_issue_detail, the endpoint the official app uses for its public list.
+    func detail(_ id: String, isPublic: Bool = false) async throws -> ReportDetail {
+        let obj = try await api.post(isPublic ? "reported_issue_detail" : "get_issue_detail_citizen", fields: ["issue_id": id])
         guard let issue = ((obj["response_data"] as? [String: Any])?["issues"] as? [[String: Any]])?.first else {
             throw CivicError.server("This report is not available.")
         }
@@ -134,7 +137,7 @@ final class Store: ObservableObject {
     /// A report's detail, with each update request that names it and all
     /// staff activity on those requests merged into its timeline by time.
     func fullDetail(_ t: some UpdateTarget) async throws -> ReportDetail {
-        let base = try await detail(t.id)
+        let base = try await detail(t.id, isPublic: !myReports.contains { $0.id == t.id })
         let requests = updateRequests(for: t)
         for r in requests { _ = try? await detail(r.id) }
         return merged(base, requests: requests)
