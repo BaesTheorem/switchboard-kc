@@ -1,0 +1,12 @@
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://prod-assets.mycivicapps.com https://*.mycivicapps.com; font-src 'self'; connect-src 'self' https://tiles.openfreemap.org https://mapd.kcmo.org https://maps2.kcmo.org https://services.arcgis.com https://services1.arcgis.com https://gis.mo.gov https://data.mo.gov https://tigerweb.geo.census.gov https://nominatim.openstreetmap.org; worker-src 'self' blob:; frame-src https://challenges.cloudflare.com; manifest-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Content-Type-Options: nosniff
+  Permissions-Policy: geolocation=(self), camera=(self), microphone=(), payment=(), usb=()
+  Cross-Origin-Opener-Policy: same-origin
+
+/sw.js
+  Cache-Control: no-cache
+
+/index.html
+  Cache-Control: no-cache

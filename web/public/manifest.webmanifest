@@ -1,0 +1,23 @@
+{
+  "name": "KC 311 (unofficial)",
+  "short_name": "KC 311",
+  "description": "Report a problem to Kansas City 311, track your reports, and find city services. Unofficial.",
+  "id": "/",
+  "start_url": "/#/report",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fafaff",
+  "theme_color": "#005ccc",
+  "lang": "en-US",
+  "categories": ["utilities", "government"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Report a problem", "url": "/#/report", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "My reports", "url": "/#/reports", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

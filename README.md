@@ -1,8 +1,10 @@
 # KC 311
 
-An unofficial iPhone client for Kansas City, Missouri 311, with KC Streetcar
-reports added. It uses the same backend as the city's official myKCMO app,
-and it uses stock Material Design 3. Testers get it through TestFlight.
+An unofficial client for Kansas City, Missouri 311, with KC Streetcar
+reports added: an iPhone app (`ios/`) and a web app (`web/`) that installs
+from the browser on any phone. Both use the same backend as the city's
+official myKCMO app, and both use stock Material Design 3. iPhone testers get
+the app through TestFlight.
 
 > **Unofficial.** This app is not made, approved, or supported by the City of
 > Kansas City, Missouri, by Tyler Technologies (the maker of myKCMO and the
@@ -143,6 +145,28 @@ For screenshots in a headless simulator, use these launch arguments:
 - `-nearbyList YES|NO` and `-onlyMine YES|NO` (Reports).
 - `-startUpdates YES`, `-openReport YES`, and `-selectPin YES|recent`.
 - `-showSettings YES`, `-appearance auto|light|dark`, and `-deviceUID <id>`.
+
+## Web app
+
+`web/` is the same app for any browser, with no app store: Report,
+Services, Reports and City, ticket alerts through Web Push, offline drafts,
+and the same rules as the iPhone app. A browser cannot call the city's API
+itself, so the web app comes with a small server (a Cloudflare Worker) that
+forwards only the calls the app makes. A server is invite-only unless its
+owner opens it. `web/README.md` explains the design, the limits, and the data
+the server keeps; `docs/WEB-PARITY.md` compares it with the iPhone app screen
+by screen.
+
+### Run your own web server
+
+Anyone can run a copy on Cloudflare's free plan, for a household or a
+neighborhood group:
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/kc311/tree/main/web)
+
+The button asks for an owner token. Open your server, tap the cog, and enter
+the token under Owner tools to make invite links. The steps are in
+`web/README.md`.
 
 ## Ticket alerts
 

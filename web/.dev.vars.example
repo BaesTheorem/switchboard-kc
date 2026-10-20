@@ -1,0 +1,7 @@
+# Secrets for your own copy of the KC 311 web server.
+# The Deploy to Cloudflare button asks for these. For `npx wrangler dev`, copy
+# this file to .dev.vars and fill it in.
+
+# The owner token. Anyone with it can make invites, pause the server, and set
+# the city key, so make it long and random (for example: openssl rand -base64 24).
+ADMIN_TOKEN=

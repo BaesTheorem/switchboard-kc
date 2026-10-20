@@ -8,3 +8,9 @@ ios/Config/civic-config.json
 __pycache__/
 outreach/
 push/.env
+web/node_modules/
+web/.wrangler/
+web/.dev.vars
+web/.env
+web/test-results/
+web/playwright-report/

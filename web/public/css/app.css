@@ -1,0 +1,490 @@
+/* KC 311 web: stock Material Design 3 through Beer CSS, with the iPhone
+   app's tonal scheme (ios/KC311/Sources/Theme.swift) as the color roles.
+   DESIGN.md records the tokens. Shapes: 12px cards, 16px tiles, 28px
+   sheets, full pills for buttons and chips. No gradients. One soft shadow,
+   on controls that float over the map. */
+
+/* Beer CSS sits in a cascade layer, so every rule in this file wins over it
+   whatever the selector's specificity. Only Beer's !important rules still
+   win; keep our class names off its helpers (.primary, .center, .page, .error). */
+@import url("/vendor/beercss/beer.min.css") layer(beer);
+
+:root,
+body.light {
+  --primary: #005ccc;
+  --on-primary: #ffffff;
+  --primary-container: #d9e3ff;
+  --on-primary-container: #001c4a;
+  --secondary: #565e71;
+  --on-secondary: #ffffff;
+  --secondary-container: #dbe3f5;
+  --on-secondary-container: #131c2b;
+  --tertiary: #705574;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #fad8fd;
+  --on-tertiary-container: #28132e;
+  --error: #ba1a1a;
+  --on-error: #ffffff;
+  --error-container: #ffd9d6;
+  --on-error-container: #400005;
+  --background: #fafaff;
+  --on-background: #1a1c21;
+  --surface: #fafaff;
+  --on-surface: #1a1c21;
+  --surface-variant: #e1e2ec;
+  --on-surface-variant: #454752;
+  --outline: #757780;
+  --outline-variant: #c4c7d1;
+  --shadow: #000000;
+  --scrim: #000000;
+  --inverse-surface: #2f3036;
+  --inverse-on-surface: #f1f0f7;
+  --inverse-primary: #adc7ff;
+  --surface-dim: #dad9e0;
+  --surface-bright: #fafaff;
+  --surface-container-lowest: #ffffff;
+  --surface-container-low: #f4f3fa;
+  --surface-container: #edf0f7;
+  --surface-container-high: #e6e8f2;
+  --surface-container-highest: #e1e2ec;
+  /* Case status. */
+  --open: #d98000;
+  --working: var(--primary);
+  --done: #218c4d;
+  /* Text in the status colors: darker in light mode, to pass 4.5:1 at 12 px. */
+  --open-text: color-mix(in srgb, var(--open) 60%, var(--on-surface));
+  --done-text: color-mix(in srgb, var(--done) 60%, var(--on-surface));
+}
+
+body.dark {
+  --primary: #adc7ff;
+  --on-primary: #002e69;
+  --primary-container: #004594;
+  --on-primary-container: #d9e3ff;
+  --secondary: #bec6dc;
+  --on-secondary: #283041;
+  --secondary-container: #3d4759;
+  --on-secondary-container: #dae2f9;
+  --tertiary: #ddbce0;
+  --on-tertiary: #3f2844;
+  --tertiary-container: #573e5c;
+  --on-tertiary-container: #fad8fd;
+  --error: #ffb5ab;
+  --on-error: #690005;
+  --error-container: #94000a;
+  --on-error-container: #ffd9d6;
+  --background: #121217;
+  --on-background: #e3e3e8;
+  --surface: #121217;
+  --on-surface: #e3e3e8;
+  --surface-variant: #44474f;
+  --on-surface-variant: #c4c7d1;
+  --outline: #8e9099;
+  --outline-variant: #45474f;
+  --shadow: #000000;
+  --scrim: #000000;
+  --inverse-surface: #e3e3e8;
+  --inverse-on-surface: #2f3036;
+  --inverse-primary: #005ccc;
+  --surface-dim: #121217;
+  --surface-bright: #38393f;
+  --surface-container-lowest: #0d0e11;
+  --surface-container-low: #1a1b20;
+  --surface-container: #1c2024;
+  --surface-container-high: #292a2e;
+  --surface-container-highest: #34353a;
+  --open: #ffba5c;
+  --done: #6ed68c;
+  --open-text: var(--open);
+  --done-text: var(--done);
+}
+
+:root {
+  --font: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  --radius-card: 12px;
+  --radius-tile: 16px;
+  --radius-sheet: 28px;
+  --bar: 56px;
+  --nav: 80px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+html, body { background: var(--surface); color: var(--on-surface); }
+/* The window scrolls, not the body (the router keeps scroll places per screen). */
+body { display: block; height: auto; min-height: 100dvh; }
+/* Beer CSS spaces sibling blocks with top margins and draws a ripple layer in
+   every button. Our screens space with flex gaps and draw their own states. */
+:is(#view, #sheet, .picker, #banner) :is(*) { margin-block-start: 0; }
+:is(.btn, .item, .icon-btn, .chip-x, .seg > button, .plain, .pill, .mine-pin, .thumb .remove, .thumb.add, .link)::after { content: none !important; }
+body { font-family: var(--font); -webkit-text-size-adjust: 100%; overscroll-behavior-y: none; }
+i { font-family: "Material Symbols Outlined"; font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24; }
+i.fill { font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24; }
+[hidden] { display: none !important; }
+.skip { position: absolute; left: -999px; top: 0; z-index: 100; padding: 8px 16px; background: var(--primary); color: var(--on-primary); }
+.skip:focus { left: 8px; top: calc(8px + var(--safe-top)); }
+:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+/* ---------- app bar and navigation ---------- */
+
+#appbar {
+  position: fixed; inset: 0 0 auto 0; z-index: 20;
+  display: grid; grid-template-columns: 48px 1fr 48px; align-items: center;
+  height: calc(var(--bar) + var(--safe-top)); padding: var(--safe-top) 4px 0;
+  background: var(--surface); color: var(--on-surface);
+}
+#appbar h1 {
+  margin: 0; font-size: 17px; font-weight: 600; line-height: 1.2; text-align: center;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#appbar button { color: var(--on-surface-variant); margin: 0; }
+#appbar #back { grid-column: 1; }
+#appbar h1 { grid-column: 2; }
+#appbar #cog { grid-column: 3; }
+#appbar.scrolled { background: var(--surface-container); }
+
+#view {
+  display: block; outline: none;
+  padding: calc(var(--bar) + var(--safe-top)) 0 calc(var(--nav) + var(--safe-bottom) + 16px);
+  min-height: 100dvh;
+}
+#view.full { padding-bottom: 0; }
+
+nav.bottom#tabs {
+  position: fixed; inset: auto 0 0 0; z-index: 20;
+  height: calc(var(--nav) + var(--safe-bottom)); padding-bottom: var(--safe-bottom);
+  background: var(--surface-container); justify-content: space-around;
+}
+nav.bottom#tabs > a { flex: 1; color: var(--on-surface-variant); }
+nav.bottom#tabs > a > i { padding: 4px 20px; border-radius: 16px; overflow: visible; }
+nav.bottom#tabs > a[aria-current="page"] { color: var(--on-surface); font-weight: 600; }
+nav.bottom#tabs > a[aria-current="page"] > i { background: var(--secondary-container); color: var(--on-secondary-container); font-variation-settings: "FILL" 1; }
+
+/* A strip at the top while the server repairs its city key. */
+#banner:empty { display: none; }
+#banner {
+  position: fixed; z-index: 30; left: 50%; transform: translateX(-50%);
+  top: calc(var(--bar) + var(--safe-top) + 4px);
+  display: flex; gap: 10px; align-items: center; max-width: calc(100% - 32px);
+  padding: 8px 14px; border-radius: 999px; font-size: 13px; font-weight: 600;
+  background: var(--primary-container); color: var(--on-primary-container);
+}
+#banner progress.circle { width: 18px; height: 18px; }
+
+/* ---------- layout ---------- */
+
+.screen { max-width: 720px; margin: 0 auto; padding: 16px; }
+.stack { display: flex; flex-direction: column; gap: 16px; }
+.stack.s4 { gap: 4px; } .stack.s8 { gap: 8px; } .stack.s12 { gap: 12px; } .stack.s20 { gap: 20px; } .stack.s24 { gap: 24px; }
+.row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.row.top { align-items: flex-start; }
+.row.base { align-items: baseline; }
+.row.wrap { flex-wrap: wrap; gap: 8px; }
+.row.s4 { gap: 4px; } .row.s8 { gap: 8px; }
+.grow { flex: 1; min-width: 0; }
+.row > * { flex: 0 1 auto; min-width: 0; }
+.row > :is(i, .avatar, .dot, .icon-btn, .badge-x, .btn.text) { flex: none; }
+.row > .grow { flex: 1 1 0%; }
+.centered { text-align: center; }
+.full-width { width: 100%; }
+
+/* ---------- type ---------- */
+
+.title2 { font-size: 22px; font-weight: 600; line-height: 1.25; margin: 0; }
+.title3 { font-size: 20px; line-height: 1.3; margin: 0; }
+.headline { font-size: 17px; font-weight: 600; line-height: 1.3; margin: 0; }
+.sub { font-size: 15px; line-height: 1.35; }
+.sub.strong, .strong { font-weight: 600; }
+.caption { font-size: 12px; line-height: 1.35; }
+.foot { font-size: 13px; line-height: 1.4; }
+.muted { color: var(--on-surface-variant); }
+.primary-text { color: var(--primary); }
+.error-text { color: var(--error); }
+.open-text { color: var(--open-text); }
+.done-text { color: var(--done-text); }
+.mono { font-variant-numeric: tabular-nums; }
+.code { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+.label { font-size: 15px; font-weight: 600; color: var(--on-surface-variant); margin: 0; }
+.prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+p { margin: 0; }
+a.link, button.link { color: var(--primary); font-weight: 600; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; font-size: 15px; min-height: 44px; display: inline-flex; align-items: center; }
+
+/* ---------- surfaces ---------- */
+
+.card { background: var(--surface-container); border-radius: var(--radius-card); padding: 16px; color: var(--on-surface); }
+.card.flush { padding: 0; overflow: hidden; }
+.tile { background: var(--surface-container); border-radius: var(--radius-tile); padding: 16px; color: var(--on-surface); }
+.hero { background: var(--primary-container); color: var(--on-primary-container); border-radius: var(--radius-sheet); padding: 20px; }
+.hero .muted { color: var(--on-primary-container); }
+.hero > i { --_size: 36px; }
+.tile.accent { background: var(--primary-container); color: var(--on-primary-container); }
+.tile.accent .muted { color: var(--on-primary-container); }
+.tile.help, .card.help { background: var(--error-container); color: var(--on-error-container); }
+.tile.help .muted { color: var(--on-error-container); }
+.error-box { background: var(--error-container); color: var(--on-error-container); border-radius: var(--radius-card); padding: 16px; }
+/* A link or button that looks like the card it wraps. :where() keeps its
+   specificity at zero, so .tile, .card and .row on the same element win. */
+:where(button.plain, a.plain) { all: unset; display: block; cursor: pointer; box-sizing: border-box; width: 100%; -webkit-tap-highlight-color: transparent; }
+:where(button.plain, a.plain):focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; border-radius: var(--radius-tile); }
+.avatar { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--primary-container); color: var(--on-primary-container); flex: none; }
+.avatar i { --_size: 28px; }
+
+/* Grouped rows inside a card, separated by inset dividers. */
+.rows { background: var(--surface-container); border-radius: var(--radius-card); overflow: hidden; }
+.rows > * + * { border-top: 1px solid var(--outline-variant); }
+.item {
+  all: unset; box-sizing: border-box; cursor: pointer; width: 100%;
+  display: flex; align-items: center; gap: 14px; min-height: 52px; padding: 10px 14px; color: var(--on-surface);
+  -webkit-tap-highlight-color: transparent;
+}
+.item:hover { background: color-mix(in srgb, var(--on-surface) 6%, transparent); }
+.item:focus-visible { outline: 3px solid var(--primary); outline-offset: -3px; }
+.item > i:first-child { color: var(--primary); width: 24px; flex: none; text-align: center; }
+.item .trail { color: var(--on-surface-variant); flex: none; --_size: 20px; }
+.section-head { display: flex; align-items: center; gap: 8px; margin: 8px 4px 0; font-size: 13px; font-weight: 600; color: var(--on-surface-variant); text-transform: none; }
+.section-head i { --_size: 18px; color: var(--primary); }
+.letter { position: sticky; top: calc(var(--bar) + var(--safe-top)); z-index: 2; background: var(--surface); color: var(--primary); font-weight: 600; font-size: 17px; padding: 4px 4px; }
+
+/* ---------- controls ---------- */
+
+.btn {
+  all: unset; box-sizing: border-box; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 52px; padding: 0 24px; border-radius: 999px; width: 100%;
+  background: var(--primary); color: var(--on-primary); font-size: 17px; font-weight: 600; text-align: center;
+}
+.btn i { --_size: 20px; }
+.btn:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.btn[disabled], .btn[aria-disabled="true"] { background: color-mix(in srgb, var(--on-surface) 12%, transparent); color: color-mix(in srgb, var(--on-surface) 38%, transparent); cursor: default; }
+.btn.tonal { background: var(--secondary-container); color: var(--on-secondary-container); min-height: 44px; font-size: 15px; padding: 0 20px; width: auto; }
+.btn.tonal.full-width { width: 100%; }
+.btn.soft { background: color-mix(in srgb, var(--surface) 70%, transparent); color: var(--on-primary-container); min-height: 44px; font-size: 15px; }
+.btn.text { background: none; color: var(--primary); min-height: 44px; font-size: 15px; width: auto; padding: 0 12px; }
+.btn.danger { background: var(--error); color: var(--on-error); }
+.btn.small { min-height: 36px; font-size: 13px; padding: 0 12px; }
+.icon-btn {
+  all: unset; box-sizing: border-box; cursor: pointer; width: 44px; height: 44px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; background: var(--secondary-container); color: var(--on-secondary-container);
+}
+.icon-btn:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+
+.chip-x {
+  all: unset; box-sizing: border-box; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;
+  min-height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--outline-variant);
+  color: var(--on-surface); font-size: 15px; -webkit-tap-highlight-color: transparent;
+}
+.chip-x i { --_size: 18px; }
+.chip-x[aria-pressed="true"], .chip-x.on { background: var(--secondary-container); border-color: transparent; color: var(--on-secondary-container); }
+.chip-x:focus-visible { outline: 3px solid var(--primary); outline-offset: 2px; }
+.chip-s { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--secondary-container); color: var(--on-secondary-container); text-decoration: none; min-height: 28px; }
+.chip-s i { --_size: 16px; }
+.chip-s.filled-error { background: var(--error); color: var(--on-error); }
+.chip-s.error { background: var(--error-container); color: var(--on-error-container); }
+.badge-x { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--primary); color: var(--on-primary); }
+
+/* MD3 segmented buttons. */
+.seg { display: flex; border: 1px solid var(--outline); border-radius: 999px; overflow: hidden; min-height: 40px; }
+.seg > button { all: unset; flex: 1; box-sizing: border-box; cursor: pointer; text-align: center; padding: 8px 10px; font-size: 14px; font-weight: 600; color: var(--on-surface); display: flex; align-items: center; justify-content: center; gap: 4px; }
+.seg > button + button { border-left: 1px solid var(--outline); }
+.seg > button[aria-pressed="true"] { background: var(--secondary-container); color: var(--on-secondary-container); }
+.seg > button:focus-visible { outline: 3px solid var(--primary); outline-offset: -3px; }
+
+/* Text inputs inside cards, as in the iPhone app. */
+.input, textarea.input, select.input {
+  all: unset; box-sizing: border-box; display: block; width: 100%; min-height: 44px; padding: 10px 12px;
+  border-radius: 8px; background: var(--surface); color: var(--on-surface); border: 1px solid var(--outline-variant);
+  font: inherit; font-size: 16px; line-height: 1.4;
+}
+textarea.input { min-height: 96px; resize: vertical; white-space: pre-wrap; }
+select.input { appearance: auto; -webkit-appearance: menulist; }
+.input:focus { border-color: var(--primary); outline: 2px solid var(--primary); outline-offset: -1px; }
+.input::placeholder { color: var(--on-surface-variant); opacity: .8; }
+.toggle-row { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 16px; cursor: pointer; }
+.toggle-row .switch { margin: 0; flex: none; }
+.field-label { font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px; }
+
+/* ---------- status ---------- */
+
+.track { display: flex; flex-direction: column; gap: 8px; }
+.track .bars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+.track .bars span { height: 6px; border-radius: 3px; background: var(--outline-variant); }
+.track .names { display: grid; grid-template-columns: repeat(4, 1fr); font-size: 12px; color: var(--on-surface-variant); }
+.track .names span:nth-child(2), .track .names span:nth-child(3) { text-align: center; }
+.track .names span:last-child { text-align: right; }
+.track .names span.now { color: var(--on-surface); font-weight: 600; }
+.stage-0 .bars span.on, .stage-1 .bars span.on { background: var(--open); }
+.stage-2 .bars span.on { background: var(--working); }
+.stage-3 .bars span.on { background: var(--done); }
+.status { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+.status.st-0, .status.st-1 { color: var(--open-text); background: color-mix(in srgb, var(--open) 14%, transparent); }
+.status.st-2 { color: var(--working); background: color-mix(in srgb, var(--working) 14%, transparent); }
+.status.st-3 { color: var(--done-text); background: color-mix(in srgb, var(--done) 14%, transparent); }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; margin-top: 5px; }
+.dot.st-0, .dot.st-1 { background: var(--open); } .dot.st-2 { background: var(--working); } .dot.st-3 { background: var(--done); }
+
+.timeline { display: flex; flex-direction: column; }
+.timeline .entry { display: grid; grid-template-columns: 12px 1fr; gap: 12px; }
+.timeline .rail { display: flex; flex-direction: column; align-items: center; }
+.timeline .rail b { width: 12px; height: 12px; border-radius: 50%; background: var(--outline-variant); margin-top: 4px; flex: none; }
+.timeline .entry:first-child .rail b { background: var(--primary); }
+.timeline .rail s { flex: 1; width: 2px; background: var(--outline-variant); }
+.timeline .entry:last-child .rail s { display: none; }
+.timeline .body { padding-bottom: 16px; }
+
+/* ---------- media ---------- */
+
+.strip { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.strip::-webkit-scrollbar { display: none; }
+.thumb { position: relative; width: 88px; height: 88px; flex: none; border-radius: var(--radius-card); overflow: hidden; background: var(--surface-container); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb .remove { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; display: grid; place-items: center; background: rgba(0,0,0,.6); color: #fff; cursor: pointer; padding: 0; }
+.thumb .remove i { --_size: 16px; }
+.thumb.add { display: grid; place-items: center; color: var(--primary); cursor: pointer; border: 0; }
+.thumb.add i { --_size: 28px; }
+.thumb.big { width: 140px; height: 140px; }
+.photo-banner { width: 100%; height: 140px; object-fit: cover; border-radius: var(--radius-tile); display: block; }
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- maps ---------- */
+
+.mapwrap { position: fixed; inset: calc(var(--bar) + var(--safe-top)) 0 calc(var(--nav) + var(--safe-bottom)) 0; }
+.mapwrap .map { position: absolute; inset: 0; }
+.scope { position: relative; }
+.scope select { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; font-size: 16px; }
+.map-controls {
+  position: absolute; top: 8px; left: 12px; right: 12px; z-index: 5; max-width: 696px; margin: 0 auto;
+  display: flex; gap: 8px; align-items: center; padding: 10px; border-radius: var(--radius-tile);
+  background: var(--surface-container-high); border: 1px solid var(--outline-variant); box-shadow: 0 2px 6px rgba(0,0,0,.18);
+}
+.map-caption { position: absolute; top: 78px; left: 18px; right: 18px; z-index: 5; max-width: 684px; margin: 0 auto; display: flex; gap: 8px; pointer-events: none; }
+.map-caption > * { pointer-events: auto; }
+.pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600;
+  background: var(--surface-container-high); border: 1px solid var(--outline-variant); color: var(--on-surface); }
+button.pill { cursor: pointer; font-family: inherit; }
+button.pill.on { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
+.pill i { --_size: 16px; }
+.map-bottom { position: absolute; left: 12px; right: 12px; bottom: 12px; z-index: 6; max-width: 696px; margin: 0 auto; }
+.pin-card { position: relative; background: var(--surface); border-radius: var(--radius-tile); padding: 16px 16px 16px 21px; max-height: 55dvh; overflow: auto; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
+.pin-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--stage, var(--open)); }
+.mini-map { height: 140px; pointer-events: none; }
+.mine-pin { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--surface); background: var(--on-surface); color: var(--surface); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.mine-pin i { --_size: 18px; font-variation-settings: "FILL" 1; }
+.me-dot { width: 16px; height: 16px; border-radius: 50%; background: #1a73e8; border: 3px solid #fff; box-shadow: 0 0 0 6px rgba(26,115,232,.25); }
+.picker { position: fixed; inset: 0; z-index: 60; background: var(--surface); display: flex; flex-direction: column; }
+.picker .map { flex: 1; position: relative; }
+.picker .pin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%); color: var(--primary); --_size: 44px; pointer-events: none; z-index: 2; font-variation-settings: "FILL" 1; }
+.picker .panel { padding: 20px 20px calc(20px + var(--safe-bottom)); background: var(--surface); border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; margin-top: -28px; position: relative; z-index: 3; }
+.picker .top { position: absolute; top: calc(8px + var(--safe-top)); left: 12px; right: 12px; z-index: 3; display: flex; gap: 8px; }
+.suggest { position: absolute; top: calc(60px + var(--safe-top)); left: 12px; right: 12px; z-index: 4; }
+.maplibregl-ctrl-attrib { font-size: 10px; }
+.maplibregl-canvas:focus-visible { outline: 3px solid var(--primary); outline-offset: -3px; }
+
+/* ---------- sheets, dialogs, snackbars ---------- */
+
+/* Beer CSS shows a dialog with [open]; this one slides up from the bottom. */
+dialog#sheet {
+  border: 0; padding: 0; margin: 0; inset: auto auto 0 50%; transform: translate(-50%, 100%);
+  inline-size: min(720px, 100%); min-inline-size: 0; max-inline-size: 100%; max-block-size: 92dvh;
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0; background: var(--surface); color: var(--on-surface);
+  overflow: auto; box-shadow: none; z-index: 80;
+}
+dialog#sheet[open] { transform: translate(-50%, 0); }
+dialog#sheet::backdrop { display: block !important; visibility: visible; opacity: 1; background: rgba(0,0,0,.4); }
+dialog#sheet .sheet-head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 12px 8px; background: var(--surface); }
+dialog#sheet .sheet-head h2 { margin: 0; font-size: 17px; font-weight: 600; text-align: center; }
+dialog#sheet .sheet-head .end { justify-self: end; }
+dialog#sheet .sheet-body { padding: 0 16px calc(24px + var(--safe-bottom)); }
+@media (min-width: 760px) {
+  dialog#sheet { inset: auto auto 24px 50%; border-radius: var(--radius-sheet); }
+}
+#snack.active { z-index: 70; bottom: calc(var(--nav) + var(--safe-bottom) + 8px); }
+
+.empty { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 32px; text-align: center; }
+.empty > i { --_size: 44px; color: var(--on-surface-variant); }
+.spinner { display: flex; justify-content: center; padding: 40px; }
+progress.circle.small { width: 24px; height: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+/* ---------- city tab (agent) ---------- */
+/* City, Health and help, the basic-needs lists, License offices, and Buses
+   and streetcar (views/city.js, help.js, places.js, licenses.js, transit.js). */
+
+/* Beer CSS gives p, h2, h3, section, ul, form and .row a 1rem top margin when
+   they follow a sibling, at a higher specificity than this file. These
+   screens space with gaps only. */
+.city-ui :is(p, h2, h3, section, ul, form, .row) { margin-block-start: 0 !important; }
+/* Beer CSS sets `flex: none` on each child of a .row, which stops .grow. */
+.row > .grow { flex: 1 1 0%; min-width: 0; }
+
+/* Rows that only show text, inside .rows. Beer CSS lets children inherit the
+   corner radius, which bends the dividers, so these rows are square. */
+.cell { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 10px 14px; border-radius: 0; }
+.cell.loading { justify-content: center; }
+.cell > .mono { flex: none; }
+ul.rows { list-style: none; margin: 0; padding: 0; }
+.place { padding: 12px 14px; border-radius: 0; }
+.refresh { align-self: center; }
+.clamp2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Small chips with a 44 px tap target around them (MD3 draws a small chip
+   inside a larger touch area). Beer CSS sizes an icon with --_size. */
+.chips { display: flex; flex-wrap: wrap; gap: 16px 8px; padding-block-start: 4px; }
+.chip-s.tap { position: relative; }
+.chip-s.tap::after { content: ""; position: absolute; inset: -8px -4px; }
+.chip-s.tap i { --_size: 16px; }
+/* Beer CSS's .error class paints with !important, so the light red chip has its own class. */
+.chip-s.help-chip { background: var(--error-container); color: var(--on-error-container); }
+.badge-help { display: inline-block; vertical-align: middle; margin-inline-start: 6px; padding: 2px 6px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--error-container); color: var(--on-error-container); }
+
+/* Health and help. */
+.help-card .tile > i:first-child { --_size: 28px; }
+.help-card .tile > i:last-child { --_size: 20px; }
+.item.need > i:first-child { color: var(--error); }
+
+/* The City tab's search field, with its icon and a clear button inside. */
+.search-box { position: relative; }
+.search-box > i { position: absolute; inset-inline-start: 12px; top: 50%; transform: translateY(-50%); color: var(--on-surface-variant); pointer-events: none; }
+.search-box > .input { padding-inline: 44px; }
+.search-box > .clear { position: absolute; inset-inline-end: 0; top: 0; background: none; color: var(--on-surface-variant); }
+
+/* "More city numbers": a row that opens in place. */
+details.more, details.more > .more-rows { border-radius: 0; }
+details.more > .more-rows > * { border-top: 1px solid var(--outline-variant); }
+details.more > summary .trail { margin-inline-start: auto; transition: transform .2s; }
+details.more[open] > summary .trail { transform: rotate(180deg); }
+
+/* License offices: today's state. --open and --done are too light for small
+   text on a light card, so here they are darkened to pass 4.5:1. */
+.today { display: flex; align-items: center; gap: 4px; }
+.today i { --_size: 16px; }
+body:not(.dark) .today.open-text { color: color-mix(in srgb, var(--open) 60%, var(--on-surface)); }
+body:not(.dark) .today.done-text { color: color-mix(in srgb, var(--done) 60%, var(--on-surface)); }
+
+/* Buses and streetcar: the route number. */
+.route { flex: none; padding: 2px 8px; border-radius: 999px; font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; background: var(--primary-container); color: var(--on-primary-container); }
+
+/* ---------- streetcar (agent) ---------- */
+/* The KC Streetcar form (views/streetcar.js). */
+
+/* Photo thumbnails are 72 px here, as in Streetcar.swift. */
+.streetcar .thumb { width: 72px; height: 72px; }
+/* The stop and car pickers: a label and a select on one row of the card.
+   Beer CSS lets children inherit the corner radius, which bends the
+   dividers, so these rows are square. */
+.sc-pick { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 16px; border-radius: 0; }
+.sc-pick > label { flex: none; }
+.sc-pick > select { flex: 1; min-width: 0; }
+.streetcar .rows > .toggle-row { border-radius: 0; }
+/* Details grows from 3 to 8 lines where the browser has field-sizing. */
+.streetcar textarea.input { field-sizing: content; max-height: calc(8lh + 22px); }
+/* The share button keeps its own width. */
+.streetcar [data-photos] > .btn { align-self: flex-start; }
+/* The channel buttons, the web form link, and the note are centered. */
+.sc-actions { align-items: center; text-align: center; }
+/* Beer CSS sizes the box of an icon with --_size (24 px). font-size alone does not change it. */
+.streetcar .avatar i { --_size: 28px; }
+.streetcar [data-result] i { --_size: 20px; }

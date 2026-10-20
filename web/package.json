@@ -1,0 +1,41 @@
+{
+  "name": "kc311-web",
+  "private": true,
+  "type": "module",
+  "description": "Unofficial Kansas City 311 web app and its Cloudflare Worker",
+  "license": "MIT",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "vendor": "node bin/vendor.mjs",
+    "test": "node --test 'test/unit/*.test.mjs'",
+    "smoke": "node test/smoke.mjs",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@block65/webcrypto-web-push": "2.0.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0",
+    "axe-core": "4.14.0",
+    "beercss": "5.0.3",
+    "maplibre-gl": "6.15.0",
+    "wrangler": "4.151.3"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ADMIN_TOKEN": {
+        "description": "The owner token for your server. Make a long random string (for example `openssl rand -base64 24`) and keep it: you type it in Settings > Owner tools to make invite links."
+      },
+      "MODE": {
+        "description": "`invite` (the default) lets only people with an invite use your server. `open` lets anyone use it. `off` pauses it."
+      },
+      "SUBMIT_DAILY": {
+        "description": "How many reports one person can file through your server in a day."
+      },
+      "APP_NAME": {
+        "description": "The name shown in the app."
+      }
+    }
+  }
+}

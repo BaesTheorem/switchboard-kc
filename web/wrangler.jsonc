@@ -1,0 +1,33 @@
+// Cloudflare Worker for the KC 311 web app. `npx wrangler deploy` from web/.
+// Secrets (wrangler secret put NAME): ADMIN_TOKEN (the owner's token, required
+// for invites), and optionally CIVIC_KEY (a first key; the app can also read
+// it from the city's app), TURNSTILE_SECRET (open mode only), SESSION_SECRET.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kc311-web",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+  // One namespace holds the key, invites, alert subscriptions, and caches.
+  "kv_namespaces": [{ "binding": "KV" }],
+  "triggers": { "crons": ["* * * * *"] },
+  "vars": {
+    "APP_NAME": "KC 311",
+    // invite | open | off. The owner can change it at run time (Settings > Owner).
+    "MODE": "invite",
+    // Reports one person can file a day through this server.
+    "SUBMIT_DAILY": "10",
+    "VAPID_SUBJECT": "https://github.com/BaesTheorem/kc311",
+    "TURNSTILE_SITE_KEY": ""
+  },
+  "ratelimits": [
+    { "name": "READS", "namespace_id": "3111", "simple": { "limit": 150, "period": 60 } },
+    { "name": "WRITES", "namespace_id": "3112", "simple": { "limit": 4, "period": 60 } },
+    { "name": "SLOW", "namespace_id": "3113", "simple": { "limit": 5, "period": 60 } }
+  ],
+  "observability": { "enabled": true }
+}
