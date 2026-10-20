@@ -9,6 +9,13 @@ and it uses stock Material Design 3. Testers get it through TestFlight.
 > MyCivic platform), or by the KC Streetcar Authority. Reports you file go
 > into the city's real 311 system. For an emergency, call 911.
 
+<p align="center">
+  <img src="docs/screenshots/report.png" width="200" alt="Report tab">
+  <img src="docs/screenshots/services.png" width="200" alt="Services tab">
+  <img src="docs/screenshots/map.png" width="200" alt="Reports map">
+  <img src="docs/screenshots/city.png" width="200" alt="City tab">
+</p>
+
 ## Tabs
 
 - **Report.** Take a photo or pick one from the library, then select the
