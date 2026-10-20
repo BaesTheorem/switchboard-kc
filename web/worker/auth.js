@@ -9,6 +9,10 @@
 // A session is a signed token "v1.<invite hash>.<issued>.<mac>". It names the
 // invite it came from, so revoking an invite ends its sessions. Invite codes
 // are stored only as SHA-256 hashes.
+//
+// Invites and the daily report counts live in the Ledger Durable Object
+// (ledger.js), not KV: a use of an invite and a report against the daily cap
+// are each one statement that two requests cannot both win.
 
 import { HttpError, hmac, randomHex, sameSecret, sha256Hex, today } from "./util.js";
 
@@ -39,15 +43,27 @@ export async function isAdmin(req, env) {
   return sameSecret(req.headers.get("x-admin-token") || "", env.ADMIN_TOKEN || "");
 }
 
+// ---------- the ledger ----------
+
+/** The one Ledger Durable Object (ledger.js) that holds invites and report counts. */
+const ledger = (env) => env.LEDGER.get(env.LEDGER.idFromName("ledger"));
+
+// Revocation reaches a running server within 30 seconds.
+const seen = new Map();
+
 /** The session behind a request, or null. */
 export async function session(req, env) {
   const m = /^Bearer (v1\.([0-9a-f]{64})\.(\d+)\.([\w-]+))$/.exec(req.headers.get("authorization") || "");
   if (!m) return null;
   const [, , inv, iat, mac] = m;
   if (!(await sameSecret(mac, await hmac(await sessionSecret(env), `v1.${inv}.${iat}`)))) return null;
-  const rec = await env.KV.get(`inv:${inv}`, { type: "json", cacheTtl: 60 });
-  if (!rec || rec.revoked) return null;
-  return { id: inv.slice(0, 16), invite: inv, label: rec.label };
+  let rec = seen.get(inv);
+  if (!rec || Date.now() - rec.at > 30_000) {
+    const row = await ledger(env).invite(inv);
+    rec = { at: Date.now(), ok: !!row && !row.revoked, label: row?.label || "" };
+    seen.set(inv, rec);
+  }
+  return rec.ok ? { id: inv.slice(0, 16), invite: inv, label: rec.label } : null;
 }
 
 /** Throws unless this request may call the city. Returns who to count it against. */
@@ -76,43 +92,32 @@ export async function createInvite(env, label, max) {
   const hash = await sha256Hex(code);
   const rec = { label: String(label || "").slice(0, 80) || "Invite", max: Math.max(1, Math.min(50, Number(max) || 3)),
                 uses: 0, created: Date.now(), revoked: false, hint: code.slice(-4) };
-  await env.KV.put(`inv:${hash}`, JSON.stringify(rec));
+  await ledger(env).create({ hash, label: rec.label, max: rec.max, created: rec.created, hint: rec.hint });
   return { code, id: hash.slice(0, 16), ...rec };
 }
 
 export async function listInvites(env) {
-  const out = [];
-  let cursor;
-  do {
-    const page = await env.KV.list({ prefix: "inv:", cursor });
-    for (const k of page.keys) {
-      const rec = await env.KV.get(k.name, "json");
-      if (rec) out.push({ id: k.name.slice(4, 20), ...rec });
-    }
-    cursor = page.list_complete ? undefined : page.cursor;
-  } while (cursor);
-  return out.sort((a, b) => b.created - a.created);
+  return (await ledger(env).list()).map((r) => ({ id: r.hash.slice(0, 16), label: r.label, max: r.max, uses: r.uses, created: r.created,
+                               revoked: !!r.revoked, hint: r.hint, last: r.last }));
 }
 
 export async function revokeInvite(env, id) {
-  const page = await env.KV.list({ prefix: `inv:${String(id).slice(0, 16)}` });
-  if (page.keys.length !== 1) throw new HttpError(404, "no_invite", "No such invite.");
-  const name = page.keys[0].name;
-  const rec = await env.KV.get(name, "json");
-  await env.KV.put(name, JSON.stringify({ ...rec, revoked: true }));
+  const prefix = String(id).replace(/[^0-9a-f]/g, "").slice(0, 16);
+  if (prefix.length !== 16) throw new HttpError(404, "no_invite", "No such invite.");
+  if (!(await ledger(env).revoke(prefix))) throw new HttpError(404, "no_invite", "No such invite.");
+  seen.clear();
 }
 
-/** Trades an invite code for a session token. Each redemption uses one of the invite's uses. */
+/** Trades an invite code for a session token. Each redemption takes one of the invite's uses, atomically. */
 export async function redeem(env, rawCode) {
-  const code = normalizeCode(rawCode);
-  const hash = await sha256Hex(code);
-  const rec = await env.KV.get(`inv:${hash}`, "json");
-  if (!rec || rec.revoked) throw new HttpError(403, "bad_invite", "That invite code does not work.");
-  if (rec.uses >= rec.max) throw new HttpError(403, "invite_used", "That invite code has been used up. Ask for a new one.");
-  await env.KV.put(`inv:${hash}`, JSON.stringify({ ...rec, uses: rec.uses + 1, last: Date.now() }));
+  const hash = await sha256Hex(normalizeCode(rawCode));
+  const r = await ledger(env).redeem(hash, Date.now());
+  if (!r.ok && r.why === "bad") throw new HttpError(403, "bad_invite", "That invite code does not work.");
+  if (!r.ok) throw new HttpError(403, "invite_used", "That invite code has been used up. Ask for a new one.");
+  const { label } = r;
   const iat = String(Math.floor(Date.now() / 1000));
   const mac = await hmac(await sessionSecret(env), `v1.${hash}.${iat}`);
-  return { token: `v1.${hash}.${iat}.${mac}`, label: rec.label };
+  return { token: `v1.${hash}.${iat}.${mac}`, label };
 }
 
 // ---------- limits ----------
@@ -124,17 +129,23 @@ export async function burst(env, binding, key) {
   if (!success) throw new HttpError(429, "slow_down", "Too many requests. Wait a minute and try again.");
 }
 
-/** A per-day cap kept in KV. Counts only successful actions (call `count` after). */
-export async function dailyLeft(env, kind, who, max) {
-  const n = Number(await env.KV.get(`cnt:${kind}:${who}:${today()}`)) || 0;
-  if (n >= max) throw new HttpError(429, "daily_limit", `This server allows ${max} reports a day per person. Try again tomorrow.`);
-  return max - n;
+/**
+ * Takes one of today's report slots for this person, or throws when none is
+ * left. Call refund() if the report then does not reach the city.
+ */
+export async function reserve(env, kind, who, max) {
+  const k = `${kind}:${who}:${today()}`;
+  if (!(await ledger(env).reserve(k, max, Date.now() + 3 * 86400e3))) throw new HttpError(429, "daily_limit", `This server allows ${max} reports a day per person. Try again tomorrow.`);
+  return k;
 }
 
-export async function count(env, kind, who) {
-  const k = `cnt:${kind}:${who}:${today()}`;
-  const n = Number(await env.KV.get(k)) || 0;
-  await env.KV.put(k, String(n + 1), { expirationTtl: 3 * 86400 });
+export async function refund(env, k) {
+  await ledger(env).refund(k);
+}
+
+/** Drops day counts older than three days (the cron calls it). */
+export async function sweepCounts(env) {
+  await ledger(env).sweep(Date.now());
 }
 
 /** Cloudflare Turnstile, required on filing in open mode when a secret is set. */

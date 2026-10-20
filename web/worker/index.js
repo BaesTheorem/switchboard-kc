@@ -3,12 +3,14 @@
 // app makes, each built here from checked fields, never a raw passthrough.
 // auth.js decides who may call it (invite codes by default).
 
-import { burst, count, createInvite, dailyLeft, gate, getMode, isAdmin, listInvites, redeem, revokeInvite, session, setMode, turnstile } from "./auth.js";
+import { burst, createInvite, gate, getMode, isAdmin, listInvites, redeem, refund, reserve, revokeInvite, session, setMode, sweepCounts, turnstile } from "./auth.js";
 import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { gtfs, hud } from "./open.js";
 import { poll, subscribe, test as pushTest, unsubscribe, vapid } from "./push.js";
 import { body, deviceId, HttpError, json, randomHex } from "./util.js";
+
+export { Ledger } from "./ledger.js";
 
 const str = (v, max = 300) => String(v ?? "").slice(0, max);
 
@@ -92,11 +94,18 @@ async function submit(req, env, who, mode) {
   if (mode === "open") await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
   // Test runs send this header: every check above runs, and nothing goes to the city.
   if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, message: "Dry run: not sent to the city.", work_order: "DRYRUN", dry: true });
-  await dailyLeft(env, "submit", who, Number(env.SUBMIT_DAILY || 10));
-  const o = await civicJSON(env, uid, "report_an_issue", { issue_details: details }, files);
+  // One of today's slots is taken before the city call and given back if the report does not get through.
+  const slot = await reserve(env, "submit", who, Number(env.SUBMIT_DAILY || 10));
+  let o;
+  try {
+    o = await civicJSON(env, uid, "report_an_issue", { issue_details: details }, files);
+  } catch (e) {
+    await refund(env, slot);
+    throw e;
+  }
   const st = o.response_status || {};
   const ok = String(st.response_code) === "1";
-  if (ok) await count(env, "submit", who);
+  if (!ok) await refund(env, slot);
   return json({ ok, message: String(st.response_message || ""), work_order: String(st.work_order || "") }, ok ? 200 : 422);
 }
 
@@ -119,7 +128,7 @@ async function health(env, url) {
 async function config(req, env) {
   const [mode, s, admin, v, cfg] = await Promise.all([getMode(env), session(req, env), isAdmin(req, env), vapid(env), getConfig(env)]);
   return json({
-    app: env.APP_NAME || "KC 311",
+    app: env.APP_NAME || "Switchboard KC",
     mode,
     session: s ? { label: s.label } : null,
     admin,
@@ -210,5 +219,7 @@ export default {
 
   async scheduled(event, env, ctx) {
     ctx.waitUntil(poll(env, event.scheduledTime).then((r) => r.length && console.log(JSON.stringify(r))));
+    // Once an hour, drop day counts older than three days.
+    if (new Date(event.scheduledTime).getUTCMinutes() === 0) ctx.waitUntil(sweepCounts(env));
   },
 };
