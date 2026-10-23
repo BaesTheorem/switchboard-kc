@@ -5,7 +5,7 @@
 //   copies of city data.
 // - push: shows the notification the server sent; a tap opens the report.
 
-const VERSION = "20261023T1942";
+const VERSION = "20261023T2006";
 const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",
@@ -17,7 +17,7 @@ const SHELL = [
   "/js/lib/image.js", "/js/lib/store.js", "/js/lib/zip.js",
   "/js/views/report.js", "/js/views/services.js", "/js/views/section.js", "/js/views/all.js", "/js/views/directory.js",
   "/js/views/form.js", "/js/views/picker.js", "/js/views/done.js", "/js/views/parts.js", "/js/views/alerts.js",
-  "/js/views/reports.js", "/js/views/detail.js", "/js/views/updates.js", "/js/views/settings.js",
+  "/js/views/reports.js", "/js/views/detail.js", "/js/views/updates.js", "/js/views/settings.js", "/js/robot.js",
   "/js/views/city.js", "/js/views/help.js", "/js/views/places.js", "/js/views/licenses.js", "/js/views/transit.js",
   "/js/views/streetcar.js", "/js/workers/gtfs.js", "/data/health-centers.json", "/vendor/icons.json",
 ];

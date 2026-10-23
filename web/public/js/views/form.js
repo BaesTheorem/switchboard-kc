@@ -2,6 +2,7 @@
 // visibility and contact. The send button names the first thing still
 // missing. Ported from ReportForm.swift.
 
+import { robotToken, warmRobotCheck } from "../robot.js";
 import { current } from "../lib/geo.js";
 import { bag, html, icon, on, raw, render } from "../lib/html.js";
 import { dispose, makeMap } from "../map.js";
@@ -201,8 +202,7 @@ export default function view(main, _params, ctx) {
           return;
         }
       }
-      const token = main.querySelector('[name="cf-turnstile-response"]')?.value;
-      const wo = await submit(draft, who, token);
+      const wo = await submit(draft, who, await robotToken($("#turnstile")));
       sessionStorage.setItem(`done:${ctx.tab}`, JSON.stringify({ wo, note: draft.autoresponse }));
       loadMyReports();
       ctx.go(`/${ctx.tab}/done`, { replace: true });
@@ -221,19 +221,8 @@ export default function view(main, _params, ctx) {
   };
   off(on(main, "submit", "#rf", (e) => { e.preventDefault(); if (!draft.missing && !sending) send(false); }));
 
-  // ---------- Turnstile (open servers only) ----------
-  if (S.config?.turnstile) {
-    render($("#turnstile"), html`<div class="cf-turnstile" data-sitekey="${S.config.turnstile}"></div>`);
-    if (!document.querySelector("script[data-turnstile]")) {
-      const s = document.createElement("script");
-      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
-      s.async = true;
-      s.dataset.turnstile = "";
-      document.head.append(s);
-    } else {
-      window.turnstile?.render?.(main.querySelector(".cf-turnstile"));
-    }
-  }
+  // The robot check gets a fresh token at each send (robot.js); load its script now.
+  warmRobotCheck();
 
   paintPhotos();
   paintLocation();

@@ -365,7 +365,7 @@ export async function flushQueue() {
     while (S.queued.length) {
       const q = S.queued[0];
       try {
-        await send(q.issueJSON, q.zip, JSON.parse(q.issueJSON).deviceuid);
+        await send(q.issueJSON, q.zip, JSON.parse(q.issueJSON).deviceuid, await (await import("./robot.js")).robotToken());
       } catch (e) {
         // The city refused this one: keep it, with the reason, for the user to remove.
         if (e.status === 400 || e.status === 422) { q.error = e.message; await idb.set("queue", S.queued); emit("queue"); }

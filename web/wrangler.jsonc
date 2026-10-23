@@ -25,7 +25,7 @@
     // Reports one IP address can file a day through this server.
     "SUBMIT_DAILY": "10",
     "VAPID_SUBJECT": "https://github.com/BaesTheorem/switchboard-kc",
-    "TURNSTILE_SITE_KEY": ""
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFi6_IY6KOTpnx6s"
   },
   "ratelimits": [
     { "name": "READS", "namespace_id": "3111", "simple": { "limit": 150, "period": 60 } },

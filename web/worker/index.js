@@ -70,7 +70,7 @@ async function duplicate(env, b) {
 }
 
 /** Files a REAL report with the city. The issue JSON is built by the app; this checks that it names this city and this id. */
-async function submit(req, env, who) {
+async function submit(req, env, who, owner) {
   if (Number(req.headers.get("content-length") || 0) > 12 * 1024 * 1024) throw new HttpError(413, "too_large", "The photos are too large.");
   const form = await req.formData();
   const uid = deviceId(form.get("device"));
@@ -91,7 +91,8 @@ async function submit(req, env, who) {
     if (head[0] !== 0x50 || head[1] !== 0x4b) throw new HttpError(400, "bad_zip", "The photos are not a zip file.");
     files.push({ name: "file_zip", blob: zip, filename: `${Date.now()}_images.zip` });
   }
-  await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
+  // The owner (the owner token) skips the robot check; everyone else passes it.
+  if (!owner) await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
   // Test runs send this header: every check above runs, and nothing goes to the city.
   if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, message: "Dry run: not sent to the city.", work_order: "DRYRUN", dry: true });
   // One of today's slots is taken before the city call and given back if the report does not get through.
@@ -190,7 +191,7 @@ async function route(req, env, ctx, url) {
 
   if (p === "/api/submit") {
     await burst(env, "WRITES", g.who);
-    return submit(req, env, g.who);
+    return submit(req, env, g.who, !!g.admin);
   }
   if (p === "/api/note") {
     await burst(env, "WRITES", g.who);

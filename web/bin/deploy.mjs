@@ -5,7 +5,7 @@
 //   node bin/deploy.mjs --dry-run  bundle and check only
 //
 // Reads web/.env (gitignored): CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN,
-// ADMIN_TOKEN. Missing values fall back to ../push/.env (CF_ACCOUNT_ID,
+// ADMIN_TOKEN, and optionally TURNSTILE_SECRET. Missing values fall back to ../push/.env (CF_ACCOUNT_ID,
 // CF_API_TOKEN), and a missing ADMIN_TOKEN is made and saved to web/.env.
 // The first key comes from ../ios/Config/civic-config.json when it exists;
 // otherwise the app reads one from the city's Android app on first use.
@@ -59,6 +59,8 @@ if (dry) {
 }
 run(["deploy"]);
 run(["secret", "put", "ADMIN_TOKEN"], admin);
+// The robot check on filing, when web/.env has its secret (the site key is in wrangler.jsonc).
+if (mine.TURNSTILE_SECRET) run(["secret", "put", "TURNSTILE_SECRET"], mine.TURNSTILE_SECRET);
 
 const name = /"name":\s*"([^"]+)"/.exec(readFileSync(join(web, "wrangler.jsonc"), "utf8"))[1];
 const sub = (await (await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.CLOUDFLARE_ACCOUNT_ID}/workers/subdomain`, {
