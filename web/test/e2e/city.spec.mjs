@@ -32,6 +32,36 @@ test("City tab: phone numbers, search, and the screens under it", async ({ conte
   expect(page.errors).toEqual([]);
 });
 
+test("City meetings: the list, a meeting sheet, subscribe, and the boards", async ({ context }) => {
+  const { page } = await ownerPage(context);
+  await page.goto("/#/city");
+  await page.getByRole("link", { name: /City meetings/ }).click();
+  await expect(page.locator("#title")).toHaveText("City meetings");
+  await expect(page.getByText(/meetings coming up/)).toBeVisible({ timeout: 30_000 });
+  expect(await axe(page)).toEqual([]);
+  // A meeting opens its sheet with the comment rule and calendar links.
+  await page.locator('[data-act="open"]').first().click();
+  await expect(page.getByRole("heading", { name: "Public comment" })).toBeVisible();
+  const ics = page.getByRole("link", { name: /\.ics file/ });
+  await expect(ics).toHaveAttribute("href", /^\/cal\/meeting\/[\w-]+\.ics$/);
+  await expect(page.getByRole("link", { name: "Google Calendar" })).toHaveAttribute("href", /^https:\/\/calendar\.google\.com\//);
+  // The sheet fades in; check the contrast once it is fully drawn.
+  await page.locator("#sheet").evaluate((d) => Promise.all(d.getAnimations({ subtree: true }).map((a) => a.finished)));
+  expect(await axe(page)).toEqual([]);
+  await page.keyboard.press("Escape");
+  // Subscribe to every meeting: a webcal link to this server's feed.
+  await page.getByRole("button", { name: /Subscribe to every meeting/ }).click();
+  await expect(page.getByRole("link", { name: /Apple Calendar/ })).toHaveAttribute("href", /^webcal:\/\/.+\/cal\/all\.ics$/);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Boards" }).click();
+  await expect(page.getByRole("button", { name: "Boards" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("heading", { name: "City Council" })).toBeVisible();
+  await page.getByRole("searchbox").fill("plan commission");
+  await expect(page.getByText("City Plan Commission").first()).toBeVisible();
+  expect(await drawnIcons(page)).toEqual([]);
+  expect(page.errors).toEqual([]);
+});
+
 test("Health and help, and a basic-needs list", async ({ context }) => {
   const { page } = await ownerPage(context);
   await page.goto("/#/report");

@@ -267,15 +267,15 @@ function questionField(q, i, draft) {
     const yes = draft.answers[q.caption] === "YES";
     return html`<div class="card stack s12" role="group" aria-labelledby="${id}-l">
       <span class="sub strong" id="${id}-l">${q.caption}</span>
-      <div class="seg"><button type="button" data-yes="YES" data-qi="${i}" aria-pressed="${yes}">Yes</button>
-        <button type="button" data-yes="NO" data-qi="${i}" aria-pressed="${!yes}">No</button></div>
+      <div class="seg"><button type="button" data-yes="YES" data-qi="${i}" aria-pressed="${String(yes)}">Yes</button>
+        <button type="button" data-yes="NO" data-qi="${i}" aria-pressed="${String(!yes)}">No</button></div>
     </div>`;
   }
   if (q.kind === Kind.choice) {
     const picked = new Set(draft.choiceAnswers[q.caption] || []);
     return html`<div class="card stack s12" role="group" aria-labelledby="${id}-l">
       <span class="sub strong" id="${id}-l">${q.caption}${star}${q.multiple ? html`<span class="caption muted"> (pick any)</span>` : ""}</span>
-      <div class="row wrap">${q.options.map((o) => html`<button type="button" class="chip-x" data-opt="${o.id}" data-qi="${i}" aria-pressed="${picked.has(o.id)}">
+      <div class="row wrap">${q.options.map((o) => html`<button type="button" class="chip-x" data-opt="${o.id}" data-qi="${i}" aria-pressed="${String(picked.has(o.id))}">
         <i aria-hidden="true" ${picked.has(o.id) ? "" : "hidden"}>${picked.has(o.id) ? "check" : ""}</i><span>${o.value}</span></button>`)}</div>
     </div>`;
   }

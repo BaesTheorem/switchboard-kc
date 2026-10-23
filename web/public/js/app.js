@@ -35,6 +35,7 @@ route("/:tab/mine/:id", v("detail"), { parent: (p) => `/${p.split("/")[1]}` });
 route("/city", v("city"), { title: "City" });
 route("/city/licenses", v("licenses"), { title: "License offices", parent: "/city" });
 route("/city/transit", v("transit"), { title: "Buses and streetcar", parent: "/city" });
+route("/city/meetings", v("meetings"), { title: "City meetings", parent: "/city" });
 route("/:tab/help", v("help"), { title: "Health and help", parent: (p) => `/${p.split("/")[1]}` });
 route("/:tab/help/:kind", v("places"), { parent: (p) => p.split("/").slice(0, 3).join("/") });
 

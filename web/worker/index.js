@@ -6,7 +6,7 @@
 import { burst, gate, getMode, isAdmin, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
 import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
-import { gtfs, hud } from "./open.js";
+import { calendarFeed, gtfs, hud, meetings } from "./open.js";
 import { poll, subscribe, test as pushTest, unsubscribe, vapid } from "./push.js";
 import { body, deviceId, HttpError, json, randomHex } from "./util.js";
 
@@ -186,6 +186,8 @@ async function route(req, env, ctx, url) {
   if (p === "/api/catalog" && req.method === "GET") return catalog(env);
   if (p === "/api/open/hud" && req.method === "GET") return hud(url);
   if (p === "/api/open/gtfs" && req.method === "GET") return gtfs();
+  if (p === "/api/meetings" && req.method === "GET") return meetings(env, "meetings");
+  if (p === "/api/bodies" && req.method === "GET") return meetings(env, "bodies");
   if (req.method === "GET" && p === "/api/key/apk") return relayApk(env, g.admin);
   if (req.method !== "POST") throw new HttpError(404, "not_found", "No such endpoint.");
 
@@ -214,6 +216,13 @@ async function route(req, env, ctx, url) {
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    // Calendar apps read the meeting feeds with no token, as on Common Lot.
+    if (url.pathname.startsWith("/cal/")) {
+      try { return await calendarFeed(env, url.pathname); } catch (e) {
+        if (e instanceof HttpError) return json({ ok: false, error: e.code, message: e.message }, e.status);
+        throw e;
+      }
+    }
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(req);
     try {
       return await route(req, env, ctx, url);

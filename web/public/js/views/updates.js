@@ -46,7 +46,7 @@ export default function view(main, _params, ctx) {
         <div class="rows">${list.map((r) => {
           const note = tooSoon(r);
           const on = selected.has(r.id);
-          return html`<button class="item" type="button" role="checkbox" aria-checked="${on}" data-sel="${r.id}" ${sending || done() || note ? "disabled" : ""}
+          return html`<button class="item" type="button" role="checkbox" aria-checked="${String(on)}" data-sel="${r.id}" ${sending || done() || note ? "disabled" : ""}
             style="align-items:flex-start;${note ? "opacity:.5" : ""}">
             <i aria-hidden="true" class="${on ? "primary-text" : "muted"}">${on ? "check_box" : "check_box_outline_blank"}</i>
             <span class="grow stack s4" style="gap:3px"><span class="sub">${r.label}</span>
@@ -59,8 +59,8 @@ export default function view(main, _params, ctx) {
       <section class="stack s8" aria-labelledby="by-h"><h2 class="label" id="by-h">The city contacts you by</h2>
         <div class="card stack s12">
           <div class="seg" role="group" aria-label="Contact method">
-            <button type="button" data-method="Email" aria-pressed="${method === "Email"}">Email</button>
-            <button type="button" data-method="Phone Call" aria-pressed="${method !== "Email"}">Phone call</button>
+            <button type="button" data-method="Email" aria-pressed="${String(method === "Email")}">Email</button>
+            <button type="button" data-method="Phone Call" aria-pressed="${String(method !== "Email")}">Phone call</button>
           </div>
           ${method === "Email"
             ? html`<label class="visually-hidden" for="u-email">Email</label><input class="input" id="u-email" type="email" inputmode="email" autocomplete="email" placeholder="Email" value="${contact.email}">`

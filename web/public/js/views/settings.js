@@ -27,7 +27,7 @@ export function openSettings() {
   const body = () => html`<div class="stack s20">
     <section class="stack s8" aria-labelledby="ap-h"><h3 class="label" id="ap-h">Appearance</h3>
       <div class="seg" role="group" aria-label="Theme">
-        ${[["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => html`<button type="button" data-theme="${k}" aria-pressed="${local.get("appearance", "auto") === k}">${l}</button>`)}
+        ${[["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => html`<button type="button" data-theme="${k}" aria-pressed="${String(local.get("appearance", "auto") === k)}">${l}</button>`)}
       </div></section>
 
     ${installed() ? "" : html`<section class="stack s8" aria-labelledby="in-h"><h3 class="label" id="in-h">Install</h3>
@@ -96,7 +96,7 @@ export function openSettings() {
     }
     return html`<div class="stack s12">
       <div class="card stack s8"><p class="sub strong">Access</p>
-        <div class="seg" role="group" aria-label="Server access">${[["open", "Open"], ["off", "Paused"]].map(([k, l]) => html`<button type="button" data-mode="${k}" aria-pressed="${S.config.mode === k}">${l}</button>`)}</div>
+        <div class="seg" role="group" aria-label="Server access">${[["open", "Open"], ["off", "Paused"]].map(([k, l]) => html`<button type="button" data-mode="${k}" aria-pressed="${String(S.config.mode === k)}">${l}</button>`)}</div>
         <p class="caption muted">Open lets anyone use this server (with the robot check, when set). Paused stops every city call.</p></div>
       <button class="btn text" type="button" data-unown>Forget the owner token on this device</button>
     </div>`;

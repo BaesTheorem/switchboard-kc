@@ -68,6 +68,24 @@ await check("duplicate check", async () => {
   const o = await ok(await post("duplicate", { device, payload: { latitude: "39.0937", longitude: "-94.5340", address: "4131 E Truman Rd", city: "Kansas City", state: "MO", zip: "64127", type: pot.cat_id, subtype: "44019" } }));
   return `level ${o.level}`;
 });
+let meeting = null;
+await check("meetings (from Common Lot)", async () => {
+  const r = await fetch(`${base}/api/meetings`);
+  const o = await r.json();
+  if (!r.ok || !Array.isArray(o.meetings) || !o.meetings.length) throw new Error(`HTTP ${r.status}, ${o.meetings?.length ?? "no"} meetings`);
+  meeting = o.meetings.find((m) => m.bodyId) || o.meetings[0];
+  return `${o.meetings.length} meetings, Legistar read ${o.fetched?.legistar}`;
+});
+await check("board descriptions", async () => { const o = await (await fetch(`${base}/api/bodies`)).json(); if (!(o.length > 10)) throw new Error("too few"); return `${o.length} boards`; });
+for (const path of ["/cal/all.ics", meeting?.bodyId && `/cal/body/${meeting.bodyId}.ics`, meeting && `/cal/meeting/${meeting.id}.ics`].filter(Boolean)) {
+  await check(`calendar feed ${path.replace(/\/\d+|\/[\w-]+\.ics$/, (x) => x.endsWith(".ics") ? "/<id>.ics" : "/<id>")}`, async () => {
+    const r = await fetch(`${base}${path}`);
+    const t = await r.text();
+    if (!r.ok || !t.startsWith("BEGIN:VCALENDAR")) throw new Error(`HTTP ${r.status}`);
+    return `${(t.match(/BEGIN:VEVENT/g) || []).length} entries`;
+  });
+}
+await check("calendar feed: a bad path is refused", async () => { const r = await fetch(`${base}/cal/../api/config.ics`); if (r.status !== 404) throw new Error(`HTTP ${r.status}`); });
 await check("open: a visitor with no token can read", async () => {
   const r = await post("myissues", { device }, { "content-type": "application/json" });
   if (r.status !== 200) throw new Error(`HTTP ${r.status}`);

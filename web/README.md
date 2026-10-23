@@ -57,6 +57,18 @@ device id. The app makes one on first use and keeps it on the device. Settings
 can copy it, save it as a file, and restore it. The same id works in the
 iPhone app.
 
+**City meetings.** City > City meetings lists the meetings of the City
+Council, its committees and the city's boards, from the Worker of
+[Common Lot](https://github.com/BaesTheorem/common-lot), which keeps a copy of
+the city's Legistar calendar and the EDC boards. The Worker relays
+`/api/meetings`, `/api/bodies` and the calendar feeds (`/cal/all.ics`,
+`/cal/body/<id>.ics`, `/cal/meeting/<id>.ics`), so a calendar subscription
+uses this server's address. The owner's server reaches Common Lot through a
+Service Binding (`COMMON_LOT` in `wrangler.jsonc`), because a Worker cannot
+fetch another Worker's workers.dev address on the same account. A self-hosted
+server has no binding: delete it, and the Worker reads Common Lot's public
+address (or `COMMON_LOT_URL`).
+
 **Ticket alerts.** The Worker reads each subscribed id's reports every minute
 and sends a Web Push notification when city staff change one
 (`worker/push.js`). On iPhone and iPad, web push works only for an app added

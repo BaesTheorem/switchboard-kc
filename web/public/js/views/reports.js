@@ -43,7 +43,7 @@ export default function view(main, _params, ctx) {
     <div id="list" class="screen" ${listMode ? "" : "hidden"} style="position:absolute;inset:0;overflow:auto;padding-top:132px;max-width:none"></div>
     <div class="map-controls" role="toolbar" aria-label="Report filters">
       <div class="seg grow" role="group" aria-label="Status">
-        ${["open", "closed", "all"].map((s) => html`<button type="button" data-status="${s}" aria-pressed="${s === status}">${s[0].toUpperCase() + s.slice(1)}</button>`)}
+        ${["open", "closed", "all"].map((s) => html`<button type="button" data-status="${s}" aria-pressed="${String(s === status)}">${s[0].toUpperCase() + s.slice(1)}</button>`)}
       </div>
       <span class="icon-btn scope" title="Reported in the past">${icon("date_range")}
         <select id="scope" aria-label="Reported in the past">

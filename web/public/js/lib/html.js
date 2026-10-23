@@ -27,10 +27,10 @@ export function html(strings, ...vals) {
   return new Safe(out);
 }
 
-/** A URL safe for href/src: http(s), tel, sms, mailto, or a same-origin path. Anything else becomes "#". */
+/** A URL safe for href/src: http(s), tel, sms, mailto, webcal (calendar feeds), or a same-origin path. Anything else becomes "#". */
 export function safeUrl(u) {
   const s = String(u ?? "").trim();
-  if (/^(https?:|tel:|sms:|mailto:|geo:|maps:)/i.test(s) || s.startsWith("/") || s.startsWith("#")) return s;
+  if (/^(https?:|tel:|sms:|mailto:|geo:|maps:|webcal:)/i.test(s) || s.startsWith("/") || s.startsWith("#")) return s;
   return "#";
 }
 
