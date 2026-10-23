@@ -184,6 +184,17 @@ export async function detail(id, scope = "mine") {
   return reportDetail(o.issue);
 }
 
+/** Sends a REAL note to staff on one of my reports, then reloads its detail. */
+export async function addNote(id, text) {
+  const o = await api("note", { body: { device: deviceId(), id, text } });
+  if (o.issue) {
+    S.details[id] = { at: Date.now(), issue: o.issue };
+    idb.set(`detail:${id}`, S.details[id]);
+    emit("detail");
+  }
+  return o;
+}
+
 export const cachedDetail = (id) => (S.details[id] ? reportDetail(S.details[id].issue) : null);
 
 /** Anything an update request can name: one of my reports or a public pin. */

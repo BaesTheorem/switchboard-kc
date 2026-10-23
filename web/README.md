@@ -32,6 +32,7 @@ files and forwards the eight API calls the app makes:
 | Public map | `reported_issues_map` |
 | Duplicate check | `check_duplicate_issue` |
 | File a report or an update request | `report_an_issue` |
+| A note on one of my reports | `add_comments_citizen` |
 | A moved API base | `token/get_baseurl` |
 
 The Worker builds each call from checked fields. It is not an open proxy: a

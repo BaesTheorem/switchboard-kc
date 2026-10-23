@@ -4,7 +4,7 @@
 // answers /api/submit inside the page.
 
 import { expect, test } from "@playwright/test";
-import { axe, BASE, drawnIcons, issueFrom, jpegWithGps, OWNER, ownerPage, TEST_DEVICE } from "./helpers.mjs";
+import { axe, BASE, drawnIcons, issueFrom, jpegWithGps, KC, OWNER, ownerPage, TEST_DEVICE } from "./helpers.mjs";
 
 test.use({ baseURL: BASE });
 
@@ -215,8 +215,16 @@ test("reports: the public map loads pins, the list shows them, and a pin opens i
 });
 
 test("my reports: a reports id with reports shows them, their detail, and the update rules", async ({ context }) => {
-  // The id from a dry-run test report would be empty; use one that has real reports, read only.
-  const { page } = await ownerPage(context, { device: process.env.READ_DEVICE || "36e84a199b185991" });
+  // Fixture data: a live id's reports change status (the old read-only id's reports all closed by 10/23/2026).
+  const { page } = await ownerPage(context);
+  const now = Math.floor(Date.now() / 1000);
+  const row = { id: "9000002", name: "Sidewalks and Curbs", sub_type: "ADA Curb Issue", status: "received", description: "Mud on the curb ramp.",
+    address: "1200 Oak St Kansas City MO 64106", latitude: String(KC.latitude), longitude: String(KC.longitude), added_on: String(now),
+    updated_on: new Date(now * 1000).toISOString().slice(0, 19).replace("T", " ") };
+  const issue = { status: "received", type: "Sidewalks and Curbs", subtype: "ADA Curb Issue", address: row.address, description: row.description,
+    added_on: now, history_object: [{ title: "Notes Added By staff", details: "Sent for review.", dateofupdate: "10/23/2026 12:00 PM", timestamp: now }] };
+  await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [row] }) }));
+  await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue }) }));
   await page.goto("/#/reports");
   await page.getByRole("button", { name: "Show list" }).click();
   await expect(page.getByRole("heading", { name: "Yours" })).toBeVisible({ timeout: 30_000 });
@@ -240,4 +248,36 @@ test("the owner gets past the invite screen with the owner token", async ({ page
   await page.getByRole("button", { name: "Open as the owner" }).click();
   await expect(page.getByRole("heading", { name: "Join this Switchboard KC server" })).toBeHidden({ timeout: 20_000 });
   await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
+});
+
+test("my reports: a note goes to the city only after the confirm, and the box clears", async ({ context }) => {
+  // Fixture data only: the list, the detail and the note call are all answered here.
+  const { page } = await ownerPage(context);
+  const row = { id: "9000001", name: "Sidewalks and Curbs", sub_type: "ADA Curb Issue", status: "received", description: "Mud on the curb ramp.", address: "1 Test St", added_on: "1791241551" };
+  let issue = { status: "received", type: "Sidewalks and Curbs", subtype: "ADA Curb Issue", address: "1 Test St", description: "Mud on the curb ramp.",
+    citizen_allow_to_send_note: 1, history_object: [{ title: "Notes Added By staff", details: "Sent for review.", dateofupdate: "10/14/2026 01:36 PM", timestamp: 1791660960 }] };
+  const notes = [];
+  await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [row] }) }));
+  await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue }) }));
+  await page.route("**/api/note", async (route) => {
+    notes.push(JSON.parse(route.request().postData()));
+    issue = { ...issue, history_object: [...issue.history_object,
+      { title: "Notes Added By Citizen", details: notes.at(-1).text, dateofupdate: "10/23/2026 12:40 PM", timestamp: 1792777200 }] };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue }) });
+  });
+  await page.goto("/#/reports/mine/9000001");
+  await expect(page.getByRole("heading", { name: "Add a note" })).toBeVisible({ timeout: 30_000 });
+  const send = page.getByRole("button", { name: "Send note" });
+  await expect(send).toBeDisabled();
+  await page.getByLabel("Note for staff").fill("The mud is still there.");
+  await send.click();
+  await page.getByRole("button", { name: "Cancel" }).click();
+  expect(notes).toEqual([]);
+  await send.click();
+  await page.locator("#sheet").getByRole("button", { name: "Send note" }).click();
+  await expect(page.getByText("Note sent")).toBeVisible();
+  expect(notes).toEqual([{ device: TEST_DEVICE, id: "9000001", text: "The mud is still there." }]);
+  await expect(page.getByLabel("Note for staff")).toHaveValue("");
+  await expect(page.getByText("Notes Added By Citizen")).toBeVisible();
+  expect(await axe(page)).toEqual([]);
 });

@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  Category, cityCaseNumber, cleanName, epoch, mapIssue, myReport, num, parseQuestions, stage, str, stripHTML,
+  Category, cityCaseNumber, cleanName, epoch, mapIssue, myReport, num, parseQuestions, reportDetail, stage, str, stripHTML,
 } from "../../public/js/models.js";
 
 const H = 3600e3;
@@ -285,4 +285,13 @@ test("mapIssue skips a pin without a position", () => {
   assert.ok(zero, "Double(\"0\") is a position in Swift");
   assert.equal(zero.submitted, null);
   assert.equal(zero.caseNumber, "");
+});
+
+// ---------- reportDetail ----------
+
+test("reportDetail opens the note box only when the city allows it (docs/API.md section 5.1)", () => {
+  assert.equal(reportDetail({ citizen_allow_to_send_note: 1 }).canAddNote, true);
+  assert.equal(reportDetail({ citizen_allow_to_send_note: "1" }).canAddNote, true);
+  assert.equal(reportDetail({ citizen_allow_to_send_note: 0 }).canAddNote, false);
+  assert.equal(reportDetail({}).canAddNote, false);
 });

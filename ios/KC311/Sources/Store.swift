@@ -131,6 +131,27 @@ final class Store: ObservableObject {
         return ReportDetail(kept)
     }
 
+    /// Adds a note to one of my reports (add_comments_citizen). Staff see it
+    /// in the report's history as "Notes Added By Citizen". The city knows the
+    /// filer only by the device id in the signature, so this works only on
+    /// reports this id filed. There is no call to edit or delete a note.
+    func addNote(_ text: String, to id: String) async throws {
+        let note = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !note.isEmpty else { return }
+        let city = CivicConfig.current?.city_id ?? KeyRefresher.kansasCity
+        let ms = String(Int(Date().timeIntervalSince1970 * 1000))
+        // The official app sends exactly these flat parts (docs/API.md section 8).
+        let obj = try await api.post("add_comments_citizen", fields: [
+            "issue_id": id, "notes": note, "city_id": city, "notify": "", "notifyids": "",
+            "api_version": CivicClient.apiVersion, "offline_timestamp": ms,
+        ], includeBase: false)
+        let msg = obj["response_message"] as? String ?? ""
+        guard msg.localizedCaseInsensitiveContains("success") else {
+            throw CivicError.server(msg.isEmpty ? "The city did not take the note." : msg)
+        }
+        _ = try? await detail(id)
+    }
+
     /// The last saved detail for a report, to show while the fresh one loads.
     func cachedDetail(_ id: String) -> ReportDetail? { detailCache[id].map(ReportDetail.init) }
 

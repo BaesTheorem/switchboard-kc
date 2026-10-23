@@ -198,3 +198,23 @@ export async function reportDetail(env, uid, id, scope = "mine") {
   for (const k of Object.keys(issue)) if (k.startsWith("reporter_")) delete issue[k];
   return issue;
 }
+
+/**
+ * Adds a note to one of this id's reports (add_comments_citizen), with the
+ * flat parts the official app sends (docs/API.md section 8). The city ties
+ * the note to the device id in the signature, so it refuses reports this id
+ * did not file. Returns the updated report, contact fields removed.
+ */
+export async function addNote(env, uid, id, notes) {
+  const cfg = await getConfig(env);
+  if (!cfg) throw new HttpError(503, "no_key", "The server has no city API key yet.");
+  const o = await civicJSON(env, uid, "add_comments_citizen", {
+    issue_id: id, notes, city_id: cfg.city_id, notify: "", notifyids: "",
+    api_version: API_VERSION, offline_timestamp: String(Date.now()),
+  });
+  const msg = String(o.response_message || "");
+  if (!/success/i.test(msg)) throw new HttpError(422, "note_refused", msg || "The city did not take the note.");
+  const issue = Array.isArray(o.response_data) ? o.response_data[0] : null;
+  if (issue) for (const k of Object.keys(issue)) if (k.startsWith("reporter_")) delete issue[k];
+  return issue;
+}

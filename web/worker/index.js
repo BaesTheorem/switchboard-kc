@@ -4,7 +4,7 @@
 // auth.js decides who may call it (invite codes by default).
 
 import { burst, createInvite, gate, getMode, isAdmin, listInvites, redeem, refund, reserve, revokeInvite, session, setMode, sweepCounts, turnstile } from "./auth.js";
-import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail } from "./civic.js";
+import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { gtfs, hud } from "./open.js";
 import { poll, subscribe, test as pushTest, unsubscribe, vapid } from "./push.js";
@@ -109,6 +109,20 @@ async function submit(req, env, who, mode) {
   return json({ ok, message: String(st.response_message || ""), work_order: String(st.work_order || "") }, ok ? 200 : 422);
 }
 
+/** Sends a REAL note to staff on one of this id's reports. */
+async function note(req, env) {
+  const b = await body(req);
+  const uid = deviceId(b.device);
+  const id = str(b.id, 20).replace(/\D/g, "");
+  const text = String(b.text ?? "").trim();
+  if (!id) throw new HttpError(400, "bad_id", "Name the report.");
+  if (!text) throw new HttpError(400, "empty_note", "Write the note first.");
+  if (text.length > 2000) throw new HttpError(413, "too_long", "Keep the note under 2,000 characters.");
+  // Test runs send this header: the checks above run, and nothing goes to the city.
+  if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, dry: true, issue: null });
+  return json({ ok: true, issue: await addNote(env, uid, id, text) });
+}
+
 let lastProbe = 0;
 async function health(env, url) {
   const cfg = await getConfig(env);
@@ -189,6 +203,10 @@ async function route(req, env, ctx, url) {
   if (p === "/api/submit") {
     await burst(env, "WRITES", g.who);
     return submit(req, env, g.who, g.mode);
+  }
+  if (p === "/api/note") {
+    await burst(env, "WRITES", g.who);
+    return note(req, env);
   }
   const b = await body(req);
   switch (p) {

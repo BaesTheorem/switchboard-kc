@@ -37,6 +37,9 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
   - An "Everyone / Only mine" chip filters. Open, Closed, All and a time
     scope (1 year by default, 6 months, 90 days, 30 days) apply to both.
   - "Request updates" files a "311 Request Update" for your open reports.
+  - "Add a note" on one of your reports sends a note to the staff. It goes
+    into the report's history, and it cannot be changed or deleted. The box
+    shows only when the city allows notes on that report.
 - **City.** City phone numbers (311, police non-emergency, the streetcar, and
   25 more from the city's own catalog text), and the city pages that no
   section claims.

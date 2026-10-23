@@ -219,6 +219,8 @@ struct ReportDetail {
     /// When the report was filed. This endpoint's epoch is the real time.
     let added: Date?
     var timeline: [TimelineEntry]
+    /// The city lets the filer add a note (`citizen_allow_to_send_note`).
+    let canAddNote: Bool
 
     init(_ d: [String: Any]) {
         caseNumber = cityCaseNumber(d)
@@ -229,6 +231,7 @@ struct ReportDetail {
         description = d.str("description")
         photos = (d["issue_image"] as? [String] ?? []).compactMap(URL.init(string:))
         added = d.date("added_on")
+        canAddNote = d.str("citizen_allow_to_send_note") == "1"
         let hist = (d["history_object"] as? [[String: Any]] ?? []).sorted { ($0.dbl("timestamp") ?? 0) < ($1.dbl("timestamp") ?? 0) }
         timeline = hist.map {
             TimelineEntry(title: $0.str("title"), details: $0.str("details").strippingHTML, when: $0.str("dateofupdate"), at: $0.date("timestamp"))

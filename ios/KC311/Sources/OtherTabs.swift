@@ -87,6 +87,9 @@ struct ReportDetailView: View {
                         }
                         .padding(16).card()
                     }
+                    if d.canAddNote {
+                        AddNoteCard(report: report) { await load() }
+                    }
                 } else if let error {
                     StateMessage(icon: "cloud_off", title: "Cannot load this report", message: error,
                                  action: ("Try again", { Task { await load() } }))
@@ -107,6 +110,65 @@ struct ReportDetailView: View {
     private func load() async {
         if detail == nil { detail = store.cachedFullDetail(report) }
         do { detail = try await store.fullDetail(report); error = nil } catch { if detail == nil { self.error = error.localizedDescription } }
+    }
+}
+
+/// A note to the staff on one of my reports. It goes into the report's
+/// history and the city cannot take it back, so it confirms first.
+struct AddNoteCard: View {
+    let report: MyReport
+    let reload: () async -> Void
+    @EnvironmentObject private var store: Store
+    @State private var text = ""
+    @State private var confirm = false
+    @State private var sending = false
+    @State private var sent = false
+    @State private var error: String?
+
+    private var empty: Bool { text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            SectionLabel(text: "Add a note")
+            VStack(alignment: .leading, spacing: 12) {
+                TextField("What should staff know?", text: $text, axis: .vertical)
+                    .lineLimit(3...8)
+                    .onChange(of: text) { if !$1.isEmpty { sent = false } }
+                HStack {
+                    TonalButton(title: sending ? "Sending" : "Send note", icon: sending ? nil : "send") { confirm = true }
+                        .disabled(sending || empty)
+                        .opacity(empty ? 0.45 : 1)
+                    if sent {
+                        Label { Text("Note sent") } icon: { Icon(name: "check_circle", size: 18) }
+                            .font(.subheadline.weight(.semibold)).foregroundStyle(Theme.done)
+                    }
+                }
+                if let error { Text(error).font(.caption).foregroundStyle(Theme.error) }
+                Text("Staff see the note in this report's history. It cannot be changed or deleted after it is sent.")
+                    .font(.caption).foregroundStyle(Theme.onSurfaceVariant)
+            }
+            .padding(16).card()
+        }
+        .confirmationDialog("Send this note to the city?", isPresented: $confirm, titleVisibility: .visible) {
+            Button("Send note") { Task { await send() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("It goes on \(report.reference) (\(report.label)) as a note from you.")
+        }
+    }
+
+    private func send() async {
+        sending = true
+        error = nil
+        defer { sending = false }
+        do {
+            try await store.addNote(text, to: report.id)
+            text = ""
+            sent = true
+            await reload()
+        } catch {
+            self.error = error.localizedDescription
+        }
     }
 }
 
