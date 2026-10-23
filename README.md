@@ -156,8 +156,8 @@ For screenshots in a headless simulator, use these launch arguments:
 Services, Reports and City, ticket alerts through Web Push, offline drafts,
 and the same rules as the iPhone app. A browser cannot call the city's API
 itself, so the web app comes with a small server (a Cloudflare Worker) that
-forwards only the calls the app makes. A server is invite-only unless its
-owner opens it. `web/README.md` explains the design, the limits, and the data
+forwards only the calls the app makes. Anyone with the address can use a
+server, and its owner can pause it. `web/README.md` explains the design, the limits, and the data
 the server keeps; `docs/WEB-PARITY.md` compares it with the iPhone app screen
 by screen.
 
@@ -168,9 +168,9 @@ neighborhood group:
 
 [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/BaesTheorem/switchboard-kc/tree/main/web)
 
-The button asks for an owner token. Open your server, choose "I run this
-server" on the invite screen, and enter the token. Then make invite links in
-Settings > Owner tools. The steps are in `web/README.md`.
+The button asks for an owner token. Open your server, and enter the token in
+Settings > Owner tools. Then send the server's address to the people who will
+use it. The steps are in `web/README.md`.
 
 ## Ticket alerts
 

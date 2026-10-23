@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Read-only smoke test of a deployed server: config, health, the catalog, my
 // reports, one detail, one map group, the duplicate check, and the guards
-// (no session, a bad origin, a bad device id). It files nothing.
+// (a bad origin, a bad device id). It files nothing.
 //   node test/smoke.mjs [base-url]
 // Uses ADMIN_TOKEN from web/.env (the owner may call everything) and the
 // device id in ../ios/Config/civic-config.json when present (else a new one).
@@ -68,9 +68,9 @@ await check("duplicate check", async () => {
   const o = await ok(await post("duplicate", { device, payload: { latitude: "39.0937", longitude: "-94.5340", address: "4131 E Truman Rd", city: "Kansas City", state: "MO", zip: "64127", type: pot.cat_id, subtype: "44019" } }));
   return `level ${o.level}`;
 });
-await check("guard: no session is refused", async () => {
+await check("open: a visitor with no token can read", async () => {
   const r = await post("myissues", { device }, { "content-type": "application/json" });
-  if (r.status !== 401) throw new Error(`HTTP ${r.status}`);
+  if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
 });
 await check("guard: another site's origin is refused", async () => {
   const r = await post("myissues", { device }, { ...owner, origin: "https://evil.example" });

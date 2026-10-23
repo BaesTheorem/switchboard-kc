@@ -25,10 +25,10 @@
   "cloudflare": {
     "bindings": {
       "ADMIN_TOKEN": {
-        "description": "The owner token for your server. Make a long random string (for example `openssl rand -base64 24`) and keep it: you type it in Settings > Owner tools to make invite links."
+        "description": "The owner token for your server. Make a long random string (for example `openssl rand -base64 24`) and keep it: you type it in Settings > Owner tools to pause the server or set its key."
       },
       "MODE": {
-        "description": "`invite` (the default) lets only people with an invite use your server. `open` lets anyone use it. `off` pauses it."
+        "description": "`open` (the default) lets anyone use your server. `off` pauses it."
       },
       "SUBMIT_DAILY": {
         "description": "How many reports one person can file through your server in a day."

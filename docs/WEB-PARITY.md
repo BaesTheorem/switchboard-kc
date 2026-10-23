@@ -61,7 +61,7 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | --- | --- | --- |
 | KC Streetcar form (Streetcar) | Changed | A web page cannot attach a photo to a text or an email; "Share the photo" opens the share sheet instead. |
 | Ticket alerts (Push, push/worker.js) | Same rules | Web Push from the web server's own cron. On iPhone, only for an app added to the Home Screen. |
-| Settings: theme, API status, key update, reports id | Same, plus | Save the reports id as a file; install the app; the owner's invite tools. |
+| Settings: theme, API status, key update, reports id | Same, plus | Save the reports id as a file; install the app; the owner's pause switch. |
 | Key repair from the APK (KeyRefresher, APIHealth) | Same | The browser reads the APK; the server tests and saves the key. |
 | iCloud Keychain copy of the reports id | Missing | A web app has no Keychain. The id is in two browser stores; Settings asks people to keep a copy. |
 

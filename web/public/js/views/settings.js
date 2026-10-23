@@ -23,7 +23,7 @@ const statusText = () => ({
 const statusClass = () => (H.status === "ok" ? "done-text" : ["unknown", "offline"].includes(H.status) ? "muted" : "error-text");
 
 export function openSettings() {
-  let alerts = "off", restoreNote = "", ownerOpen = !!local.get("ownerToken"), invites = null, newInvite = null, ownerMsg = "";
+  let alerts = "off", restoreNote = "", ownerOpen = !!local.get("ownerToken"), ownerMsg = "";
   const body = () => html`<div class="stack s20">
     <section class="stack s8" aria-labelledby="ap-h"><h3 class="label" id="ap-h">Appearance</h3>
       <div class="seg" role="group" aria-label="Theme">
@@ -76,8 +76,7 @@ export function openSettings() {
 
     <section class="stack s8" aria-labelledby="sv-h"><h3 class="label" id="sv-h">This server</h3>
       <div class="rows">
-        <div class="row" style="padding:14px 16px"><span class="sub grow">Access</span><span class="sub muted">${S.config?.mode === "open" ? "Open to anyone" : S.config?.mode === "off" ? "Paused" : "Invite only"}</span></div>
-        ${S.config?.session ? html`<div class="row" style="padding:14px 16px"><span class="sub grow">Invited as</span><span class="sub muted">${S.config.session.label}</span></div>` : ""}
+        <div class="row" style="padding:14px 16px"><span class="sub grow">Access</span><span class="sub muted">${S.config?.mode === "off" ? "Paused" : "Open to anyone"}</span></div>
         ${S.config?.submitDaily ? html`<div class="row" style="padding:14px 16px"><span class="sub grow">Reports a day</span><span class="sub muted">${S.config.submitDaily}</span></div>` : ""}
       </div>
       <details ${ownerOpen || S.config?.admin ? "open" : ""} id="owner"><summary class="caption muted" style="cursor:pointer;min-height:44px;display:flex;align-items:center">Owner tools</summary>
@@ -96,22 +95,9 @@ export function openSettings() {
         ${ownerMsg ? html`<p class="caption error-text">${ownerMsg}</p>` : ""}</div>`;
     }
     return html`<div class="stack s12">
-      <div class="card stack s8"><p class="sub strong">Invite someone</p>
-        <label class="caption muted" for="inv-l">Who it is for (only you see this)</label><input class="input" id="inv-l" placeholder="Neighbor on Oak St">
-        <label class="caption muted" for="inv-n">Devices it may join</label><input class="input" id="inv-n" type="number" min="1" max="50" value="3">
-        <button class="btn tonal" type="button" data-mkinv>${icon("person_add")}<span>Make an invite link</span></button>
-        ${newInvite ? html`<div class="stack s8"><p class="caption muted">Send this link. It works ${newInvite.max} times.</p>
-          <p class="sub code" style="user-select:all;overflow-wrap:anywhere">${newInvite.link}</p>
-          <div class="row"><button class="btn text" type="button" data-cpinv>Copy</button>${navigator.share ? html`<button class="btn text" type="button" data-shinv>Share</button>` : ""}</div></div>` : ""}
-      </div>
       <div class="card stack s8"><p class="sub strong">Access</p>
-        <div class="seg" role="group" aria-label="Server access">${[["invite", "Invite"], ["open", "Open"], ["off", "Paused"]].map(([k, l]) => html`<button type="button" data-mode="${k}" aria-pressed="${S.config.mode === k}">${l}</button>`)}</div>
+        <div class="seg" role="group" aria-label="Server access">${[["open", "Open"], ["off", "Paused"]].map(([k, l]) => html`<button type="button" data-mode="${k}" aria-pressed="${S.config.mode === k}">${l}</button>`)}</div>
         <p class="caption muted">Open lets anyone use this server (with the robot check, when set). Paused stops every city call.</p></div>
-      <div class="card stack s8"><div class="row"><p class="sub strong grow">Invites</p><button class="btn text" type="button" data-lsinv>Show</button></div>
-        ${invites ? html`<div class="rows">${invites.map((i) => html`<div class="row" style="padding:10px 12px">
-          <span class="grow stack s4" style="gap:2px"><span class="sub">${i.label}${i.revoked ? " (revoked)" : ""}</span>
-          <span class="caption muted">…${i.hint} · used ${i.uses} of ${i.max}${i.last ? ` · last ${relative(i.last)}` : ""}</span></span>
-          ${i.revoked ? "" : html`<button class="btn text" type="button" data-rvinv="${i.id}">Revoke</button>`}</div>`)}</div>` : ""}</div>
       <button class="btn text" type="button" data-unown>Forget the owner token on this device</button>
     </div>`;
   };
@@ -166,16 +152,6 @@ export function openSettings() {
         paint();
       });
       h("[data-unown]", async () => { local.del("ownerToken"); S.config = await api("config").catch(() => S.config); paint(); });
-      h("[data-mkinv]", async () => {
-        try {
-          newInvite = await api("admin/invites", { body: { label: el.querySelector("#inv-l").value, max: Number(el.querySelector("#inv-n").value) } });
-        } catch (x) { snack(x.message); }
-        paint();
-      });
-      h("[data-cpinv]", async () => { await navigator.clipboard?.writeText(newInvite.link); snack("Copied the invite link."); });
-      h("[data-shinv]", () => navigator.share?.({ title: "Switchboard KC invite", text: "Join Switchboard KC to report problems to the city:", url: newInvite.link }).catch(() => {}));
-      h("[data-lsinv]", async () => { invites = (await api("admin/invites").catch(() => ({ invites: [] }))).invites; paint(); });
-      h("[data-rvinv]", async (e, b) => { await api("admin/invites/revoke", { body: { id: b.dataset.rvinv } }); invites = (await api("admin/invites")).invites; paint(); });
       h("[data-mode]", async (e, b) => { await api("admin/mode", { body: { mode: b.dataset.mode } }).catch((x) => snack(x.message)); S.config = await api("config"); paint(); });
       return () => offs.forEach((f) => f());
     },

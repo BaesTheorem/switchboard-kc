@@ -13,7 +13,6 @@ import {
   loadSavedMaps, loadSavedMine, recoverDeviceId, refreshCatalog, S,
 } from "./state.js";
 import { applyAppearance } from "./theme.js";
-import { showInviteGate } from "./views/invite.js";
 
 const v = (name) => () => import(`./views/${name}.js`);
 
@@ -43,7 +42,6 @@ $("#cog").addEventListener("click", async () => (await import("./views/settings.
 addEventListener("scroll", () => $("#appbar").classList.toggle("scrolled", scrollY > 4), { passive: true });
 
 onApiError((e) => {
-  if (e.code === "invite_required") showInviteGate();
   if (["key_rejected", "no_key"].includes(e.code)) onKeyTrouble(e.code);
 });
 
@@ -56,9 +54,6 @@ async function foreground() {
 }
 
 async function boot() {
-  // Read an invite link (#invite=CODE) before the router replaces the address.
-  const inviteCode = /#invite=([\w-]+)/.exec(location.hash)?.[1];
-  if (inviteCode) history.replaceState({ depth: 0 }, "", "#/report");
   applyAppearance(local.get("appearance", "auto"));
   await recoverDeviceId();
   persist();
@@ -71,10 +66,6 @@ async function boot() {
     config = await loadConfig();
   } catch {
     config = null;   // offline: the saved copies carry the app until the server answers
-  }
-  if (config && config.mode === "invite" && !config.session && !config.admin) {
-    const ok = await showInviteGate(inviteCode);
-    if (!ok) return;
   }
   if (config?.mode === "off") return;
 

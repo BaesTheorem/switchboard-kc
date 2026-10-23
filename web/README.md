@@ -70,16 +70,15 @@ out when the server answers.
 
 | Mode | Who | Set with |
 | --- | --- | --- |
-| `invite` (default) | People with an invite code | `MODE` in `wrangler.jsonc`, or Settings > Owner tools |
-| `open` | Anyone; Cloudflare Turnstile guards filing when `TURNSTILE_SECRET` is set | the same |
+| `open` (default) | Anyone with the address; Cloudflare Turnstile guards filing when `TURNSTILE_SECRET` is set | `MODE` in `wrangler.jsonc`, or Settings > Owner tools |
 | `off` | Nobody: every city call answers 503, and the app still opens | the same |
 
-Limits on every server: 150 reads a minute and 4 reports a minute per person,
-and `SUBMIT_DAILY` reports a day (10 by default). Invite codes are 16
-characters, stored only as SHA-256 hashes; a session names its invite, so
-revoking an invite ends its sessions within 30 seconds. Invites and the daily
-counts live in one SQLite Durable Object (`worker/ledger.js`), so a one-use
-invite cannot be redeemed twice, even by two requests at the same moment.
+Limits on every server: 150 reads a minute and 4 reports a minute per IP
+address, and `SUBMIT_DAILY` reports a day per IP address (10 by default). The
+daily counts live in one SQLite Durable Object (`worker/ledger.js`), so two
+requests at the same moment cannot both take the last report of the day.
+People who share one IP address (a household, an office, some phone
+carriers) share these limits.
 
 ## Run your own server
 
@@ -91,9 +90,9 @@ neighborhood group.
 1. Click the button and sign in to Cloudflare.
 2. When it asks for `ADMIN_TOKEN`, paste a long random string. Keep a copy.
 3. When the deploy is done, open your server's address.
-4. On the invite screen, open **I run this server**, and paste the `ADMIN_TOKEN`.
-5. Use the app once as the owner. If the server has no city key yet, it gets one from the city's app.
-6. In **Owner tools**, make an invite link for each person, and send it to them.
+4. Open **Settings > Owner tools**, and paste the `ADMIN_TOKEN`.
+5. Use the app once. If the server has no city key yet, it gets one from the city's app.
+6. Send your server's address to the people who will use it. They can add it to the Home Screen.
 
 To deploy from a computer instead:
 
@@ -117,8 +116,8 @@ Cloudflare KV holds:
   which timeline entries were already sent (times and titles only),
 - a cached copy of the report types.
 
-The ledger Durable Object holds invite records (a label, the counts, and the
-code's hash) and the daily report count for each person.
+The ledger Durable Object holds the daily report count for each IP address,
+and deletes each count after three days.
 
 It keeps no report text, no address, no photo, and no contact details. The
 app keeps your reports, drafts, and contact details on your device only.

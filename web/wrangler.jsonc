@@ -1,7 +1,7 @@
 // Cloudflare Worker for the Switchboard KC web app. `npx wrangler deploy` from web/.
-// Secrets (wrangler secret put NAME): ADMIN_TOKEN (the owner's token, required
-// for invites), and optionally CIVIC_KEY (a first key; the app can also read
-// it from the city's app), TURNSTILE_SECRET (open mode only), SESSION_SECRET.
+// Secrets (wrangler secret put NAME): ADMIN_TOKEN (the owner's token, for the
+// owner tools), and optionally CIVIC_KEY (a first key; the app can also read
+// it from the city's app), TURNSTILE_SECRET (the robot check on filing).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "switchboard-kc",
@@ -12,17 +12,17 @@
     "binding": "ASSETS",
     "run_worker_first": ["/api/*"]
   },
-  // One namespace holds the key, invites, alert subscriptions, and caches.
+  // One namespace holds the key, alert subscriptions, and caches.
   "kv_namespaces": [{ "binding": "KV", "id": "d549e5992ed34cbdb37725cca31fc9ab" }],
-  // Invites and the daily report counts: one SQLite Durable Object (worker/ledger.js).
+  // The daily report counts: one SQLite Durable Object (worker/ledger.js).
   "durable_objects": { "bindings": [{ "name": "LEDGER", "class_name": "Ledger" }] },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Ledger"] }],
   "triggers": { "crons": ["* * * * *"] },
   "vars": {
     "APP_NAME": "Switchboard KC",
-    // invite | open | off. The owner can change it at run time (Settings > Owner).
-    "MODE": "invite",
-    // Reports one person can file a day through this server.
+    // open | off. The owner can change it at run time (Settings > Owner).
+    "MODE": "open",
+    // Reports one IP address can file a day through this server.
     "SUBMIT_DAILY": "10",
     "VAPID_SUBJECT": "https://github.com/BaesTheorem/switchboard-kc",
     "TURNSTILE_SITE_KEY": ""

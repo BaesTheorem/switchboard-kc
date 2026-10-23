@@ -273,7 +273,7 @@ export async function loadMap(center, status, force = false) {
     const o = await api("map", { body: { device: deviceId(), lat: center.lat, lng: center.lng, status, types } });
     return (o.response_status?.response_data || []).map(mapIssue).filter(Boolean);
   };
-  const isFatal = (e) => ["key_rejected", "no_key", "paused", "invite_required", "slow_down"].includes(e.code);
+  const isFatal = (e) => ["key_rejected", "no_key", "paused", "slow_down"].includes(e.code);
   await Promise.all(groups.map(async (g) => {
     let rows = null;
     try {

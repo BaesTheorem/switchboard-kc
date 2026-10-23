@@ -1,42 +1,26 @@
 // Who may use the city proxy.
 //
 // Modes (KV "cfg:mode", else the MODE var):
-// - invite: every city call needs a session, and a session needs an invite
-//   code. This is the default.
-// - open:   anyone can call; Turnstile guards filing when it is configured.
-// - off:    the kill switch. City calls answer 503; the app still loads.
+// - open: anyone can call. This is the default. Turnstile guards filing when
+//   it is configured, and each IP address gets SUBMIT_DAILY reports a day.
+// - off:  the kill switch. City calls answer 503; the app still loads.
 //
-// A session is a signed token "v1.<invite hash>.<issued>.<mac>". It names the
-// invite it came from, so revoking an invite ends its sessions. Invite codes
-// are stored only as SHA-256 hashes.
-//
-// Invites and the daily report counts live in the Ledger Durable Object
-// (ledger.js), not KV: a use of an invite and a report against the daily cap
-// are each one statement that two requests cannot both win.
+// The daily report counts live in the Ledger Durable Object (ledger.js), not
+// KV: a report against the daily cap is one statement that two requests
+// cannot both win.
 
-import { HttpError, hmac, randomHex, sameSecret, sha256Hex, today } from "./util.js";
+import { HttpError, sameSecret, today } from "./util.js";
 
-const MODES = ["invite", "open", "off"];
-const CODE_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
+const MODES = ["open", "off"];
 
 export async function getMode(env) {
   const m = await env.KV.get("cfg:mode", { cacheTtl: 60 });
-  return MODES.includes(m) ? m : MODES.includes(env.MODE) ? env.MODE : "invite";
+  return MODES.includes(m) ? m : MODES.includes(env.MODE) ? env.MODE : "open";
 }
 
 export async function setMode(env, mode) {
   if (!MODES.includes(mode)) throw new HttpError(400, "bad_mode", `Mode must be one of ${MODES.join(", ")}.`);
   await env.KV.put("cfg:mode", mode);
-}
-
-async function sessionSecret(env) {
-  if (env.SESSION_SECRET) return env.SESSION_SECRET;
-  let s = await env.KV.get("cfg:session_secret", { cacheTtl: 3600 });
-  if (!s) {
-    s = randomHex(32);
-    await env.KV.put("cfg:session_secret", s);
-  }
-  return s;
 }
 
 export async function isAdmin(req, env) {
@@ -45,79 +29,15 @@ export async function isAdmin(req, env) {
 
 // ---------- the ledger ----------
 
-/** The one Ledger Durable Object (ledger.js) that holds invites and report counts. */
+/** The one Ledger Durable Object (ledger.js) that holds the daily report counts. */
 const ledger = (env) => env.LEDGER.get(env.LEDGER.idFromName("ledger"));
-
-// Revocation reaches a running server within 30 seconds.
-const seen = new Map();
-
-/** The session behind a request, or null. */
-export async function session(req, env) {
-  const m = /^Bearer (v1\.([0-9a-f]{64})\.(\d+)\.([\w-]+))$/.exec(req.headers.get("authorization") || "");
-  if (!m) return null;
-  const [, , inv, iat, mac] = m;
-  if (!(await sameSecret(mac, await hmac(await sessionSecret(env), `v1.${inv}.${iat}`)))) return null;
-  let rec = seen.get(inv);
-  if (!rec || Date.now() - rec.at > 30_000) {
-    const row = await ledger(env).invite(inv);
-    rec = { at: Date.now(), ok: !!row && !row.revoked, label: row?.label || "" };
-    seen.set(inv, rec);
-  }
-  return rec.ok ? { id: inv.slice(0, 16), invite: inv, label: rec.label } : null;
-}
 
 /** Throws unless this request may call the city. Returns who to count it against. */
 export async function gate(req, env) {
   const mode = await getMode(env);
   if (mode === "off") throw new HttpError(503, "paused", "This server is paused by its owner.");
   if (await isAdmin(req, env)) return { who: "owner", mode, admin: true };
-  const s = await session(req, env);
-  if (s) return { who: s.id, mode, session: s };
-  if (mode === "invite") throw new HttpError(401, "invite_required", "This server is invite-only. Enter an invite code.");
   return { who: `ip:${req.headers.get("cf-connecting-ip") || "unknown"}`, mode };
-}
-
-// ---------- invites ----------
-
-function newCode() {
-  const bytes = crypto.getRandomValues(new Uint8Array(16));
-  const chars = [...bytes].map((b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
-  return chars.match(/.{4}/g).join("-");
-}
-
-export const normalizeCode = (c) => String(c || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "").match(/.{1,4}/g)?.join("-") || "";
-
-export async function createInvite(env, label, max) {
-  const code = newCode();
-  const hash = await sha256Hex(code);
-  const rec = { label: String(label || "").slice(0, 80) || "Invite", max: Math.max(1, Math.min(50, Number(max) || 3)),
-                uses: 0, created: Date.now(), revoked: false, hint: code.slice(-4) };
-  await ledger(env).create({ hash, label: rec.label, max: rec.max, created: rec.created, hint: rec.hint });
-  return { code, id: hash.slice(0, 16), ...rec };
-}
-
-export async function listInvites(env) {
-  return (await ledger(env).list()).map((r) => ({ id: r.hash.slice(0, 16), label: r.label, max: r.max, uses: r.uses, created: r.created,
-                               revoked: !!r.revoked, hint: r.hint, last: r.last }));
-}
-
-export async function revokeInvite(env, id) {
-  const prefix = String(id).replace(/[^0-9a-f]/g, "").slice(0, 16);
-  if (prefix.length !== 16) throw new HttpError(404, "no_invite", "No such invite.");
-  if (!(await ledger(env).revoke(prefix))) throw new HttpError(404, "no_invite", "No such invite.");
-  seen.clear();
-}
-
-/** Trades an invite code for a session token. Each redemption takes one of the invite's uses, atomically. */
-export async function redeem(env, rawCode) {
-  const hash = await sha256Hex(normalizeCode(rawCode));
-  const r = await ledger(env).redeem(hash, Date.now());
-  if (!r.ok && r.why === "bad") throw new HttpError(403, "bad_invite", "That invite code does not work.");
-  if (!r.ok) throw new HttpError(403, "invite_used", "That invite code has been used up. Ask for a new one.");
-  const { label } = r;
-  const iat = String(Math.floor(Date.now() / 1000));
-  const mac = await hmac(await sessionSecret(env), `v1.${hash}.${iat}`);
-  return { token: `v1.${hash}.${iat}.${mac}`, label };
 }
 
 // ---------- limits ----------
@@ -148,7 +68,7 @@ export async function sweepCounts(env) {
   await ledger(env).sweep(Date.now());
 }
 
-/** Cloudflare Turnstile, required on filing in open mode when a secret is set. */
+/** Cloudflare Turnstile, required on filing when a secret is set. */
 export async function turnstile(env, token, ip) {
   if (!env.TURNSTILE_SECRET) return;
   const form = new FormData();

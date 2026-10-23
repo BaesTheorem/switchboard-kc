@@ -1,9 +1,9 @@
 // The web app's server: static files from public/, and under /api a scoped
 // proxy to the city's 311 API. The proxy forwards only the dozen calls the
 // app makes, each built here from checked fields, never a raw passthrough.
-// auth.js decides who may call it (invite codes by default).
+// auth.js decides who may call it (anyone, unless the owner pauses it).
 
-import { burst, createInvite, gate, getMode, isAdmin, listInvites, redeem, refund, reserve, revokeInvite, session, setMode, sweepCounts, turnstile } from "./auth.js";
+import { burst, gate, getMode, isAdmin, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
 import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { gtfs, hud } from "./open.js";
@@ -70,7 +70,7 @@ async function duplicate(env, b) {
 }
 
 /** Files a REAL report with the city. The issue JSON is built by the app; this checks that it names this city and this id. */
-async function submit(req, env, who, mode) {
+async function submit(req, env, who) {
   if (Number(req.headers.get("content-length") || 0) > 12 * 1024 * 1024) throw new HttpError(413, "too_large", "The photos are too large.");
   const form = await req.formData();
   const uid = deviceId(form.get("device"));
@@ -91,7 +91,7 @@ async function submit(req, env, who, mode) {
     if (head[0] !== 0x50 || head[1] !== 0x4b) throw new HttpError(400, "bad_zip", "The photos are not a zip file.");
     files.push({ name: "file_zip", blob: zip, filename: `${Date.now()}_images.zip` });
   }
-  if (mode === "open") await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
+  await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
   // Test runs send this header: every check above runs, and nothing goes to the city.
   if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, message: "Dry run: not sent to the city.", work_order: "DRYRUN", dry: true });
   // One of today's slots is taken before the city call and given back if the report does not get through.
@@ -140,14 +140,13 @@ async function health(env, url) {
 }
 
 async function config(req, env) {
-  const [mode, s, admin, v, cfg] = await Promise.all([getMode(env), session(req, env), isAdmin(req, env), vapid(env), getConfig(env)]);
+  const [mode, admin, v, cfg] = await Promise.all([getMode(env), isAdmin(req, env), vapid(env), getConfig(env)]);
   return json({
     app: env.APP_NAME || "Switchboard KC",
     mode,
-    session: s ? { label: s.label } : null,
     admin,
     vapid: v.publicKey,
-    turnstile: mode === "open" && env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET ? env.TURNSTILE_SITE_KEY : null,
+    turnstile: env.TURNSTILE_SITE_KEY && env.TURNSTILE_SECRET ? env.TURNSTILE_SITE_KEY : null,
     submitDaily: Number(env.SUBMIT_DAILY || 10),
     city: cfg?.city_id || KANSAS_CITY,
   });
@@ -158,13 +157,6 @@ async function config(req, env) {
 async function admin(req, env, url, ctx) {
   if (!env.ADMIN_TOKEN || !(await isAdmin(req, env))) throw new HttpError(403, "not_owner", "Owner token required.");
   const p = url.pathname.slice("/api/admin/".length);
-  if (req.method === "GET" && p === "invites") return json({ ok: true, invites: await listInvites(env) });
-  if (req.method === "POST" && p === "invites") {
-    const b = await body(req);
-    const inv = await createInvite(env, b.label, b.max);
-    return json({ ok: true, ...inv, link: `${url.origin}/#invite=${inv.code}` });
-  }
-  if (req.method === "POST" && p === "invites/revoke") { await revokeInvite(env, (await body(req)).id); return json({ ok: true }); }
   if (req.method === "POST" && p === "mode") { await setMode(env, (await body(req)).mode); return json({ ok: true, mode: await getMode(env) }); }
   if (req.method === "POST" && p === "key") return setKey(env, await body(req));
   if (req.method === "POST" && p === "run") return json({ ok: true, results: await poll(env) });
@@ -184,10 +176,6 @@ async function route(req, env, ctx, url) {
   if (req.method !== "GET" && origin && origin !== url.origin) throw new HttpError(403, "origin", "Cross-site requests are not allowed.");
 
   if (p === "/api/config" && req.method === "GET") return config(req, env);
-  if (p === "/api/session" && req.method === "POST") {
-    await burst(env, "SLOW", `redeem:${req.headers.get("cf-connecting-ip") || ""}`);
-    return json({ ok: true, ...(await redeem(env, (await body(req)).code)) });
-  }
   if (p.startsWith("/api/admin/")) return admin(req, env, url, ctx);
   if (p === "/api/health" && req.method === "GET") return health(env, url);
 
@@ -202,7 +190,7 @@ async function route(req, env, ctx, url) {
 
   if (p === "/api/submit") {
     await burst(env, "WRITES", g.who);
-    return submit(req, env, g.who, g.mode);
+    return submit(req, env, g.who);
   }
   if (p === "/api/note") {
     await burst(env, "WRITES", g.who);

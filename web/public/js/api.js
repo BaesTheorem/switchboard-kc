@@ -13,13 +13,11 @@ export class ApiError extends Error {
 }
 
 const listeners = new Set();
-/** Called with every ApiError (the app shows the invite screen or starts a key repair). */
+/** Called with every ApiError (the app starts a key repair when the key is the problem). */
 export const onApiError = (fn) => (listeners.add(fn), () => listeners.delete(fn));
 
 export function authHeaders() {
   const h = {};
-  const token = local.get("session");
-  if (token) h.authorization = `Bearer ${token}`;
   const owner = local.get("ownerToken");
   if (owner) h["x-admin-token"] = owner;
   // Set by the test runs: the server checks a report and then does not send it to the city.

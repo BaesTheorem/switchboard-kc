@@ -20,42 +20,12 @@ async function potholeForm(page) {
   await page.getByRole("button", { name: "One pothole" }).click();
 }
 
-const revokeLater = [];
-test.afterAll(async ({ request }) => {
-  for (const id of revokeLater.splice(0)) await request.post(`${BASE}/api/admin/invites/revoke`, { headers: { "x-admin-token": OWNER }, data: { id } });
-});
-
-test.describe("access", () => {
-  test("a visitor without an invite sees the invite screen, and a wrong code is refused", async ({ page }) => {
-    await page.goto("/");
-    await expect(page.getByRole("heading", { name: "Join this Switchboard KC server" })).toBeVisible();
-    await page.getByLabel("Invite code").fill("aaaa-bbbb-cccc-dddd");
-    await page.getByRole("button", { name: "Join" }).click();
-    await expect(page.getByText("That invite code does not work.")).toBeVisible();
-    expect(await axe(page)).toEqual([]);
-  });
-
-  test("an invite link joins the server, once per use", async ({ page, request }) => {
-    const r = await request.post(`${BASE}/api/admin/invites`, { headers: { "x-admin-token": OWNER }, data: { label: "e2e test", max: 1 } });
-    const inv = await r.json();
-    expect(inv.ok).toBe(true);
-    // The invite is revoked at the end even when the test fails part way.
-    test.info().attach("invite", { body: inv.id });
-    revokeLater.push(inv.id);
-    await page.goto(`/#invite=${inv.code}`);
-    // The app redeems the code, keeps the session, and reloads without the invite screen.
-    // The page reloads part way through, so a read can land between two documents; that read counts as "not yet".
-    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem("session") || "null")).catch(() => null), { timeout: 20_000 }).toMatch(/^v1\./);
-    await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Join this Switchboard KC server" })).toBeHidden();
-    const again = await request.post(`${BASE}/api/session`, { data: { code: inv.code } });
-    expect(again.status()).toBe(403);
-    await request.post(`${BASE}/api/admin/invites/revoke`, { headers: { "x-admin-token": OWNER }, data: { id: inv.id } });
-    // A revoked invite ends its sessions.
-    const token = await page.evaluate(() => JSON.parse(localStorage.getItem("session")));
-    await expect.poll(async () => (await request.post(`${BASE}/api/myissues`, { headers: { authorization: `Bearer ${token}` }, data: { device: TEST_DEVICE } })).status(),
-      { timeout: 180_000, intervals: [15_000] }).toBe(401);
-  });
+test("a visitor with no token or invite opens the app and reads city data", async ({ page }) => {
+  await page.goto("/");
+  await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
+  const r = await page.request.post(`${BASE}/api/myissues`, { data: { device: TEST_DEVICE } });
+  expect(r.status()).toBe(200);
+  expect(await axe(page)).toEqual([]);
 });
 
 test("report home, the four tabs, and settings", async ({ context }) => {
@@ -235,19 +205,6 @@ test("my reports: a reports id with reports shows them, their detail, and the up
   await expect(page.getByRole("button", { name: "Request update" })).toBeDisabled();
   await expect(page.getByText(/Update requests open/)).toBeVisible();
   expect(await axe(page)).toEqual([]);
-});
-
-test("the owner gets past the invite screen with the owner token", async ({ page }) => {
-  await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Join this Switchboard KC server" })).toBeVisible();
-  await page.getByText("I run this server").click();
-  await page.getByLabel("Owner token (ADMIN_TOKEN)").fill("wrong-token");
-  await page.getByRole("button", { name: "Open as the owner" }).click();
-  await expect(page.getByText("That token is not right.")).toBeVisible();
-  await page.getByLabel("Owner token (ADMIN_TOKEN)").fill(OWNER);
-  await page.getByRole("button", { name: "Open as the owner" }).click();
-  await expect(page.getByRole("heading", { name: "Join this Switchboard KC server" })).toBeHidden({ timeout: 20_000 });
-  await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
 });
 
 test("my reports: a note goes to the city only after the confirm, and the box clears", async ({ context }) => {
