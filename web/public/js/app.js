@@ -12,6 +12,7 @@ import {
   autoRequestUpdates, deviceId, flushQueue, loadConfig, loadMap, loadMyReports, loadQueue, loadSavedCatalog,
   loadSavedMaps, loadSavedMine, recoverDeviceId, refreshCatalog, S,
 } from "./state.js";
+import "./install.js";   // listens for the install prompt from the start
 import { applyAppearance } from "./theme.js";
 
 const v = (name) => () => import(`./views/${name}.js`);

@@ -1,6 +1,6 @@
 // The Report tab's home: photo first (camera, library, or none), Health and
-// help, facts for where you are, reports waiting to send, and your open
-// reports. Ported from ReportTab.swift and CivicData.swift (NearYou).
+// help, facts for where you are, reports waiting to send, your open
+// reports, and the cards that keep them safe (Home Screen app, passkey). Ported from ReportTab.swift and CivicData.swift (NearYou).
 
 import { attrs, KCMO, query, text } from "../lib/arcgis.js";
 import { relative } from "../lib/format.js";
@@ -8,8 +8,10 @@ import { currentIfAllowed, meters } from "../lib/geo.js";
 import { bag, html, icon, render } from "../lib/html.js";
 import { local } from "../lib/store.js";
 import { draftFor, dropQueued, flushQueue, listen, S, visibleReports } from "../state.js";
+import { installCard, wireInstallCard } from "../install.js";
 import { acts } from "../ui.js";
 import { helpCard } from "./help.js";
+import { keepCard, restoreCard, wireKeep } from "./keep.js";
 import { photoInputs, reportCard, wirePhotoInputs } from "./parts.js";
 
 export default function view(main, _params, ctx) {
@@ -31,6 +33,7 @@ export default function view(main, _params, ctx) {
     <div id="near"></div>
     <div id="queued"></div>
     <div id="recent"></div>
+    <div id="keep" class="stack s12"></div>
   </div>`);
 
   const pickers = wirePhotoInputs(main, "rp", async (file) => {
@@ -87,9 +90,18 @@ export default function view(main, _params, ctx) {
     </section>`);
   };
 
+  // With reports: keep them (Home Screen, passkey). With none yet: offer a restore from a passkey.
+  const paintKeep = () => {
+    const box = main.querySelector("#keep");
+    if (!box) return;
+    render(box, S.myReports.length ? html`${installCard("Keep Switchboard KC on your Home Screen")}${keepCard()}` : restoreCard());
+  };
+
   paintQueued();
   paintRecent();
-  off(listen("queue", paintQueued), listen("mine", paintRecent), listen("detail", paintRecent));
+  paintKeep();
+  off(listen("queue", paintQueued), listen("mine", paintRecent), listen("detail", paintRecent), listen("mine", paintKeep),
+    wireKeep(main, paintKeep), wireInstallCard(main, paintKeep));
   nearYou().then(paintNear).catch(() => {});
   return off.run;
 }

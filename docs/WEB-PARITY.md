@@ -43,7 +43,7 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | Public report detail | Fixed | Uses `reported_issue_detail`. Since Tyler's October 2026 fix, `get_issue_detail_citizen` (which the iPhone app uses) answers "Report not available." for other people's reports. |
 | My report detail and timeline, update requests merged (ReportDetailView) | Same | |
 | Request updates: checklist, contact, 7-day rule (RequestUpdatesView) | Same | |
-| Ask automatically (AutoUpdates) | Changed | Runs when the app opens, at most every 6 hours. A web app gets no background time. |
+| Ask automatically (AutoUpdates) | Changed | Runs when the app opens, at most every 6 hours. A web app gets no background time. See `ROADMAP.md`. |
 
 ## City tab
 
@@ -64,7 +64,8 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | Ticket alerts (Push, push/worker.js) | Same rules | Web Push from the web server's own cron. On iPhone, only for an app added to the Home Screen. |
 | Settings: theme, API status, key update, reports id | Same, plus | Save the reports id as a file; install the app; the owner's pause switch. |
 | Key repair from the APK (KeyRefresher, APIHealth) | Same | The browser reads the APK; the server tests and saves the key. |
-| iCloud Keychain copy of the reports id | Missing | A web app has no Keychain. The id is in two browser stores; Settings asks people to keep a copy. |
+| iCloud Keychain copy of the reports id | Same, by passkey | The id is the user handle of a passkey for this site, so iCloud Keychain, Google Password Manager or another password manager keeps it. Settings > My reports saves and restores it; Report sent and the Report tab offer it, and a device with no reports offers a restore. |
+| Installed from the App Store | Home Screen install | Report sent, the Report tab and Settings show the steps for this device (Safari's Share button on iPhone, the install prompt or the menu elsewhere). An installed web app keeps its storage, and on iPhone it is the only way to get alerts. |
 
 ## iPhone fixes found while porting
 

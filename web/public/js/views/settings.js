@@ -11,10 +11,11 @@ import { local } from "../lib/store.js";
 import { deviceId, listen, loadMyReports, S, useDeviceId } from "../state.js";
 import { applyAppearance } from "../theme.js";
 import { sheet, snack } from "../ui.js";
-import { alertState, installed, installSteps, reportsIdChanged, sendTest, turnOff, turnOn } from "./alerts.js";
+import { canPrompt, installed, onInstallChange, promptInstall, stepsList } from "../install.js";
+import { passkeysSupported, savedToPasskey } from "../passkey.js";
+import { alertState, reportsIdChanged, sendTest, turnOff, turnOn } from "./alerts.js";
+import { restoreNow, saveNow } from "./keep.js";
 
-let installPrompt = null;
-addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); installPrompt = e; });
 
 const statusText = () => ({
   unknown: "Not checked yet", ok: "Working", offline: "No connection to the server", error: "The server did not answer",
@@ -31,15 +32,15 @@ export function openSettings() {
       </div></section>
 
     ${installed() ? "" : html`<section class="stack s8" aria-labelledby="in-h"><h3 class="label" id="in-h">Install</h3>
-      <div class="card stack s8"><p class="sub">${installPrompt ? "Install this app to open it from your home screen, keep your reports id safe, and get alerts." : installSteps()}</p>
-        ${installPrompt ? html`<button class="btn tonal" type="button" data-install>${icon("install_mobile")}<span>Install the app</span></button>` : ""}</div></section>`}
+      <div class="card stack s8"><p class="sub">Install this app to open it from your Home Screen, keep your reports id safe, and get alerts.</p>
+        ${canPrompt() ? html`<button class="btn tonal" type="button" data-install>${icon("install_mobile")}<span>Install the app</span></button>` : stepsList()}</div></section>`}
 
     <section class="stack s8" aria-labelledby="al-h"><h3 class="label" id="al-h">Ticket alerts</h3>
       <div class="rows">
         <label class="toggle-row" for="al-on">${icon("notifications", "primary-text")}<span class="grow sub">Alert me when the city updates a report</span>
           <span class="switch"><input type="checkbox" id="al-on" ${alerts === "on" ? "checked" : ""} ${["needs-install", "denied", "unsupported"].includes(alerts) ? "disabled" : ""}><span></span></span></label>
         ${alerts === "on" ? html`<div class="row" style="padding:8px 16px"><span class="caption muted grow">Checking every minute</span><button class="btn text" type="button" data-test>Send a test</button></div>` : ""}
-        ${alerts === "needs-install" ? html`<p class="caption muted" style="padding:12px 16px">${installSteps()}</p>` : ""}
+        ${alerts === "needs-install" ? html`<div class="stack s8" style="padding:12px 16px"><p class="caption muted">On iPhone and iPad, alerts work only in the Home Screen app:</p>${stepsList()}</div>` : ""}
         ${alerts === "denied" ? html`<p class="caption error-text" style="padding:12px 16px">Notifications are blocked for this app. Allow them in the device or browser settings.</p>` : ""}
         ${alerts === "unsupported" ? html`<p class="caption muted" style="padding:12px 16px">This browser cannot show alerts.</p>` : ""}
       </div>
@@ -67,12 +68,16 @@ export function openSettings() {
         <div class="row" style="padding:14px 16px"><span class="sub grow">Your reports id</span><span class="sub code" style="user-select:all">${deviceId()}</span></div>
         <div class="row wrap" style="padding:8px 12px"><button class="btn text" type="button" data-copy>${icon("content_copy")}<span>Copy it</span></button>
           <button class="btn text" type="button" data-save>${icon("download")}<span>Save a copy</span></button></div>
+        ${passkeysSupported() ? html`<div class="stack s8" style="padding:8px 16px 12px">
+          ${savedToPasskey(deviceId()) ? html`<p class="caption done-text">${icon("check_circle", "inline")} Saved to a passkey on this device.</p>` : ""}
+          <div class="row wrap"><button class="btn tonal" type="button" data-pk-save>${icon("passkey")}<span>${savedToPasskey(deviceId()) ? "Save to another passkey" : "Save to a passkey"}</span></button>
+          <button class="btn text" type="button" data-pk-restore>${icon("passkey")}<span>Restore from a passkey</span></button></div></div>` : ""}
         <div class="stack s8" style="padding:12px 16px"><label class="caption muted" for="rid">Paste an id to restore</label>
           <input class="input code" id="rid" autocapitalize="none" autocomplete="off" spellcheck="false" placeholder="16 characters, 0 to 9 and a to f">
           <button class="btn tonal" type="button" data-restore>Restore my reports</button>
           ${restoreNote ? html`<p class="caption muted" role="status">${restoreNote}</p>` : ""}</div>
       </div>
-      <p class="caption muted">The city has no accounts: it keeps your reports under this id. This app saves it on this device only. Keep a copy: if you delete the app or clear this site's data, the id is gone, and with it the list. The iPhone app can use the same id.</p></section>
+      <p class="caption muted">The city has no accounts: it keeps your reports under this id. This app saves it on this device only. Keep a copy: if you delete the app or clear this site's data, the id is gone, and with it the list. A passkey is the easy copy: your password manager (iCloud Keychain, Google Password Manager and others) keeps it for all your devices. The iPhone app can use the same id.</p></section>
 
     <section class="stack s8" aria-labelledby="sv-h"><h3 class="label" id="sv-h">This server</h3>
       <div class="rows">
@@ -116,7 +121,12 @@ export function openSettings() {
       offs.push(listen("health", paint), listen("config", paint));
       const h = (sel, fn, type = "click") => offs.push(on(el, type, sel, fn));
       h("[data-theme]", (e, b) => { local.set("appearance", b.dataset.theme); applyAppearance(b.dataset.theme); paint(); });
-      h("[data-install]", async () => { await installPrompt?.prompt(); installPrompt = null; paint(); });
+      h("[data-install]", async () => { await promptInstall(); paint(); });
+      offs.push(onInstallChange(paint));
+      h("[data-pk-save]", async () => { if (await saveNow()) paint(); });
+      h("[data-pk-restore]", async () => {
+        if (await restoreNow()) { restoreNote = "Restored. Your reports now shows the reports filed under this id."; paint(); }
+      });
       h("#al-on", async (e) => {
         try {
           if (e.target.checked) await turnOn(); else await turnOff();

@@ -488,3 +488,8 @@ body:not(.dark) .today.done-text { color: color-mix(in srgb, var(--done) 60%, va
 /* Beer CSS sizes the box of an icon with --_size (24 px). font-size alone does not change it. */
 .streetcar .avatar i { --_size: 28px; }
 .streetcar [data-result] i { --_size: 20px; }
+
+/* Numbered steps in the install card, and an icon inside a line of text. */
+.steps { margin: 0; padding-left: 22px; display: grid; gap: 6px; }
+.steps li { padding-left: 2px; }
+i.inline { --_size: 1.15em; vertical-align: -0.2em; }

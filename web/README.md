@@ -54,8 +54,17 @@ also set the key directly (`POST /api/admin/key`).
 
 **Your reports id.** The city has no accounts: it files "my reports" under a
 device id. The app makes one on first use and keeps it on the device. Settings
-can copy it, save it as a file, and restore it. The same id works in the
+can copy it, save it as a file, save it to a passkey, and restore it. The
+passkey (`public/js/passkey.js`) is storage, not a login: the id is its user
+handle, so a password manager syncs it to the person's other devices, and a
+restore reads it back. The server sees none of this. The same id works in the
 iPhone app.
+
+**Home Screen.** Report sent, the Report tab and Settings show how to add the
+app to the Home Screen (`public/js/install.js`): the browser's install prompt
+where there is one, else the steps for this device. An installed app keeps its
+storage (Safari deletes a site's storage after 7 days with no visit), and on
+iPhone and iPad it is the only way to get alerts.
 
 **City meetings.** City > City meetings lists the meetings of the City
 Council, its committees and the city's boards, from the Worker of

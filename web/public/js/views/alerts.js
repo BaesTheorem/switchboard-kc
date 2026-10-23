@@ -7,12 +7,11 @@
 
 import { api } from "../api.js";
 import { html, icon, on } from "../lib/html.js";
+import { installCard, installed, isIOS } from "../install.js";
 import { local } from "../lib/store.js";
 import { deviceId, S } from "../state.js";
 import { snack } from "../ui.js";
 
-const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-export const installed = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 export const supported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
 /** off | on | denied | unsupported | needs-install */
@@ -63,21 +62,13 @@ export async function sendTest() {
   snack("A test alert is on its way.");
 }
 
-export const installSteps = () => isIOS()
-  ? "In Safari, tap the Share button, then Add to Home Screen. Open the app from the Home Screen, then turn alerts on here."
-  : "Use your browser's menu to install this app (Add to Home screen or Install app), then turn alerts on here.";
-
 /** The offer shown after a report is sent, when the user has not chosen yet. */
 export async function alertsOffer() {
   if (local.get("alertsChoice")) return null;
   const st = await alertState();
   if (st === "on" || st === "denied" || st === "unsupported") return null;
-  if (st === "needs-install") {
-    return html`<div class="card stack s8" style="text-align:left">
-      <div class="row">${icon("notifications", "primary-text")}<span class="sub strong">Get an alert when the city updates it</span></div>
-      <p class="caption muted">${installSteps()}</p>
-    </div>`;
-  }
+  // On iPhone and iPad, alerts need the Home Screen app: the install card says so.
+  if (st === "needs-install") return installCard("Add Switchboard KC to your Home Screen to get alerts") || null;
   return html`<div class="card stack s12" style="text-align:left" id="offer">
     <div class="row">${icon("notifications", "primary-text")}<span class="sub strong grow">Get an alert when the city updates it</span></div>
     <div class="row"><button class="btn tonal" type="button" data-alerts="on">Turn on alerts</button>
