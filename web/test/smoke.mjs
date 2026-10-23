@@ -12,7 +12,7 @@ import { fileURLToPath } from "node:url";
 
 const web = join(dirname(fileURLToPath(import.meta.url)), "..");
 const env = Object.fromEntries(readFileSync(join(web, ".env"), "utf8").split("\n").filter((l) => l.includes("=")).map((l) => l.split(/=(.*)/s).slice(0, 2)));
-const base = process.argv[2] || env.URL || "https://switchboard-kc.alex-hedtke.workers.dev";
+const base = process.argv[2] || env.URL || "https://switchboard.commonlot.io";
 const cfgPath = join(web, "../ios/Config/civic-config.json");
 const device = (existsSync(cfgPath) && JSON.parse(readFileSync(cfgPath, "utf8")).device_uid) || "0123456789abcdef";
 const owner = { "x-admin-token": env.ADMIN_TOKEN, "content-type": "application/json" };

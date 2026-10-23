@@ -216,6 +216,12 @@ async function route(req, env, ctx, url) {
 export default {
   async fetch(req, env, ctx) {
     const url = new URL(req.url);
+    // Pages on any other address (workers.dev) move to the app's own address.
+    // The API and the calendar feeds stay on both, for apps and calendars set up before the move.
+    const home = env.CANONICAL_HOST;
+    if (home && url.hostname !== home && !url.pathname.startsWith("/api/") && !url.pathname.startsWith("/cal/")) {
+      return Response.redirect(`https://${home}${url.pathname}${url.search}`, 301);
+    }
     // Calendar apps read the meeting feeds with no token, as on Common Lot.
     if (url.pathname.startsWith("/cal/")) {
       try { return await calendarFeed(env, url.pathname); } catch (e) {

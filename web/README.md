@@ -16,6 +16,9 @@ home screen as an app and has ticket alerts. The iPhone app is in `../ios`.
   <img src="docs/screenshots/city-light.png" width="180" alt="City tab">
 </p>
 
+The owner's server is at **https://switchboard.commonlot.io**, on the domain of
+[Common Lot](https://github.com/BaesTheorem/common-lot). Anyone can open it.
+
 ## How it works
 
 A browser cannot call the city's API itself: the API sends no CORS headers,

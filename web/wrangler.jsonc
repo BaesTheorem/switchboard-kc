@@ -6,6 +6,10 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "switchboard-kc",
   "main": "worker/index.js",
+  // The app's address. workers.dev stays on, for the API calls of apps that
+  // were opened there before the move.
+  "routes": [{ "pattern": "switchboard.commonlot.io", "custom_domain": true }],
+  "workers_dev": true,
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./public",
@@ -23,6 +27,9 @@
   "triggers": { "crons": ["* * * * *"] },
   "vars": {
     "APP_NAME": "Switchboard KC",
+    // When set, pages on any other address redirect here (worker/index.js).
+    // Empty until the Turnstile widget accepts switchboard.commonlot.io.
+    "CANONICAL_HOST": "",
     // open | off. The owner can change it at run time (Settings > Owner).
     "MODE": "open",
     // Reports one IP address can file a day through this server.
