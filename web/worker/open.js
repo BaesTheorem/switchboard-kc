@@ -34,9 +34,11 @@ const commonLot = (env) => (env.COMMON_LOT_URL || COMMON_LOT).replace(/\/$/, "")
 // account (Cloudflare error 1042), so the owner's server calls Common Lot
 // through a Service Binding. A self-hosted server has no binding and uses
 // the public address.
-const fromCommonLot = (env, path, ttl) => env.COMMON_LOT
+// A failure there (a Service Binding throws when Common Lot's Worker fails) is a 502 here, not a crash.
+const fromCommonLot = (env, path, ttl) => (env.COMMON_LOT
   ? env.COMMON_LOT.fetch(new Request(`${commonLot(env)}${path}`))
-  : fetch(`${commonLot(env)}${path}`, { cf: { cacheTtl: ttl, cacheEverything: true } });
+  : fetch(`${commonLot(env)}${path}`, { cf: { cacheTtl: ttl, cacheEverything: true } }))
+  .catch(() => { throw new HttpError(502, "common_lot", "The meeting list did not answer. Try again in a minute."); });
 
 /** Every city meeting, or the board descriptions (`what` = "meetings" | "bodies"). */
 export async function meetings(env, what) {

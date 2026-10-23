@@ -14,7 +14,7 @@
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/cal/*"]
+    "run_worker_first": true
   },
   // One namespace holds the key, alert subscriptions, and caches.
   "kv_namespaces": [{ "binding": "KV", "id": "d549e5992ed34cbdb37725cca31fc9ab" }],
@@ -28,8 +28,7 @@
   "vars": {
     "APP_NAME": "Switchboard KC",
     // When set, pages on any other address redirect here (worker/index.js).
-    // Empty until the Turnstile widget accepts switchboard.commonlot.io.
-    "CANONICAL_HOST": "",
+    "CANONICAL_HOST": "switchboard.commonlot.io",
     // open | off. The owner can change it at run time (Settings > Owner).
     "MODE": "open",
     // Reports one IP address can file a day through this server.
