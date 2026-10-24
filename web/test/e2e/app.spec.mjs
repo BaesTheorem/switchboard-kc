@@ -28,14 +28,14 @@ test("a visitor with no token or invite opens the app and reads city data", asyn
   expect(await axe(page)).toEqual([]);
 });
 
-test("report home, the four tabs, and settings", async ({ context }) => {
+test("report home, the five tabs, and settings", async ({ context }) => {
   const { page } = await ownerPage(context);
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Take a photo" })).toBeVisible();
   await expect(page.getByRole("link", { name: /Health and help/ })).toBeVisible();
   expect(await axe(page)).toEqual([]);
-  for (const [tab, title] of [["Services", "Services"], ["Reports", "Reports"], ["City", "City"], ["Report", "Switchboard KC"]]) {
+  for (const [tab, title] of [["Services", "Services"], ["Reports", "Reports"], ["Meetings", "City meetings"], ["City", "City"], ["Report", "Switchboard KC"]]) {
     await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: tab, exact: true }).click();
     await expect(page.locator("#title")).toHaveText(title);
   }

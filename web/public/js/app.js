@@ -36,7 +36,9 @@ route("/:tab/mine/:id", v("detail"), { parent: (p) => `/${p.split("/")[1]}` });
 route("/city", v("city"), { title: "City" });
 route("/city/licenses", v("licenses"), { title: "License offices", parent: "/city" });
 route("/city/transit", v("transit"), { title: "Buses and streetcar", parent: "/city" });
-route("/city/meetings", v("meetings"), { title: "City meetings", parent: "/city" });
+route("/meetings", v("meetings"), { title: "City meetings" });
+// The screen was under City until 2026-10-24; old links go to the tab.
+route("/city/meetings", async () => ({ default: (_main, _params, ctx) => { ctx.go("/meetings", { replace: true }); } }));
 route("/:tab/help", v("help"), { title: "Health and help", parent: (p) => `/${p.split("/")[1]}` });
 route("/:tab/help/:kind", v("places"), { parent: (p) => p.split("/").slice(0, 3).join("/") });
 

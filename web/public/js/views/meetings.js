@@ -1,4 +1,4 @@
-// City meetings: every public meeting of the City Council, its committees and
+// The Meetings tab: every public meeting of the City Council, its committees and
 // the city's boards, from Common Lot's copy of the city's Legistar calendar
 // plus the EDC boards (worker/open.js relays it). Two views: what is coming
 // up, by day, and the boards by subject. A meeting opens a sheet with the

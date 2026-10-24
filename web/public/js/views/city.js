@@ -1,5 +1,5 @@
-// The City tab: Health and help, the city's phone numbers, city meetings,
-// license offices and transit, and the city pages that no Report section claims. The search
+// The City tab: Health and help, the city's phone numbers, license offices
+// and transit, and the city pages that no Report section claims. The search
 // field filters all of it. Ported from CityTab in OtherTabs.swift.
 
 import { generalLinks, PHONES_MORE, PHONES_PINNED, phoneHref } from "../catalog.js";
@@ -21,7 +21,6 @@ export function matches(q, text) {
 
 // One keyword line for the License offices and Buses and streetcar rows.
 const TRAVEL = "license offices dmv driver license plates title motor vehicle buses streetcar transit ridekc";
-const MEETINGS = "city meetings council committee board commission hearing agenda testimony public comment zoning calendar";
 
 const phoneRow = (p) => html`<a class="item" href="${safeUrl(phoneHref(p))}">
   ${icon(p.text ? "sms" : "call")}
@@ -38,11 +37,10 @@ function list() {
   const pinned = PHONES_PINNED.filter(phone);
   const more = PHONES_MORE.filter(phone);
   const travel = matches(query, TRAVEL);
-  const meetings = matches(query, MEETINGS);
   const links = generalLinks(S.links).filter((l) => matches(query, linkName(l.name)));
   // Open while searching, so the matches show.
   const open = showMore || query !== "";
-  const count = pinned.length + more.length + (travel ? 2 : 0) + (meetings ? 1 : 0) + links.length;
+  const count = pinned.length + more.length + (travel ? 2 : 0) + links.length;
   return {
     count,
     tpl: html`
@@ -56,12 +54,6 @@ function list() {
           <div class="more-rows">${more.map(phoneRow)}</div>
         </details>` : ""}
       </div>
-    </section>` : ""}
-    ${meetings ? html`<section class="stack s8">
-      <div class="rows">
-        <a class="item" href="#/city/meetings" data-go="/city/meetings">${icon("gavel")}<span class="grow">City meetings</span>${icon("chevron_right", "trail")}</a>
-      </div>
-      <p class="foot muted">Council, committees and city boards: agendas, public comment, and calendar subscriptions.</p>
     </section>` : ""}
     ${travel ? html`<section class="stack s8">
       <div class="rows">

@@ -53,7 +53,7 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | License offices with today's hours (LicenseOffices) | Same | The hours parser keeps the iPhone's rules, including its known gaps (see below). |
 | Buses and streetcar from the RideKC schedule (Transit) | Same | The feed comes through the server (no CORS); parsing runs in a Web Worker. |
 | Health and help, basic needs lists (HealthHelp, CivicData) | Same | A HUD counselor with "N/A" as a website gets no Website button. |
-| None | City meetings (web only) | Council, committees and boards from Common Lot's copy of the city's Legistar calendar and the EDC boards: what is coming up, the boards by subject, the agenda, the public comment rule, add to calendar, and calendar subscriptions (`/cal/*.ics`). |
+| None | Meetings tab (web only) | Council, committees and boards from Common Lot's copy of the city's Legistar calendar and the EDC boards: what is coming up, the boards by subject, the agenda, the public comment rule, add to calendar, and calendar subscriptions (`/cal/*.ics`). |
 | City pages | Same | |
 
 ## Other

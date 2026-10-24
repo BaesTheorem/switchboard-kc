@@ -27,16 +27,19 @@ test("City tab: phone numbers, search, and the screens under it", async ({ conte
   await page.getByRole("link", { name: /Buses and streetcar/ }).click();
   await expect(page.locator("#title")).toHaveText("Buses and streetcar");
   // Downtown has stops within half a mile; their names come from RideKC's schedule.
-  await expect(page.getByText(/Main|Grand|Walnut|\d+(st|nd|rd|th)/).first()).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(/Main|Grand|Walnut|\d+(st|nd|rd|th)/i).first()).toBeVisible({ timeout: 60_000 });
   expect(await drawnIcons(page)).toEqual([]);
   expect(page.errors).toEqual([]);
 });
 
 test("City meetings: the list, a meeting sheet, subscribe, and the boards", async ({ context }) => {
   const { page } = await ownerPage(context);
-  await page.goto("/#/city");
-  await page.getByRole("link", { name: /City meetings/ }).click();
+  // The old address under City forwards to the Meetings tab.
+  await page.goto("/#/city/meetings");
+  await expect(page).toHaveURL(/#\/meetings$/);
+  await page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Meetings", exact: true }).click();
   await expect(page.locator("#title")).toHaveText("City meetings");
+  await expect(page.getByRole("navigation", { name: "Sections" }).getByRole("link", { name: "Meetings", exact: true })).toHaveAttribute("aria-current", "page");
   await expect(page.getByText(/meetings coming up/)).toBeVisible({ timeout: 30_000 });
   expect(await axe(page)).toEqual([]);
   // A meeting opens its sheet with the comment rule and calendar links.

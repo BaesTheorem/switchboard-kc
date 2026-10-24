@@ -156,7 +156,7 @@ For screenshots in a headless simulator, use these launch arguments:
 Services, Reports and City, ticket alerts through Web Push, offline drafts,
 and the same rules as the iPhone app. A browser cannot call the city's API
 itself, so the web app comes with a small server (a Cloudflare Worker) that
-forwards only the calls the app makes. The web app also has City meetings:
+forwards only the calls the app makes. The web app also has a Meetings tab:
 the council, its committees and the city's boards, with agendas and calendar
 subscriptions, from [Common Lot](https://github.com/BaesTheorem/common-lot).
 Anyone with the address can use a

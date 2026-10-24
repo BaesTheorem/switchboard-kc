@@ -1,5 +1,5 @@
 // Hash routes. The first path segment is the tab (report, services, reports,
-// city); each tab keeps its own place, as the iPhone app's tab stacks do.
+// meetings, city); each tab keeps its own place, as the iPhone app's tab stacks do.
 //
 // A view module exports `default (main, params, ctx) => cleanup?`. It renders
 // into `main`, sets its title with ctx.title(), and returns a function that
@@ -9,7 +9,7 @@ import { $, $$ } from "./lib/html.js";
 import { setTitle, closeSheet } from "./ui.js";
 
 const routes = [];
-const lastPath = { report: "/report", services: "/services", reports: "/reports", city: "/city" };
+const lastPath = { report: "/report", services: "/services", reports: "/reports", meetings: "/meetings", city: "/city" };
 const scrollAt = new Map();
 let cleanup = null;
 let currentPath = "";

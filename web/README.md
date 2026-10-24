@@ -1,7 +1,7 @@
 # Switchboard KC on the web
 
-The web version of Switchboard KC: the same four tabs as the iPhone app
-(Report, Services, Reports, City), in any modern browser. It installs to the
+The web version of Switchboard KC: the four tabs of the iPhone app (Report,
+Services, Reports, City) plus a Meetings tab, in any modern browser. It installs to the
 home screen as an app and has ticket alerts. The iPhone app is in `../ios`.
 
 > **Unofficial.** This app is not made, approved, or supported by the City of
@@ -69,7 +69,7 @@ where there is one, else the steps for this device. An installed app keeps its
 storage (Safari deletes a site's storage after 7 days with no visit), and on
 iPhone and iPad it is the only way to get alerts.
 
-**City meetings.** City > City meetings lists the meetings of the City
+**Meetings.** The Meetings tab lists the meetings of the City
 Council, its committees and the city's boards, from the Worker of
 [Common Lot](https://github.com/BaesTheorem/common-lot), which keeps a copy of
 the city's Legistar calendar and the EDC boards. The Worker relays
