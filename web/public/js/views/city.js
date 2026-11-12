@@ -3,6 +3,7 @@
 // field filters all of it. Ported from CityTab in OtherTabs.swift.
 
 import { generalLinks, PHONES_MORE, PHONES_PINNED, phoneHref } from "../catalog.js";
+import { isPayLink } from "../pay.js";
 import { $, bag, html, icon, on, render, safeUrl } from "../lib/html.js";
 import { linkIcon, linkName } from "../models.js";
 import { listen, S } from "../state.js";
@@ -27,9 +28,12 @@ const phoneRow = (p) => html`<a class="item" href="${safeUrl(phoneHref(p))}">
   <span class="grow stack s4"><span>${p.name}</span><span class="caption muted mono">${p.number}</span></span>
 </a>`;
 
-const linkRow = (l) => html`<a class="item" href="${safeUrl(l.url)}" target="_blank" rel="noopener">
+// The city's "Pay Online" link opens the app's own Pay screen, which has each payment one tap away.
+const linkRow = (l) => (isPayLink(l)
+  ? html`<a class="item" href="#/city/pay">${icon("payments")}<span class="grow">Pay a bill or a ticket</span>${icon("chevron_right", "trail")}</a>`
+  : html`<a class="item" href="${safeUrl(l.url)}" target="_blank" rel="noopener">
   ${icon(linkIcon(l.name))}<span class="grow">${linkName(l.name)}</span>${icon("open_in_new", "trail")}
-</a>`;
+</a>`);
 
 function list() {
   // The name and the number are matched as one run of text, as on the iPhone.

@@ -1,5 +1,5 @@
 // What is wrong? The police and KC Streetcar shortcuts (neither is part of
-// 311), the A to Z list, then the nine sections. The Services tab shows it as its home ("No photo" lands here);
+// 311), the A to Z list, the Pay door, then the nine sections. The Services tab shows it as its home ("No photo" lands here);
 // the Report tab shows it after a photo, with the photo on top. Ported from
 // SectionGrid in ReportBrowse.swift.
 
@@ -49,6 +49,12 @@ export default function view(main, _params, ctx) {
         ${icon("sort_by_alpha", "primary-text")}
         <span class="sub strong grow">Everything, A to Z</span>
         <span class="caption muted">${allItems().length}</span>
+        ${icon("chevron_right", "muted")}
+      </a>
+      <a class="plain card row" href="#/${tab}/pay">
+        ${icon("payments", "primary-text")}
+        <span class="grow stack s4" style="gap:2px"><span class="sub strong">Pay a bill or a ticket</span>
+          <span class="caption muted">Water bill, parking and court tickets, taxes, permits</span></span>
         ${icon("chevron_right", "muted")}
       </a>
       ${sectionsFor(S.categories).map((s) => html`

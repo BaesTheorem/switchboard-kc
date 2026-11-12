@@ -1,4 +1,4 @@
-// The A to Z rows (report types, city pages, phone numbers, the streetcar, the police),
+// The A to Z rows (report types, city pages, phone numbers, the streetcar, the police, payments),
 // with a letter header per group, and what a tap on a row does. Ported from
 // DirectoryRows in ReportBrowse.swift and `open(_:)` in ReportTab.swift.
 
@@ -21,6 +21,7 @@ function row(it, tab) {
   if (it.kind === "phone") return html`<a class="item" href="${safeUrl(phoneHref(it.phone))}">${inner}</a>`;
   if (it.kind === "streetcar") return html`<a class="item" href="#/${tab}/streetcar">${inner}${icon("chevron_right", "trail")}</a>`;
   if (it.kind === "police") return html`<a class="item" href="#/${tab}/police">${inner}${icon("chevron_right", "trail")}</a>`;
+  if (it.kind === "pay") return html`<a class="item" href="#/${tab}/pay">${inner}${icon("chevron_right", "trail")}</a>`;
   return html`<button class="item" type="button" data-pick="${itemKey(it)}">${inner}${icon("chevron_right", "trail")}</button>`;
 }
 

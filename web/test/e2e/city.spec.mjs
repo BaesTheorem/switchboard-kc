@@ -136,3 +136,26 @@ test("Police report: above the streetcar, the department's forms, the numbers, a
   expect(page.errors).toEqual([]);
 });
 
+
+
+test("Pay: each bill and ticket opens the payment page of its office", async ({ context }) => {
+  const { page } = await ownerPage(context);
+  await page.goto("/#/services");
+  await page.getByRole("link", { name: /Pay a bill or a ticket/ }).click();
+  await expect(page.locator("#title")).toHaveText("Pay");
+  await expect(page.getByText("This app takes no card numbers.")).toBeVisible();
+  const rows = page.locator("#pay-list a");
+  await expect(rows).toHaveCount(12);
+  // Every row leaves the app for a secure page of the office, in a new tab.
+  expect(await rows.evaluateAll((as) => as.filter((a) => a.href.startsWith("https://") && a.target === "_blank" && !a.href.includes(location.host)).length)).toBe(12);
+  await expect(rows.first()).toHaveAttribute("href", "https://my.kcwater.us/eportal/#/accountlookup/pay");
+  await expect(page.getByText(/Towing fees: only in person/)).toBeVisible();
+  expect(await axe(page)).toEqual([]);
+  expect(await drawnIcons(page)).toEqual([]);
+  // The A to Z list finds a payment by the paper in the person's hand.
+  await page.goto("/#/services/all");
+  await page.getByLabel("Search everything").fill("parking ticket");
+  await page.getByRole("link", { name: /Pay: Parking ticket/ }).click();
+  await expect(page.locator("#title")).toHaveText("Pay");
+  expect(page.errors).toEqual([]);
+});

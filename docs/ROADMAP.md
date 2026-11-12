@@ -60,21 +60,21 @@ Open:
 
 ## Pay city bills and tickets
 
-Today the city's app has the menu links "Pay Online", "KC Water", "Municipal
-Court" and "Compass KC". Switchboard shows the same links, but "Pay Online" is
-only in "Everything, A to Z".
+Done on the web on 2026-11-12: a Pay screen, from a row on the Services tab.
+It lists 12 payments by the paper that the person has (water bill, parking
+ticket, court ticket, taxes, ambulance bill, permit fee and more). Each one
+opens the payment page of the office that owns it. The app takes no card
+numbers. The A to Z list finds a payment by its name, and the city's "Pay
+Online" link opens this screen. The list is from the city's Pay Online page,
+with the date of the read, in `web/public/js/pay.js`.
 
-The plan: a "Pay" door in Services. It lists each payment by the paper that
-the person has: a water bill, a court ticket, a parking ticket, a tax bill, a
-permit fee. Each one opens the payment page of the office that owns it. The
-app does not take card numbers and does not keep account numbers.
+Open:
 
-To do first: read the city's Pay Online page and record each payment and its
-address. The page refused automated reads on 2026-11-12, so a person must
-read it.
-
-Not known: if an office has a public lookup for a balance or a due date. With
-one, the app can show "your water bill is due on" for the home address.
+- The list is a copy. Read the city's page again from time to time. That
+  page refuses most automated reads; a real Chrome gets through.
+- It is not known if an office has a public lookup for a balance or a due
+  date. With one, the app can show "your water bill is due on" for the home
+  address.
 
 ## What the city's app has that Switchboard does not
 

@@ -34,6 +34,8 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
     report and its report types, opens the department's own form, and tells
     how to get a copy of a report. "KC Streetcar" writes a report to the
     Streetcar Authority.
+  - "Pay a bill or a ticket" (web app) lists each payment the city takes
+    online and opens the payment page of the office that owns it.
 - **Reports.** Your reports and everyone else's, in a list or on one map.
   - On the map, your reports are dark markers with a person glyph, drawn
     on top of the public pins. Public pins have status colors.

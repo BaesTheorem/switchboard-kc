@@ -55,6 +55,7 @@ route("/:tab/form", v("form"), { title: "Details" });
 route("/:tab/done", v("done"), { title: "Report sent", parent: (p) => `/${p.split("/")[1]}` });
 route("/:tab/streetcar", v("streetcar"), { title: "Streetcar" });
 route("/:tab/police", v("police"), { title: "Police report" });
+route("/:tab/pay", v("pay"), { title: "Pay" });
 // Reports tab
 route("/reports", v("reports"), { title: "Reports", full: true });
 route("/reports/updates", v("updates"), { title: "Request updates", parent: "/reports" });

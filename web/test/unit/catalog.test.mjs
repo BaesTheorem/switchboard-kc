@@ -86,7 +86,7 @@ const TABLES = {
 test("directory: every report type, page, and phone number, A to Z", () => {
   const { categories, links } = readCatalog(TABLES);
   const items = directory(categories, links);
-  // localizedCaseInsensitiveCompare order of the 49 titles: 35 from the catalog and the phone list, and 14 for the police.
+  // localizedCaseInsensitiveCompare order of the 61 titles: 35 from the catalog and the phone list, 14 for the police, and 12 payments.
   assert.deepEqual(items.map((i) => i.title), [
     "Animal bite, after hours", "Barking dogs (KC Pet Project)", "Beekeeper registration", "Call 311",
     "Civil Rights and Equal Opportunity", "Crosswalk Restoration Program", "Environmental compliance, illicit discharge",
@@ -94,7 +94,11 @@ test("directory: every report type, page, and phone number, A to Z", () => {
     "HUD housing discrimination", "Human trafficking hotline", "KC Streetcar Authority", "KC Streetcar problem",
     "KC Streetcar See Say (text dispatch)", "KC Water, account shut off", "KC Water, lead service line hotline",
     "KCPD community complaints", "KCPD information", "KCPD records", "KCPD video requests", "MoDOT (highways and ramps)",
-    "Municipal Court", "Parks facility reservations", "PIAC sidewalk requests", "Police non-emergency",
+    "Municipal Court", "Parks facility reservations",
+    "Pay: Ambulance bill", "Pay: City taxes", "Pay: Court ticket or fine", "Pay: Dumpster rental", "Pay: Health Department fees", "Pay: Land Bank",
+    "Pay: Parking ticket", "Pay: Parks passes and classes", "Pay: Permit or license fee", "Pay: Pet license", "Pay: Rent for leased city property",
+    "Pay: Water bill",
+    "PIAC sidewalk requests", "Police non-emergency",
     "Police report, accident: hit and run", "Police report, accident: no injury", "Police report, child custody violation",
     "Police report, copy of a report", "Police report, drug activity tip", "Police report, extra patrol request",
     "Police report, fraudulent use of a credit device", "Police report, identity theft", "Police report, lost property",
@@ -142,6 +146,14 @@ test("directory: every report type, page, and phone number, A to Z", () => {
   assert.equal(pd.kind, "police");
   assert.equal(pd.detail, "Police Department, not 311");
   assert.equal(pd.icon, "local_police");
+});
+
+test("directory: the Pay screen takes the place of the city's Pay Online link", () => {
+  const { categories, links } = readCatalog(TABLES);
+  const items = directory(categories, [...links, { name: "Pay Online", url: "https://www.kcmo.gov/city-hall/pay-online" }]);
+  assert.equal(items.filter((i) => i.kind === "link" && /pay online/i.test(i.title)).length, 0);
+  assert.equal(items.filter((i) => i.kind === "pay").length, 12);
+  assert.equal(items.find((i) => i.title === "Pay: Water bill").icon, "water_drop");
 });
 
 test("directory: the police screen takes the place of the city's police report link", () => {
