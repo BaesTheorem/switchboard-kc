@@ -131,6 +131,8 @@ struct ReportTab: View {
                         .background(Theme.surface.opacity(0.7), in: Capsule())
                 }
             }
+            Text("Unofficial. Not a City of Kansas City service.")
+                .font(.footnote).foregroundStyle(Theme.onPrimaryContainer.opacity(0.8))
         }
         .padding(20)
         .background(Theme.primaryContainer, in: RoundedRectangle(cornerRadius: Theme.Shape.sheet, style: .continuous))

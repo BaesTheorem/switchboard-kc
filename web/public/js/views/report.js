@@ -28,6 +28,7 @@ export default function view(main, _params, ctx) {
         <button class="btn soft grow" type="button" data-act="library">${icon("photo_library")}<span>Library</span></button>
         <a class="btn soft grow" href="#/services">No photo</a>
       </div>
+      <p class="foot muted">Unofficial. Not a City of Kansas City service.</p>
       ${photoInputs("rp")}
     </section>
     ${helpCard("#/report/help")}
