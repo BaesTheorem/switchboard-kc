@@ -327,7 +327,9 @@ final class NearYou: ObservableObject {
         } else { outage = nil }
         let s = try? await ArcGIS.query("\(CivicSources.kcmo)/EventSnowRoutes_public_74e8930bc7fb4f2aa30a81bec12d50bc/FeatureServer/0",
                                         near: c, miles: 0.1, limit: 20)
-        let last = s?.compactMap { ArcGIS.attrs($0)["lastserviced"] as? Double }.max().map { Date(timeIntervalSince1970: $0 / 1000) }
+        // Public Works records its dry runs here too, as an event with "TEST" in the name.
+        let real = s?.map(ArcGIS.attrs).filter { (($0["eventname"] as? String) ?? "").range(of: #"\btest\b"#, options: [.regularExpression, .caseInsensitive]) == nil }
+        let last = real?.compactMap { $0["lastserviced"] as? Double }.max().map { Date(timeIntervalSince1970: $0 / 1000) }
         if let last, Date().timeIntervalSince(last) < 3 * 86400 { plowed = "Your street was plowed \(last.relative)" } else { plowed = nil }
     }
 }

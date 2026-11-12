@@ -266,3 +266,18 @@ export function stage(status, timeline = []) {
   if (st < 2 && timeline.some((e) => /staff/i.test(e.title))) st = 2;
   return st;
 }
+
+/**
+ * The newest plow pass in rows of the city's snow route layer, in ms, or 0.
+ * Public Works records its dry runs in the same layer, as an event with
+ * "TEST" in the name ("TEST event 11092026", November 2026, no snow). Those
+ * rows are left out.
+ */
+export function lastPlowed(rows) {
+  let last = 0;
+  for (const a of rows || []) {
+    if (/\btest\b/i.test(String(a?.eventname ?? ""))) continue;
+    last = Math.max(last, Number(a?.lastserviced) || 0);
+  }
+  return last;
+}

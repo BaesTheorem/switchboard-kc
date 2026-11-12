@@ -4,7 +4,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  Category, cityCaseNumber, cleanName, epoch, mapIssue, myReport, num, parseQuestions, reportDetail, stage, str, stripHTML,
+  Category, cityCaseNumber, cleanName, epoch, lastPlowed, mapIssue, myReport, num, parseQuestions, reportDetail, stage, str, stripHTML,
 } from "../../public/js/models.js";
 
 const H = 3600e3;
@@ -294,4 +294,32 @@ test("reportDetail opens the note box only when the city allows it (docs/API.md 
   assert.equal(reportDetail({ citizen_allow_to_send_note: "1" }).canAddNote, true);
   assert.equal(reportDetail({ citizen_allow_to_send_note: 0 }).canAddNote, false);
   assert.equal(reportDetail({}).canAddNote, false);
+});
+
+// ---------- lastPlowed ----------
+
+// Rows as the city's EventSnowRoutes_public layer returned them on 2026-11-11
+// for E 11th St and Oak St, after the Public Works dry run of November 9 and 10.
+const DRY_RUN = { roadname: "E 11th St", lastserviced: Date.UTC(2026, 10, 10, 13, 28), eventname: "TEST event 11092026", preciptotal: 0 };
+
+test("lastPlowed leaves out a Public Works dry run", () => {
+  assert.equal(lastPlowed([DRY_RUN, { ...DRY_RUN, roadname: "Oak St", eventname: "Test Event" }]), 0);
+});
+
+test("lastPlowed keeps the newest pass of a real event", () => {
+  const storm = Date.UTC(2026, 0, 26, 9, 0);
+  const rows = [DRY_RUN, { roadname: "Oak St", lastserviced: storm, eventname: "Winter Storm 01262026" },
+    { roadname: "Locust St", lastserviced: storm - 3600e3, eventname: null }];
+  assert.equal(lastPlowed(rows), storm);
+});
+
+test("lastPlowed reads a name that only contains the letters of test as real", () => {
+  const t = Date.UTC(2026, 1, 3, 4, 0);
+  assert.equal(lastPlowed([{ lastserviced: t, eventname: "Greatest snow of 2026" }]), t);
+});
+
+test("lastPlowed is 0 for no rows and for rows with no time", () => {
+  assert.equal(lastPlowed([]), 0);
+  assert.equal(lastPlowed(null), 0);
+  assert.equal(lastPlowed([{ eventname: "Winter Storm", lastserviced: null }, {}]), 0);
 });

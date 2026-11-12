@@ -7,6 +7,7 @@ import { relative } from "../lib/format.js";
 import { currentIfAllowed, meters } from "../lib/geo.js";
 import { bag, html, icon, render } from "../lib/html.js";
 import { local } from "../lib/store.js";
+import { lastPlowed } from "../models.js";
 import { draftFor, dropQueued, flushQueue, listen, S, visibleReports } from "../state.js";
 import { installCard, wireInstallCard } from "../install.js";
 import { acts } from "../ui.js";
@@ -125,7 +126,7 @@ async function nearYou() {
   }
   let plowed = "";
   const snow = await query(`${KCMO}/EventSnowRoutes_public_74e8930bc7fb4f2aa30a81bec12d50bc/FeatureServer/0`, { near: here, miles: 0.1, limit: 20 }).catch(() => []);
-  const last = Math.max(0, ...snow.map((f) => Number(attrs(f).lastserviced) || 0));
+  const last = lastPlowed(snow.map(attrs));
   if (last && Date.now() - last < 3 * 86400e3) plowed = `Your street was plowed ${relative(last)}`;
   return { ...saved, plowed };
 }
