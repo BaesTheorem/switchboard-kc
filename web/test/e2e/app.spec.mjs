@@ -93,6 +93,7 @@ test("home: no trash day before an address is set, and the setup card asks for t
   const near = page.locator("#near");
   await expect(near.getByRole("heading", { name: street })).toBeVisible();
   await expect(near).toContainText(/Trash day: \w+day/, { timeout: 30_000 });
+  await expect(setup).toContainText(`Address: ${street}`);
   await setup.getByRole("button", { name: "Add your contact details" }).click();
   const sheet = page.locator("#sheet");
   await sheet.getByLabel("First name").fill("Test");

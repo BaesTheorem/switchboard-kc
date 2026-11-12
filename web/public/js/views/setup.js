@@ -69,12 +69,14 @@ export function editContact() {
 export function setupCard() {
   const h = homePlace(), c = contactLine();
   if ((h && c) || local.get("setupCardClosed")) return "";
+  // The first screen can be on a shared display or in view of the next seat: it names the person, and it does not show the e-mail or the phone.
+  const who = [contactSaved().firstName, contactSaved().lastName].map((x) => String(x || "").trim()).filter(Boolean).join(" ") || "saved";
   const done = (label, value) => html`<div class="row top">${icon("check_circle", "done-text")}<p class="sub grow">${label}: ${value}</p></div>`;
   return html`<section class="card stack s12" style="text-align:left" aria-labelledby="setup-h">
     <div class="row">${icon("home", "primary-text")}<h2 class="sub strong grow" id="setup-h">Set your address and contact details</h2></div>
     <p class="caption muted">Your address shows your trash day, your leaf and brush zone, and when your street was plowed. Your contact details go to the city with a report, so staff can answer you. This app stores both on this device only.</p>
     ${h ? done("Address", h.street || "set") : html`<button class="btn tonal" type="button" data-setup="home">${icon("location_on")}<span>Set your address</span></button>`}
-    ${c ? done("Contact", c) : html`<button class="btn tonal" type="button" data-setup="contact">${icon("person")}<span>Add your contact details</span></button>`}
+    ${c ? done("Contact", who) : html`<button class="btn tonal" type="button" data-setup="contact">${icon("person")}<span>Add your contact details</span></button>`}
     <button class="btn text" type="button" data-setup="close">Not now</button>
   </section>`;
 }
