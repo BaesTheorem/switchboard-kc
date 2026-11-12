@@ -7,7 +7,7 @@
 // effect without a deploy. A rejected signature marks the key "rejected";
 // the web app then reads the new key from the newest APK (keys.js).
 
-import { enc, b64url, b64urlText, HttpError, randomHex } from "./util.js";
+import { enc, b64url, b64urlText, HttpError, randomHex, softPut } from "./util.js";
 
 export const API_VERSION = "6.0";
 export const KANSAS_CITY = "1adb57d07d9ea1e1dd8160697f745c0d";
@@ -48,7 +48,7 @@ export async function markKey(env, state) {
   if (keyState.state === state) return;
   const prior = await env.KV.get("civic:state", "json");
   keyState = { state, at: Date.now() };
-  if (prior?.state !== state) await env.KV.put("civic:state", JSON.stringify(keyState));
+  if (prior?.state !== state) await softPut(env, "civic:state", JSON.stringify(keyState));
 }
 
 export async function readKeyState(env) {

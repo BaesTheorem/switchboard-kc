@@ -74,3 +74,18 @@ export function deviceId(v) {
   if (!/^[0-9a-f]{16}$/.test(id)) throw new HttpError(400, "bad_device", "The reports id must be 16 characters, 0 to 9 and a to f.");
   return id;
 }
+
+/**
+ * A KV write for a cache or a status flag. The free plan allows 1,000 writes
+ * a day for the whole account. Past that, put() throws until 00:00 UTC, and
+ * a lost cache entry must not turn a good answer into an error.
+ */
+export async function softPut(env, key, value, opts) {
+  try {
+    await env.KV.put(key, value, opts);
+    return true;
+  } catch (e) {
+    console.warn(`KV write skipped (${key}): ${e?.message || e}`);
+    return false;
+  }
+}

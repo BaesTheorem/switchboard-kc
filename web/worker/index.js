@@ -8,7 +8,7 @@ import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_C
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { calendarFeed, gtfs, hud, meetings } from "./open.js";
 import { poll, subscribe, test as pushTest, unsubscribe, vapid } from "./push.js";
-import { body, deviceId, HttpError, json, randomHex } from "./util.js";
+import { body, deviceId, HttpError, json, randomHex, softPut } from "./util.js";
 
 export { Ledger } from "./ledger.js";
 
@@ -31,7 +31,7 @@ async function catalog(env) {
     keep.MENU = keep.MENU.filter((r) => r.menu_item_type === "HTML")
       .map((r) => ({ menu_item_name: r.menu_item_name, menu_item_url: r.menu_item_url, ios_url: r.ios_url }));
     text = JSON.stringify({ at: Date.now(), tables: keep });
-    await env.KV.put(key, text, { expirationTtl: 6 * 3600 });
+    await softPut(env, key, text, { expirationTtl: 6 * 3600 });
   }
   return new Response(text, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
 }
