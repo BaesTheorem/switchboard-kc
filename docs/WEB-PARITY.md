@@ -11,7 +11,9 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | Photo first: camera, library, "No photo" (ReportTab) | Same | The camera opens through the browser's file picker. |
 | Photo GPS sets the location (Place.gps) | Same | Some browsers remove location data from a picked photo; then the device position is used. |
 | Health and help card (HealthHelp) | Same | |
-| Near you: trash day, leaf and brush zone, plowing (CivicData) | Same, less the water outage | The water outage host (maps.kcwater.info) stopped resolving in October 2026, so the iPhone check fails too. |
+| Near you: trash day, leaf and brush zone, plowing (CivicData) | Changed | The iPhone app reads them for the device's position and names no place. The web app reads them for a home address that the person sets, and the card names the address. Away from home, the position gives another street's trash day. No water outage line: its host (maps.kcwater.info) stopped resolving in October 2026, so the iPhone check fails too. |
+| None | New | A card on the Report tab asks for the home address and the contact details, and says that the app stores both on the device only. Settings > Your details changes them. |
+| Passkey card on the Report tab after the first report | Changed | The web app shows it from the first open. A closed card says that Settings > My reports has the same buttons. |
 | Reports waiting to send, with Retry (ReportTab) | Same | A report the city refuses stays in the list with the reason and a Remove button. |
 | Your open reports, newest first, top 5 (ReportTab) | Same | |
 

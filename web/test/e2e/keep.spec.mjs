@@ -20,7 +20,7 @@ test("the reports id goes into a passkey and comes back from it", async ({ conte
   } });
   await page.goto("/");
   await page.locator("#cog").click();
-  await page.getByRole("button", { name: "Save to a passkey" }).click();
+  await page.locator("#sheet").getByRole("button", { name: "Save to a passkey" }).click();
   await expect(page.getByText("Saved to a passkey on this device.")).toBeVisible();
   // The authenticator now holds one discoverable credential whose user handle is the id.
   const { credentials } = await cdp.send("WebAuthn.getCredentials", { authenticatorId });
@@ -42,9 +42,17 @@ test("the Report tab offers a restore when there are no reports, and Report sent
   const { page } = await ownerPage(context, { device: "0f0f0f0f0f0f0f0f" });
   await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [] }) }));
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Used Switchboard KC before?" })).toBeVisible({ timeout: 20_000 });
-  await page.getByRole("button", { name: "Not now" }).click();
-  await expect(page.getByRole("heading", { name: "Used Switchboard KC before?" })).toBeHidden();
+  const homeCard = (name) => page.locator("section.card", { has: page.getByRole("heading", { name }) });
+  await expect(homeCard("Used Switchboard KC before?")).toBeVisible({ timeout: 20_000 });
+  // The passkey card is on the home screen before the first report. Each card stays until it is closed, and then says where its buttons are.
+  await expect(homeCard("Keep your reports if you lose this phone")).toBeVisible();
+  await homeCard("Used Switchboard KC before?").getByRole("button", { name: "Not now" }).click();
+  await expect(homeCard("Used Switchboard KC before?")).toBeHidden();
+  await expect(page.locator("#snack")).toHaveText("You can restore anytime in Settings, under My reports.");
+  await expect(homeCard("Keep your reports if you lose this phone")).toBeVisible();
+  await homeCard("Keep your reports if you lose this phone").getByRole("button", { name: "Not now" }).click();
+  await expect(homeCard("Keep your reports if you lose this phone")).toBeHidden();
+  await expect(page.locator("#snack")).toHaveText("You can save it anytime in Settings, under My reports.");
   // The install card on the Report sent screen: the iPhone steps name Safari's Share button.
   await page.evaluate(() => sessionStorage.setItem("done:report", JSON.stringify({ wo: "123456" })));
   await page.goto("/#/report/done");

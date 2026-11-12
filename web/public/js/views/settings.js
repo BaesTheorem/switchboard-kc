@@ -11,11 +11,12 @@ import { local } from "../lib/store.js";
 import { deviceId, listen, loadMyReports, S, useDeviceId } from "../state.js";
 import { seconds, startLog, startParts } from "../startup.js";
 import { applyAppearance } from "../theme.js";
-import { sheet, snack } from "../ui.js";
+import { closeSheet, sheet, snack } from "../ui.js";
 import { canPrompt, installed, onInstallChange, promptInstall, stepsList } from "../install.js";
 import { passkeysSupported, savedToPasskey } from "../passkey.js";
 import { alertState, reportsIdChanged, sendTest, turnOff, turnOn } from "./alerts.js";
 import { restoreNow, saveNow } from "./keep.js";
+import { contactLine, editContact, homePlace, setHome } from "./setup.js";
 
 
 /** How long the app took to start: the last start, and the slowest one on record with where its time went. */
@@ -41,6 +42,15 @@ export function openSettings() {
       <div class="seg" role="group" aria-label="Theme">
         ${[["auto", "Auto"], ["light", "Light"], ["dark", "Dark"]].map(([k, l]) => html`<button type="button" data-theme="${k}" aria-pressed="${String(local.get("appearance", "auto") === k)}">${l}</button>`)}
       </div></section>
+
+    <section class="stack s8" aria-labelledby="me-h"><h3 class="label" id="me-h">Your details</h3>
+      <div class="rows">
+        <button class="item" type="button" data-me="home">${icon("home")}<span class="grow stack s4" style="gap:2px"><span>Home address</span>
+          <span class="caption muted">${homePlace()?.street || "Not set"}</span></span>${icon("chevron_right", "trail")}</button>
+        <button class="item" type="button" data-me="contact">${icon("person")}<span class="grow stack s4" style="gap:2px"><span>Contact details</span>
+          <span class="caption muted">${contactLine() || "Not set"}</span></span>${icon("chevron_right", "trail")}</button>
+      </div>
+      <p class="caption muted">The address shows your trash day on the Report tab. The contact details go to the city with a report that you send. This app stores both on this device only.</p></section>
 
     ${installed() ? "" : html`<section class="stack s8" aria-labelledby="in-h"><h3 class="label" id="in-h">Install</h3>
       <div class="card stack s8"><p class="sub">Install this app to open it from your Home Screen, keep your reports id safe, and get alerts.</p>
@@ -133,6 +143,12 @@ export function openSettings() {
       offs.push(listen("health", paint), listen("config", paint));
       const h = (sel, fn, type = "click") => offs.push(on(el, type, sel, fn));
       h("[data-theme]", (e, b) => { local.set("appearance", b.dataset.theme); applyAppearance(b.dataset.theme); paint(); });
+      // The map and the contact sheet take the place of this sheet.
+      h("[data-me]", async (e, b) => {
+        if (b.dataset.me === "contact") return editContact();
+        closeSheet();
+        if (await setHome()) snack("Saved on this device.");
+      });
       h("[data-install]", async () => { await promptInstall(); paint(); });
       offs.push(onInstallChange(paint));
       h("[data-pk-save]", async () => { if (await saveNow()) paint(); });

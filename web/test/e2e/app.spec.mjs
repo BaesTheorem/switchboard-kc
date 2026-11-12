@@ -73,6 +73,42 @@ test("the five tabs fit a 320 px screen (an iPhone with Display Zoom)", async ({
   expect(m).toEqual({ bar: 0, right: 320, label: 0, count: 5 });
 });
 
+test("home: no trash day before an address is set, and the setup card asks for the address and the contact details", async ({ context }) => {
+  const { page } = await ownerPage(context);   // the position is allowed and known, as on a phone that said yes
+  let lookups = 0;
+  page.on("request", (r) => { if (r.url().includes("mapd.kcmo.org")) lookups++; });
+  await page.goto("/");
+  const setup = page.locator("section.card", { has: page.getByRole("heading", { name: "Set your address and contact details" }) });
+  await expect(setup).toContainText("This app stores both on this device only.");
+  // The device's position alone shows nothing: the trash day there can be another street's.
+  await page.waitForLoadState("networkidle");
+  await expect(page.locator("#near")).toBeEmpty();
+  expect(lookups).toBe(0);
+  expect(await axe(page)).toEqual([]);
+  await setup.getByRole("button", { name: "Set your address" }).click();
+  const picker = page.locator(".picker");
+  await expect(picker.locator("#pk-addr")).not.toHaveText(/Move the map|Finding/, { timeout: 30_000 });
+  const street = await picker.locator("#pk-addr").textContent();
+  await picker.getByRole("button", { name: "Use this spot" }).click();
+  const near = page.locator("#near");
+  await expect(near.getByRole("heading", { name: street })).toBeVisible();
+  await expect(near).toContainText(/Trash day: \w+day/, { timeout: 30_000 });
+  await setup.getByRole("button", { name: "Add your contact details" }).click();
+  const sheet = page.locator("#sheet");
+  await sheet.getByLabel("First name").fill("Test");
+  await sheet.getByLabel("Email").fill("test@example.com");
+  await expect(sheet).toHaveCSS("opacity", "1");   // the sheet fades in, and a contrast check in the fade reads pale text
+  expect(await axe(page, "#sheet")).toEqual([]);
+  await sheet.getByRole("button", { name: "Save" }).click();
+  await expect(setup).toBeHidden();
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("contact")))).toMatchObject({ firstName: "Test", email: "test@example.com" });
+  // Settings holds both, to change later.
+  await page.getByRole("button", { name: "Settings" }).click();
+  await expect(sheet.getByRole("button", { name: /Home address/ })).toContainText(street);
+  await expect(sheet.getByRole("button", { name: /Contact details/ })).toContainText("Test · test@example.com");
+  expect(page.errors).toEqual([]);
+});
+
 test("file a pothole report: section, type, questions, location, send", async ({ context }) => {
   const { page, submits } = await ownerPage(context, { contact: { firstName: "Test", lastName: "Person", email: "test@example.com", phone: "" } });
   await page.goto("/#/services");

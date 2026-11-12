@@ -1,6 +1,7 @@
 // Cards that keep a person's reports safe: save the reports id to a passkey,
 // and on a new device, restore it from one (passkey.js). The Report tab and
-// the Report sent screen show them; Settings > My reports has the same buttons.
+// the Report sent screen show them until the person saves or closes them;
+// Settings > My reports has the same buttons, and a closed card says so.
 
 import { html, icon } from "../lib/html.js";
 import { local } from "../lib/store.js";
@@ -64,8 +65,8 @@ export function wireKeep(root, repaint) {
     const b = e.target.closest("[data-keep]");
     if (!b || !root.contains(b)) return;
     const act = b.dataset.keep;
-    if (act === "close-keep") local.set("keepCardClosed", Date.now());
-    else if (act === "close-restore") local.set("restoreCardClosed", Date.now());
+    if (act === "close-keep") { local.set("keepCardClosed", Date.now()); snack("You can save it anytime in Settings, under My reports.", 6000); }
+    else if (act === "close-restore") { local.set("restoreCardClosed", Date.now()); snack("You can restore anytime in Settings, under My reports.", 6000); }
     else {
       b.disabled = true;
       if (act === "save") await saveNow(); else await restoreNow();

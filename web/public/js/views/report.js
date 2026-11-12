@@ -1,10 +1,12 @@
 // The Report tab's home: photo first (camera, library, or none), Health and
-// help, facts for where you are, reports waiting to send, your open
-// reports, and the cards that keep them safe (Home Screen app, passkey). Ported from ReportTab.swift and CivicData.swift (NearYou).
+// help, the card that asks for an address and contact details, facts for
+// that address, reports waiting to send, your open reports, and the cards
+// that keep them safe (Home Screen app, passkey). Ported from ReportTab.swift
+// and CivicData.swift (NearYou), which read the device's position instead.
 
 import { attrs, KCMO, query, text } from "../lib/arcgis.js";
 import { relative } from "../lib/format.js";
-import { currentIfAllowed, meters } from "../lib/geo.js";
+import { meters } from "../lib/geo.js";
 import { bag, html, icon, render } from "../lib/html.js";
 import { local } from "../lib/store.js";
 import { lastPlowed } from "../models.js";
@@ -14,6 +16,7 @@ import { acts } from "../ui.js";
 import { helpCard } from "./help.js";
 import { keepCard, restoreCard, wireKeep } from "./keep.js";
 import { photoInputs, reportCard, wirePhotoInputs } from "./parts.js";
+import { homePlace, setupCard, wireSetup } from "./setup.js";
 
 export default function view(main, _params, ctx) {
   const off = bag();
@@ -32,6 +35,7 @@ export default function view(main, _params, ctx) {
       ${photoInputs("rp")}
     </section>
     ${helpCard("#/report/help")}
+    <div id="setup"></div>
     <div id="near"></div>
     <div id="queued"></div>
     <div id="recent"></div>
@@ -82,40 +86,64 @@ export default function view(main, _params, ctx) {
     </section>`);
   };
 
+  // Facts for the address the person set, under its name. No address, no facts:
+  // the trash day of wherever the device is now would be another street's.
   const paintNear = (n) => {
     const box = main.querySelector("#near");
-    if (!n || (!n.trashDay && !n.plowed)) { box.replaceChildren(); return; }
-    render(box, html`<section class="card stack s12" aria-label="Near you">
-      ${n.trashDay ? html`<div class="row top">${icon("delete", "primary-text")}
+    const h = homePlace();
+    if (!box) return;
+    if (!h) { box.replaceChildren(); return; }
+    render(box, html`<section class="card stack s12" aria-labelledby="near-h">
+      <div class="row">${icon("home", "primary-text")}<h2 class="sub strong grow" id="near-h">${h.street || "Your address"}</h2>
+        <button class="link" type="button" data-setup="home">Change</button></div>
+      ${!n ? html`<p class="caption muted">Finding your trash day</p>` : ""}
+      ${n?.trashDay ? html`<div class="row top">${icon("delete", "primary-text")}
         <p class="sub">Trash day: ${n.trashDay}${n.zone ? ` · Leaf and brush zone: ${n.zone}` : ""}</p></div>` : ""}
-      ${n.plowed ? html`<div class="row top">${icon("ac_unit", "primary-text")}<p class="sub">${n.plowed}</p></div>` : ""}
+      ${n && !n.trashDay ? html`<p class="caption muted">The city's map has no trash day for this spot. It covers Kansas City, Missouri.</p>` : ""}
+      ${n?.plowed ? html`<div class="row top">${icon("ac_unit", "primary-text")}<p class="sub">${n.plowed}</p></div>` : ""}
     </section>`);
   };
+  // The trash day shows as soon as it is known; the plow line follows.
+  const spot = (h) => (h ? `${h.lat},${h.lng}` : "");
+  let nearFor = null;
+  const loadNear = async () => {
+    const h = homePlace(), mine = spot(h);
+    nearFor = mine;
+    paintNear(null);
+    if (!h) return;
+    const facts = await trashFacts(h).catch(() => ({}));
+    if (mine !== nearFor) return;
+    paintNear(facts);
+    const plowed = await plowLine(h).catch(() => "");
+    if (mine === nearFor && plowed) paintNear({ ...facts, plowed });
+  };
+  const paintSetup = () => { const box = main.querySelector("#setup"); if (box) render(box, setupCard()); };
 
-  // With reports: keep them (Home Screen, passkey). With none yet: offer a restore from a passkey.
+  // The passkey card stays until the person saves or closes it. With reports,
+  // the Home Screen card joins it; with none yet, a restore from a passkey does.
   const paintKeep = () => {
     const box = main.querySelector("#keep");
     if (!box) return;
-    render(box, S.myReports.length ? html`${installCard("Keep Switchboard KC on your Home Screen")}${keepCard()}` : restoreCard());
+    render(box, html`${S.myReports.length ? installCard("Keep Switchboard KC on your Home Screen") : restoreCard()}${keepCard()}`);
   };
 
   paintQueued();
   paintRecent();
   paintKeep();
+  paintSetup();
   off(listen("queue", paintQueued), listen("mine", paintRecent), listen("detail", paintRecent), listen("mine", paintKeep),
-    wireKeep(main, paintKeep), wireInstallCard(main, paintKeep));
-  nearYou().then(paintNear).catch(() => {});
+    listen("setup", () => { paintSetup(); if (spot(homePlace()) !== nearFor) loadNear(); }),
+    wireKeep(main, paintKeep), wireInstallCard(main, paintKeep), wireSetup(main));
+  loadNear();
   return off.run;
 }
 
 /**
- * Trash day and leaf and brush zone (saved a day, per spot) and recent snow
- * plowing for the device's position. The water outage layer the iPhone app
- * read (maps.kcwater.info) stopped resolving in October 2026, so it is left out.
+ * Trash day and leaf and brush zone for a spot (saved a day, per spot). The
+ * water outage layer the iPhone app read (maps.kcwater.info) stopped
+ * resolving in October 2026, so it is left out.
  */
-async function nearYou() {
-  const here = await currentIfAllowed();
-  if (!here) return null;
+async function trashFacts(here) {
   let saved = local.get("nearYou");
   if (!saved || Date.now() - saved.at > 86400e3 || meters(saved, here) > 100) {
     const [trash, zone] = await Promise.all([
@@ -125,10 +153,13 @@ async function nearYou() {
     saved = { lat: here.lat, lng: here.lng, at: Date.now(), trashDay: text(attrs(trash[0]), "TRASHDAY"), zone: text(attrs(zone[0]), "ZONE") };
     local.set("nearYou", saved);
   }
-  let plowed = "";
+  return saved;
+}
+
+/** "Your street was plowed 2 hours ago" for a spot, or "" with no pass in the last 3 days. */
+async function plowLine(here) {
   const snow = await query(`${KCMO}/EventSnowRoutes_public_74e8930bc7fb4f2aa30a81bec12d50bc/FeatureServer/0`, { near: here, miles: 0.1, limit: 20 }).catch(() => []);
   const last = lastPlowed(snow.map(attrs));
-  if (last && Date.now() - last < 3 * 86400e3) plowed = `Your street was plowed ${relative(last)}`;
-  return { ...saved, plowed };
+  return last && Date.now() - last < 3 * 86400e3 ? `Your street was plowed ${relative(last)}` : "";
 }
 
