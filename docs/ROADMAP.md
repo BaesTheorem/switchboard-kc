@@ -88,9 +88,11 @@ and with its live menu. Switchboard shows all the menu links.
   `update_notification_status`): messages that the city sends to every phone.
   Switchboard sends its own alerts when a report changes, and it does not
   receive the city's messages.
-- **Earlier reports of the same type as pins on the location step**
-  (`searchNearestIssue`). Switchboard runs the city's duplicate check and shows
-  nearby reports on the Reports tab.
+- **Earlier reports of the same type on the location step**
+  (`searchNearestIssue`). Done on the web on 2026-11-12, in another way: the
+  form lists the open reports of the same type within 500 feet of the spot,
+  from the public map call with one category. The city's call sends no
+  position and answers for the full city.
 - **Mark an update as read on the city's side** (`read_history_timeline`).
 
 ## When the web app replaces the iPhone app

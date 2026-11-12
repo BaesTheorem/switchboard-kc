@@ -3,17 +3,19 @@
 // missing. Ported from ReportForm.swift.
 
 import { robotToken, warmRobotCheck } from "../robot.js";
+import { distance, relative } from "../lib/format.js";
 import { current } from "../lib/geo.js";
 import { bag, html, icon, on, raw, render } from "../lib/html.js";
 import { dispose, makeMap } from "../map.js";
-import { Kind } from "../models.js";
+import { Kind, stage, subName } from "../models.js";
 import {
-  checkDuplicate, contactSaved, draftFor, enqueue, loadMyReports, S, saveContact, submit,
+  checkDuplicate, contactSaved, draftFor, enqueue, loadMyReports, nearbyOfType, S, saveContact, submit,
 } from "../state.js";
 import { confirmDialog, snack } from "../ui.js";
 import { formatAnswerDate } from "../draft.js";
 import { photoInputs, wirePhotoInputs } from "./parts.js";
 import { pickLocation } from "./picker.js";
+import { publicDetail } from "./reports.js";
 
 export default function view(main, _params, ctx) {
   const off = bag();
@@ -30,7 +32,7 @@ export default function view(main, _params, ctx) {
     </div>
     ${draft.disclaimer ? html`<div class="card row top">${icon("info", "primary-text")}<p class="foot muted prewrap">${draft.disclaimer}</p></div>` : ""}
     <section class="stack s8" aria-labelledby="ph-h"><h2 class="label" id="ph-h">Photos</h2><div id="photos"></div>${photoInputs("rf")}</section>
-    <section class="stack s8" aria-labelledby="loc-h"><h2 class="label" id="loc-h">${draft.locationRequired ? "Location" : "Location (optional)"}</h2><div id="loc"></div></section>
+    <section class="stack s8" aria-labelledby="loc-h"><h2 class="label" id="loc-h">${draft.locationRequired ? "Location" : "Location (optional)"}</h2><div id="loc"></div><div id="nearby"></div></section>
     ${draft.questions.length ? html`<section class="stack s12" aria-labelledby="q-h"><h2 class="label" id="q-h">The city asks</h2>
       ${draft.questions.map((q, i) => questionField(q, i, draft))}</section>` : ""}
     <section class="stack s8">
@@ -107,8 +109,40 @@ export default function view(main, _params, ctx) {
         new m.ml.Marker({ color: getComputedStyle(document.body).getPropertyValue("--primary").trim() || "#005ccc" }).setLngLat([loc.lng, loc.lat]).addTo(m.map);
       }).catch(() => {});
     }
+    loadNearby();
   };
   off(() => dispose(mini));
+
+  // ---------- reports of this type near the spot ----------
+  // A person sees here if the city has the problem already. The city's own
+  // duplicate check still runs at Send; this shows the reports before that,
+  // with their photos and status, one tap away.
+  let nearFor = "", near = [];
+  const loadNearby = async () => {
+    const loc = draft.location, box = $("#nearby");
+    if (!box) return;
+    const key = loc ? `${loc.lat.toFixed(5)},${loc.lng.toFixed(5)}` : "";
+    if (key === nearFor) return;
+    nearFor = key;
+    near = [];
+    box.replaceChildren();
+    if (!loc) return;
+    const rows = await nearbyOfType(draft.category.name, draft.sub ? subName(draft.sub) : "", loc).catch(() => []);
+    if (nearFor !== key || !rows.length || !main.contains(box)) return;
+    near = rows;
+    render(box, html`<div class="card stack s8" role="region" aria-label="Open reports of this type near this spot">
+      <div class="row top">${icon("info", "primary-text")}
+        <p class="sub grow"><span class="strong">${rows.length === 1 ? "One open report" : `${rows.length} open reports`} of this type within 500 feet.</span>
+          Look before you send: the city can have it already.</p></div>
+      <div class="rows">${rows.slice(0, 3).map((r) => html`<button class="item" type="button" data-near="${r.id}" style="align-items:flex-start">
+        <span class="dot st-${stage(r.status)}" aria-hidden="true"></span>
+        <span class="grow stack s4" style="gap:2px"><span class="sub">${r.subtype || r.type}</span>
+          <span class="caption muted">${[r.address, `${distance(r.meters)} away`, r.submitted ? `reported ${relative(r.submitted)}` : null].filter(Boolean).join(" · ")}</span></span>
+        ${icon("chevron_right", "trail")}</button>`)}</div>
+    </div>`);
+  };
+  off(on(main, "click", "[data-near]", (e, b) => { const r = near.find((x) => x.id === b.dataset.near); if (r) publicDetail(r); }));
+
   off(on(main, "click", "#loc-btn", async () => {
     const picked = await pickLocation(draft.location);
     if (!picked) return;

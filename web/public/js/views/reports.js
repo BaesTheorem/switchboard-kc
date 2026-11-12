@@ -293,7 +293,7 @@ function pinCard(i) {
 }
 
 /** A public report's detail: photos, description, staff timeline. The reporter's contact fields are never read. */
-function publicDetail(i) {
+export function publicDetail(i) {
   const t = asTarget(i);
   let detail = cachedFullDetail(t), error = null;
   const body = () => html`<div class="stack">

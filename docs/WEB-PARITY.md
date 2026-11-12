@@ -32,6 +32,7 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | Location line in the description, where-questions filled in | Same | |
 | Duplicate check: warn, block (Store.checkDuplicate) | Same | |
 | Public map switch on by default, send anonymously, contact (ReportForm) | Same | Contact is kept on the device only. |
+| None | New | The form lists the open reports of the same type within 500 feet of the spot. A tap opens a report's detail. |
 | Offline queue (Store.enqueue) | Same | Kept in IndexedDB. |
 | Report sent, report number, the city's reply (DoneView) | Same | Offers ticket alerts when the user has not chosen. |
 | Draft kept while the app runs | Better | Kept in IndexedDB, so a reload (iOS can drop a web app while the camera is open) does not lose it. |

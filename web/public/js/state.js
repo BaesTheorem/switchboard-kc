@@ -309,6 +309,21 @@ export async function loadMap(center, status, force = false) {
   emit("map");
 }
 
+/**
+ * The open reports of one category within `within` meters of a point, nearest
+ * first, for the report form. The city's app shows earlier reports of the
+ * category on its location screen from a call that sends no position and
+ * answers for the full city. This asks the public map call for one category
+ * at the spot, so the answer is small.
+ */
+export async function nearbyOfType(type, subtype, at, within = 150) {
+  const o = await api("map", { body: { device: deviceId(), lat: at.lat, lng: at.lng, status: "open", types: [type] } });
+  return (o.response_status?.response_data || []).map(mapIssue).filter(Boolean)
+    .map((i) => ({ ...i, meters: meters(at, i) }))
+    .filter((i) => i.meters <= within && (!subtype || !i.subtype || i.subtype === subtype))
+    .sort((a, b) => a.meters - b.meters);
+}
+
 // ---------- filing ----------
 
 export async function checkDuplicate(d) {

@@ -8,7 +8,7 @@
 //   copies of city data.
 // - push: shows the notification the server sent; a tap opens the report.
 
-const VERSION = "20261112T2325";
+const VERSION = "20261112T2332";
 const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",

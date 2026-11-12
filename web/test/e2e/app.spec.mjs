@@ -144,6 +144,40 @@ test("file a pothole report: section, type, questions, location, send", async ({
   expect(page.errors).toEqual([]);
 });
 
+test("the form shows the open reports of the same type near the spot, and one opens its detail", async ({ context }) => {
+  const { page } = await ownerPage(context);
+  const now = Math.floor(Date.now() / 1000);
+  const pin = (id, subtype, north, address) => ({ report_id: id, issue_name: "A Pothole", subtype, issue_status: "received", issue_address: address,
+    issue_latitude: String(KC.latitude + north), issue_longitude: String(KC.longitude), issue_submitted_date: String(now - 3 * 86400), issue_description: "Deep hole in the right lane." });
+  let asked = null;
+  await page.route("**/api/map", (route) => {
+    asked = route.request().postDataJSON();
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, response_status: { response_data: [
+      pin("9100002", "Pothole in the Street", 0.0009, "1100 Main St Kansas City MO 64105"),      // about 100 m
+      pin("9100001", "Pothole in the Street", 0.00027, "1201 Main St Kansas City MO 64105"),     // about 30 m
+      pin("9100003", "Pothole in the Street", 0.0036, "800 Main St Kansas City MO 64105"),       // about 400 m: too far
+      pin("9100004", "Pothole in the Alley", 0.0002, "1200 Baltimore Ave Kansas City MO 64105"), // another type
+    ] } }) });
+  });
+  await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue: {
+    status: "received", type: "A Pothole", subtype: "Pothole in the Street", address: "1201 Main St Kansas City MO 64105", description: "Deep hole in the right lane.", added_on: now - 3 * 86400, history_object: [] } }) }));
+  await page.goto("/#/services");
+  await page.getByRole("link", { name: /Streets & Sidewalks/ }).click();
+  await page.getByRole("button", { name: "Pothole in the Street" }).click();
+  const near = page.getByRole("region", { name: "Open reports of this type near this spot" });
+  await expect(near).toContainText("2 open reports of this type within 500 feet.", { timeout: 30_000 });
+  // One city call, for this category only, at the spot. The nearest report is first.
+  expect(asked.types).toHaveLength(1);
+  expect(asked.status).toBe("open");
+  await expect(near.locator("[data-near]")).toHaveCount(2);
+  await expect(near.locator("[data-near]").first()).toContainText("1201 Main St");
+  expect(await axe(page)).toEqual([]);
+  await near.locator("[data-near]").first().click();
+  await expect(page.locator("#sheet .track")).toBeVisible();
+  await page.keyboard.press("Escape");
+  expect(page.errors).toEqual([]);
+});
+
 test("the server checks a report but does not send it during a test run", async ({ context }) => {
   const { page } = await ownerPage(context);
   await page.unroute("**/api/submit");

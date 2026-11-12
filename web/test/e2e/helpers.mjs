@@ -77,6 +77,11 @@ export async function ownerPage(context, { device = TEST_DEVICE, contact = null,
   // The city's duplicate check is real data; tests that are not about it get "no duplicate".
   if (duplicate) await page.route("**/api/duplicate", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, ...duplicate }) }));
   await page.route("**/api/push/**", (route) => route.fulfill({ status: 200, contentType: "application/json", body: '{"ok":true}' }));
+  // The report form asks the city's map for one category near the spot. Tests that are not about that get "none",
+  // so each form test does not cost the city a slow call. A call for a group of categories (the Reports tab) goes out.
+  await page.route("**/api/map", (route) => ((route.request().postDataJSON()?.types || []).length === 1
+    ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, response_status: { response_data: [] } }) })
+    : route.fallback()));
   await page.route("**/api/key/**", (route) => route.fulfill({ status: 429, contentType: "application/json", body: '{"ok":false,"error":"test"}' }));
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
