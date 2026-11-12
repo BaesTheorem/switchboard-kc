@@ -175,18 +175,33 @@ struct AddNoteCard: View {
 /// My reports and everyone else's on one map (or list). Mine are drawn as
 /// person pins on top and never fall under the 250-pin cap; in the list they
 /// sit in a Yours section above Nearby. "Only mine" hides everyone else.
+/// The tab opens on the list of my own reports; a device with none sees everyone's.
 struct ReportsTab: View {
     @EnvironmentObject private var store: Store
     // `-startUpdates YES` opens the update screen, `-openReport YES` my first report (screenshots).
     @State private var path = NavigationPath()
-    @AppStorage("onlyMine") private var onlyMine = false
+    /// Kept between launches. The first version kept these two choices as
+    /// "onlyMine" and "nearbyList", and it opened on the map of everyone's reports.
+    @AppStorage("reportsOnlyMine") private var onlyMine = true
     @State private var position: MapCameraPosition = .region(MKCoordinateRegion(center: Locator.downtown, latitudinalMeters: 2500, longitudinalMeters: 2500))
     @State private var center = Locator.downtown
-    @State private var status = "open"
+    /// Each scope keeps its own status: all of my reports, the open ones of everyone's.
+    @State private var mineStatus = "all"
+    @State private var everyoneStatus = "open"
+    @State private var refreshing = false
     @State private var selected: MapIssue?
     @State private var detailFor: MapIssue?
-    /// Map or list, kept between launches.
-    @AppStorage("nearbyList") private var listMode = false
+    /// List or map, kept between launches.
+    @AppStorage("reportsList") private var listMode = true
+
+    private var mineOnly: Bool { Store.mineOnly(chosen: onlyMine, count: store.visibleReports.count, state: store.myReportsState) }
+    private var status: String { mineOnly ? mineStatus : everyoneStatus }
+    private var statusChoice: Binding<String> {
+        Binding(get: { status }, set: { if mineOnly { mineStatus = $0 } else { everyoneStatus = $0 } })
+    }
+    private var noneOfMine: String {
+        status == "all" ? "No reports of yours in the past \(scopeLabel)" : "None of your reports are \(status)"
+    }
 
     /// Time scope in days, kept between launches. Default 1 year.
     @AppStorage("mapScopeDays") private var scopeDays = 365
@@ -210,7 +225,7 @@ struct ReportsTab: View {
             .prefix(250)
             .map(\.0)
     }
-    private var loading: Bool { store.mapLoading.contains(status) }
+    private var loading: Bool { mineOnly ? refreshing || store.myReportsState == .loading : store.mapLoading.contains(status) }
     private var error: String? { store.mapError }
 
     /// My reports that match the status and time filters.
@@ -221,7 +236,7 @@ struct ReportsTab: View {
         }
     }
     private var mineIDs: Set<String> { Set(store.visibleReports.map(\.id)) }
-    private var others: [MapIssue] { onlyMine ? [] : issues.filter { !mineIDs.contains($0.id) } }
+    private var others: [MapIssue] { mineOnly ? [] : issues.filter { !mineIDs.contains($0.id) } }
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -238,7 +253,7 @@ struct ReportsTab: View {
                         }
                     })) {
                         UserAnnotation()
-                        if !onlyMine {
+                        if !mineOnly {
                             ForEach(shown.filter { !mineIDs.contains($0.id) }) { i in
                                 Marker(i.type, monogram: Text(""), coordinate: CLLocationCoordinate2D(latitude: i.lat, longitude: i.lon))
                                     .tint(color(i.status))
@@ -260,7 +275,7 @@ struct ReportsTab: View {
             .safeAreaInset(edge: .top) {
                 // Large text: the picker gets the full width; refresh is an icon button.
                 HStack(spacing: 8) {
-                    Picker("Status", selection: $status) {
+                    Picker("Status", selection: statusChoice) {
                         Text("Open").tag("open")
                         Text("Closed").tag("closed")
                         Text("All").tag("all")
@@ -280,7 +295,7 @@ struct ReportsTab: View {
                         .background(Theme.secondaryContainer, in: Capsule())
                     }
                     .accessibilityLabel("Reported in the past \(scopeLabel)")
-                    Button { Task { await load(force: true) } } label: {
+                    Button { Task { await refresh() } } label: {
                         Group {
                             if loading { ProgressView() } else { Icon(name: "refresh", size: 22) }
                         }
@@ -288,7 +303,7 @@ struct ReportsTab: View {
                         .foregroundStyle(Theme.onPrimaryContainer)
                         .background(Theme.secondaryContainer, in: Circle())
                     }
-                    .accessibilityLabel(loading ? "Loading" : "Search this area")
+                    .accessibilityLabel(loading ? "Loading" : mineOnly ? "Refresh my reports" : "Search this area")
                 }
                 .padding(10)
                 // Opaque, so the controls stay readable over busy map tiles in light and dark.
@@ -326,12 +341,13 @@ struct ReportsTab: View {
                 if let i = selected, !listMode {
                     PinCard(issue: i, color: color(i.status)) { detailFor = i } close: { selected = nil }
                         .padding(12)
-                } else if let error {
+                } else if let error, !mineOnly {
                     Text(error).font(.footnote).padding(12)
                         .background(Theme.errorContainer, in: RoundedRectangle(cornerRadius: Theme.Shape.card, style: .continuous))
                         .padding(12)
                 } else if !loading && others.isEmpty && mine.isEmpty && !listMode {
-                    Text("No \(status == "all" ? "" : status + " ")reports here in the past \(scopeLabel).").font(.footnote).padding(12)
+                    Text(mineOnly ? noneOfMine + "." : "No \(status == "all" ? "" : status + " ")reports here in the past \(scopeLabel).")
+                        .font(.footnote).padding(12)
                         .background(Theme.surface, in: Capsule()).padding(12)
                 }
             }
@@ -371,6 +387,8 @@ struct ReportsTab: View {
                 if UserDefaults.standard.bool(forKey: "openReport"), path.isEmpty, let r = store.visibleReports.first { path.append(r) }
             }
             .onChange(of: status) { _, _ in Task { await load() } }
+            // The scope went to everyone's (a tap on the chip, or a device with no reports): get the pins.
+            .onChange(of: mineOnly) { _, _ in selected = nil; Task { await load() } }
             // A tapped ticket alert opens its report.
             .onReceive(PushAlerts.shared.$openReportID) { id in
                 guard let id else { return }
@@ -388,8 +406,9 @@ struct ReportsTab: View {
 
     private var caption: String {
         let n = others.count, m = mine.count
-        let parts = [m > 0 ? "\(m) yours" : nil, onlyMine ? nil : "\(n) nearby"].compactMap { $0 }
-        return "Past \(scopeLabel) · " + parts.joined(separator: " · ")
+        // "0 yours" is for a status with no match, not for the wait before the first answer.
+        let yours: String? = m > 0 || (mineOnly && !store.visibleReports.isEmpty) ? "\(m) yours" : nil
+        return ["Past \(scopeLabel)", yours, mineOnly ? nil : "\(n) nearby"].compactMap { $0 }.joined(separator: " · ")
     }
 
     /// List mode: Yours (with Request updates) above Nearby, nearest first.
@@ -398,6 +417,11 @@ struct ReportsTab: View {
         let rows = others.map { ($0, here.distance(from: CLLocation(latitude: $0.lat, longitude: $0.lon))) }.sorted { $0.1 < $1.1 }
         let openCount = store.visibleReports.filter(\.isOpen).count
         return List {
+            if case .failed(let message) = store.myReportsState {
+                StateMessage(icon: "cloud_off", title: "Cannot load your reports", message: message,
+                             action: ("Try again", { Task { await refresh() } }))
+                    .listRowBackground(Color.clear)
+            }
             if !mine.isEmpty || !store.queued.isEmpty {
                 Section {
                     ForEach(store.queued) { q in
@@ -427,7 +451,7 @@ struct ReportsTab: View {
                     }
                 }
             }
-            if !onlyMine {
+            if !mineOnly {
                 Section("Nearby") {
                     ForEach(rows, id: \.0.id) { i, meters in
                         Button { detailFor = i } label: { NearbyRow(issue: i, meters: meters, color: color(i.status)) }
@@ -438,14 +462,32 @@ struct ReportsTab: View {
         }
         .listStyle(.plain)
         .overlay {
-            if rows.isEmpty && mine.isEmpty {
+            if mineOnly {
+                if !mine.isEmpty || !store.queued.isEmpty {
+                    EmptyView()
+                } else if store.visibleReports.isEmpty {
+                    ProgressView()
+                } else {
+                    StateMessage(icon: "search_off", title: noneOfMine, message: "Try another status or a longer time.")
+                }
+            } else if rows.isEmpty && mine.isEmpty {
                 StateMessage(icon: "search_off", title: "No reports", message: "Try another status or a longer time.")
             }
         }
     }
 
+    /// Everyone's pins take the city about 6 s per call, so "only mine" does not ask for them.
     private func load(force: Bool = false) async {
+        if mineOnly { return }
         await store.loadMap(center: center, status: status, force: force)
+    }
+
+    /// The refresh button: my reports when the tab shows only mine, the pins when it shows everyone's.
+    private func refresh() async {
+        guard mineOnly else { return await load(force: true) }
+        refreshing = true
+        await store.loadMyReports()
+        refreshing = false
     }
 
     private func color(_ s: String) -> Color {

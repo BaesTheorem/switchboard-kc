@@ -20,14 +20,21 @@ struct KC311App: App {
                 .task {
                     await PushAlerts.shared.start()
                     await store.refreshCatalog()
-                    // Start the map early: its city endpoint is slow.
-                    Task {
-                        let here = await Locator.shared.currentIfAllowed() ?? Locator.downtown
-                        await store.loadMap(center: here, status: "open")
+                    // Start everyone's map early, because its city endpoint is slow, but only
+                    // when the Reports tab shows it: the person chose everyone's, or this
+                    // device has no reports. A person with reports sees their own list first.
+                    let warmMap = {
+                        Task {
+                            let here = await Locator.shared.currentIfAllowed() ?? Locator.downtown
+                            await store.loadMap(center: here, status: "open")
+                        }
                     }
+                    let early = !store.reportsMineOnly
+                    if early { _ = warmMap() }
                     await APIHealth.shared.check()
                     await store.flushQueue()
                     await store.loadMyReports()
+                    if !early && !store.reportsMineOnly { _ = warmMap() }
                     await store.autoRequestUpdates()
                     Store.scheduleBackground()
                 }

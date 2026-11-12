@@ -44,6 +44,19 @@ extension Store {
     /// Reports to show: update requests appear as a note on their report.
     var visibleReports: [MyReport] { myReports.filter { !$0.isUpdateRequest } }
 
+    /// Whether the Reports tab shows only my reports. "Only mine" (the default)
+    /// needs reports to show, so a device that has none sees everyone's. Before
+    /// the first answer about my reports the scope stays mine: the tab waits,
+    /// and it does not ask the city for everyone's pins.
+    static func mineOnly(chosen: Bool, count: Int, state: LoadState) -> Bool {
+        chosen && (count > 0 || state == .idle || state == .loading)
+    }
+    /// The same rule with the saved choice, for the launch work.
+    var reportsMineOnly: Bool {
+        Store.mineOnly(chosen: UserDefaults.standard.object(forKey: "reportsOnlyMine") as? Bool ?? true,
+                       count: visibleReports.count, state: myReportsState)
+    }
+
     /// The update requests in my reports that name this report.
     func updateRequests(for r: some UpdateTarget) -> [MyReport] {
         let keys = ["report \(r.id)"] + (r.caseNumber.isEmpty ? [] : ["#\(r.caseNumber)"])

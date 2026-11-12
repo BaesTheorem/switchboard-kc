@@ -37,8 +37,8 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | iPhone (Swift) | Web | Notes |
 | --- | --- | --- |
 | Map of my reports and public pins (ReportsTab) | Same | All public pins are drawn (WebGL), with no 250-pin cap. |
-| Opens on the map of everyone's open reports | Changed | Opens on the list of my own reports, open and closed. A device with no reports sees everyone's open reports in the list. The web app asks the city for everyone's pins only when it shows them. |
-| Open, Closed, All; 1 year to 30 days; Everyone or Only mine | Changed | "Only mine" and "Everyone" each keep their own status. Mine starts at All, everyone's at Open. |
+| Opens on the list of my own reports, open and closed; a device with no reports sees everyone's open reports | Same | Both ask the city for everyone's pins only when they show them. |
+| Open, Closed, All; 1 year to 30 days; Everyone or Only mine | Same | "Only mine" and "Everyone" each keep their own status. Mine starts at All, everyone's at Open. |
 | Pin card: details, Request update | Same | A tap selects the nearest pin within 16 px. |
 | List: Yours above Nearby, by distance | Same | Nearby shows the 300 nearest. The list is the screen-reader view of the map. |
 | Public report detail | Fixed | Uses `reported_issue_detail`. Since Tyler's October 2026 fix, `get_issue_detail_citizen` (which the iPhone app uses) answers "Report not available." for other people's reports. |

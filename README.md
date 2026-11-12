@@ -36,10 +36,9 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
     "Nearby", which is sorted by distance.
   - An "Everyone / Only mine" chip filters. Open, Closed, All and a time
     scope (1 year by default, 6 months, 90 days, 30 days) apply to both.
-  - The web app opens this tab on the list of your own reports, open and
-    closed. With no reports of your own, it shows everyone's open reports.
-    It keeps the choices that you make after that. The iPhone app opens on
-    the map of everyone's.
+  - The tab opens on the list of your own reports, open and closed. With
+    no reports of your own, it shows everyone's open reports. It keeps the
+    choices that you make after that.
   - "Request updates" files a "311 Request Update" for your open reports.
   - "Add a note" on one of your reports sends a note to the staff. It goes
     into the report's history, and it cannot be changed or deleted. The box
@@ -150,7 +149,7 @@ For screenshots in a headless simulator, use these launch arguments:
 - `-startTab 0|2|3|4` for Report, Reports, City, and Services.
 - `-startStep category|all|details|sub|streetcar` (`sub` with
   `-startCategory trash`).
-- `-nearbyList YES|NO` and `-onlyMine YES|NO` (Reports).
+- `-reportsList YES|NO` and `-reportsOnlyMine YES|NO` (Reports).
 - `-startUpdates YES`, `-openReport YES`, and `-selectPin YES|recent`.
 - `-showSettings YES`, `-appearance auto|light|dark`, and `-deviceUID <id>`.
 
