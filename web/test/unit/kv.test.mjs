@@ -25,3 +25,19 @@ test("markKey does not fail a request when its status write is refused", async (
   t.mock.method(console, "warn", () => {});
   await markKey({ KV: { get: async () => null, put: overLimit } }, "rejected");
 });
+
+// ---------- settings kept in memory ----------
+
+test("getMode reads KV one time for a burst of calls, and setMode shows at once", async () => {
+  const { getMode, setMode } = await import("../../worker/auth.js");
+  let gets = 0;
+  const kv = new Map();
+  const env = { MODE: "open", KV: { get: async (k) => { gets++; return kv.get(k) ?? null; }, put: async (k, v) => { kv.set(k, v); } } };
+  assert.equal(await getMode(env), "open");
+  assert.equal(await getMode(env), "open");
+  assert.equal(await getMode(env), "open");
+  assert.equal(gets, 1);
+  await setMode(env, "off");
+  assert.equal(await getMode(env), "off");
+  assert.equal(gets, 1);
+});

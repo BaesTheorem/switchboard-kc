@@ -9,12 +9,15 @@
 // - The first look at an id records what exists and sends nothing.
 // - State is saved only after a push is accepted, so a failure retries.
 //
-// KV holds two values, so one cron run costs two reads:
-//   wpush:subs   { uid: [ {endpoint, keys, added} ] }  written by (un)subscribe
-//   wpush:state  { uid: { seeded, seen: { reportId: {sig, keys} } } }  written by the cron
-// Neither holds report text, addresses, or contact data.
+// The subscriptions and what the cron saw last are rows in the ledger's
+// SQLite (alerts-store.js). A run asks the ledger for the ids of this minute
+// and gives it back the rows that changed: two calls, and no KV. The two KV
+// values of the first version (wpush:subs, wpush:state) are read one time,
+// to move their content, and nothing reads them after that.
+// None of it holds report text, addresses, or contact data.
 
 import { buildPushPayload } from "@block65/webcrypto-web-push";
+import { ledger } from "./auth.js";
 import { myReports, reportDetail } from "./civic.js";
 import { b64url, deviceId, HttpError, json } from "./util.js";
 
@@ -25,8 +28,17 @@ const PUSH_HOSTS = [/(^|\.)push\.apple\.com$/, /^fcm\.googleapis\.com$/, /(^|\.)
 
 // ---------- VAPID ----------
 
+let vapidMemo = null;   // the keys never change, and the app asks for the public one at each start
+
 /** The server's VAPID keys, made once and kept in KV. */
 export async function vapid(env) {
+  if (vapidMemo) return vapidMemo;
+  const kept = await vapidFromKV(env);
+  vapidMemo = kept;
+  return kept;
+}
+
+async function vapidFromKV(env) {
   let v = await env.KV.get("cfg:vapid", { type: "json", cacheTtl: 3600 });
   if (v) return v;
   v = await env.KV.get("cfg:vapid", "json");
@@ -60,26 +72,30 @@ export async function subscribe(env, b) {
   const sub = checkSubscription(b.subscription);
   // Read the id's reports once: this checks the city key and that the id works.
   await myReports(env, uid);
-  const subs = (await env.KV.get("wpush:subs", "json")) || {};
-  const prior = b.previous ? String(b.previous) : "";
-  // A changed reports id (Settings > Restore) moves the subscription.
-  if (prior && prior !== uid && subs[prior]) {
-    subs[prior] = subs[prior].filter((x) => x.endpoint !== sub.endpoint);
-    if (!subs[prior].length) delete subs[prior];
-  }
-  subs[uid] = [...(subs[uid] || []).filter((x) => x.endpoint !== sub.endpoint), sub].slice(-5);
-  await env.KV.put("wpush:subs", JSON.stringify(subs));
+  const store = ledger(env);
+  await moveFromKV(env, store);
+  // A changed reports id (Settings > Restore) moves the subscription: `previous` is the id it had.
+  const prior = /^[0-9a-f]{16}$/.test(String(b.previous || "")) ? String(b.previous) : "";
+  await store.alertSubscribe(uid, sub, prior);
   return json({ ok: true });
 }
 
 export async function unsubscribe(env, b) {
   const uid = deviceId(b.device);
-  const subs = (await env.KV.get("wpush:subs", "json")) || {};
-  const before = subs[uid]?.length || 0;
-  subs[uid] = (subs[uid] || []).filter((x) => x.endpoint !== String(b.endpoint || ""));
-  if (!subs[uid].length) delete subs[uid];
-  if ((subs[uid]?.length || 0) !== before) await env.KV.put("wpush:subs", JSON.stringify(subs));
+  const store = ledger(env);
+  await moveFromKV(env, store);
+  await store.alertUnsubscribe(uid, String(b.endpoint || ""));
   return json({ ok: true });
+}
+
+let moved = false;   // in this isolate
+
+/** One time: moves the two KV values of the first version into the ledger. */
+async function moveFromKV(env, store, known = false) {
+  if (moved || known) { moved = true; return; }
+  const [subs, state] = await Promise.all([env.KV.get("wpush:subs", "json"), env.KV.get("wpush:state", "json")]);
+  await store.alertImport(subs || {}, state || {});
+  moved = true;
 }
 
 /** Sends one message to every subscription of an id. Returns the endpoints the push service says are gone. */
@@ -103,7 +119,9 @@ async function send(env, subs, message) {
 
 export async function test(env, b) {
   const uid = deviceId(b.device);
-  const subs = ((await env.KV.get("wpush:subs", "json")) || {})[uid] || [];
+  const store = ledger(env);
+  await moveFromKV(env, store);
+  const subs = await store.alertSubs(uid);
   if (!subs.length) throw new HttpError(404, "no_subscription", "Alerts are not on for this reports id.");
   const r = await send(env, subs, { title: "Alerts work", body: "You will get a notification when the city changes one of your reports.", tag: "test", url: "/#/reports" });
   return json({ ok: r.ok > 0, sent: r.ok });
@@ -154,55 +172,52 @@ function message(report, fresh) {
   };
 }
 
-/** One minute's pass. Ids are split into slices so each run stays under the free plan's 50 subrequests. */
+/**
+ * One minute's pass. The ledger gives the ids of this minute (at most 15, so a
+ * run stays under the free plan's 50 calls out) with what was seen, and gets
+ * back only the reports that changed.
+ */
 export async function poll(env, when = Date.now()) {
-  const subs = (await env.KV.get("wpush:subs", "json")) || {};
-  const uids = Object.keys(subs).sort();
-  if (!uids.length) return [];
-  const slices = Math.ceil(uids.length / 15);
+  const store = ledger(env);
   const minute = Math.floor(when / 60000);
-  const mine = uids.filter((_, i) => i % slices === minute % slices);
-  const state = (await env.KV.get("wpush:state", "json")) || {};
-  let changed = false;
+  let turn = await store.alertBatch(minute);
+  if (!turn.imported) {
+    await moveFromKV(env, store);
+    turn = await store.alertBatch(minute);
+  }
+  moved = true;
+  if (!turn.batch.length) return [];
+  const updates = [];
   const gone = [];
   const results = [];
-  for (const uid of mine) {
-    const st = state[uid] || { seeded: false, seen: {} };
+  for (const { uid, subs, seeded, seen } of turn.batch) {
+    const changed = {};
     try {
       const all = await myReports(env, uid);
       for (const report of all) {
         if (isUpdateRequest(report)) continue;
         const requests = requestsFor(report, all);
         const s = sig([report, ...requests]);
-        const prior = st.seen[report.id];
+        const prior = seen[report.id];
         if (prior && prior.sig === s) continue;
         const tl = await timeline(env, uid, report, requests);
         const known = new Set(prior?.keys || []);
         const fresh = tl.filter((e) => !known.has(entryKey(e)));
-        if (fresh.length && st.seeded && prior) {
-          const r = await send(env, subs[uid], message(report, fresh));
+        if (fresh.length && seeded && prior) {
+          const r = await send(env, subs, message(report, fresh));
           gone.push(...r.gone.map((endpoint) => [uid, endpoint]));
           if (!r.ok) continue;   // keep the old state: the next run tries again
         }
-        st.seen[report.id] = { sig: s, keys: [...new Set([...known, ...tl.map(entryKey)])].slice(-200) };
-        changed = true;
+        changed[report.id] = { sig: s, keys: [...new Set([...known, ...tl.map(entryKey)])].slice(-200) };
       }
-      if (!st.seeded) { st.seeded = true; changed = true; }
-      state[uid] = st;
+      // The first look records what exists and sends nothing.
+      if (!seeded || Object.keys(changed).length) updates.push({ uid, seen: changed });
       results.push({ uid: uid.slice(0, 4), reports: all.length });
     } catch (e) {
       results.push({ uid: uid.slice(0, 4), error: String(e.code || e.message || e) });
       if (e.code === "key_rejected" || e.code === "no_key") break;
     }
   }
-  if (changed) await env.KV.put("wpush:state", JSON.stringify(state));
-  if (gone.length) {
-    const fresh = (await env.KV.get("wpush:subs", "json")) || {};
-    for (const [uid, endpoint] of gone) {
-      fresh[uid] = (fresh[uid] || []).filter((x) => x.endpoint !== endpoint);
-      if (!fresh[uid].length) delete fresh[uid];
-    }
-    await env.KV.put("wpush:subs", JSON.stringify(fresh));
-  }
+  if (updates.length || gone.length) await store.alertSave(updates, gone);
   return results;
 }

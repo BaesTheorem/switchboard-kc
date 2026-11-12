@@ -13,14 +13,20 @@ import { HttpError, sameSecret, today } from "./util.js";
 
 const MODES = ["open", "off"];
 
+// Kept a minute in this isolate: every city call asks for the mode, and one open of the app makes several.
+let modeMemo = { mode: "", at: 0 };
+
 export async function getMode(env) {
+  if (modeMemo.mode && Date.now() - modeMemo.at < 60_000) return modeMemo.mode;
   const m = await env.KV.get("cfg:mode", { cacheTtl: 60 });
-  return MODES.includes(m) ? m : MODES.includes(env.MODE) ? env.MODE : "open";
+  modeMemo = { mode: MODES.includes(m) ? m : MODES.includes(env.MODE) ? env.MODE : "open", at: Date.now() };
+  return modeMemo.mode;
 }
 
 export async function setMode(env, mode) {
   if (!MODES.includes(mode)) throw new HttpError(400, "bad_mode", `Mode must be one of ${MODES.join(", ")}.`);
   await env.KV.put("cfg:mode", mode);
+  modeMemo = { mode, at: Date.now() };
 }
 
 export async function isAdmin(req, env) {
@@ -29,8 +35,8 @@ export async function isAdmin(req, env) {
 
 // ---------- the ledger ----------
 
-/** The one Ledger Durable Object (ledger.js) that holds the daily report counts. */
-const ledger = (env) => env.LEDGER.get(env.LEDGER.idFromName("ledger"));
+/** The one Ledger Durable Object (ledger.js) that holds the daily report counts and the alert data. */
+export const ledger = (env) => env.LEDGER.get(env.LEDGER.idFromName("ledger"));
 
 /** Throws unless this request may call the city. Returns who to count it against. */
 export async function gate(req, env) {

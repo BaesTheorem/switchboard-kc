@@ -3,7 +3,7 @@
 // app makes, each built here from checked fields, never a raw passthrough.
 // auth.js decides who may call it (anyone, unless the owner pauses it).
 
-import { burst, gate, getMode, isAdmin, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
+import { burst, gate, getMode, isAdmin, ledger, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
 import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { calendarFeed, gtfs, hud, meetings } from "./open.js";
@@ -16,12 +16,15 @@ const str = (v, max = 300) => String(v ?? "").slice(0, max);
 
 // ---------- city reads ----------
 
+// The catalog text, kept 10 minutes in this isolate, so the app's opens in that time read KV one time.
+let catalogMemo = { key: "", text: "", at: 0 };
+
 /** The report catalog (get_main), trimmed to the three tables the app reads and kept 6 hours. */
 async function catalog(env) {
   const cfg = await getConfig(env);
   if (!cfg) throw new HttpError(503, "no_key", "The server has no city API key yet.");
   const key = `cache:catalog:${cfg.app_version}`;
-  let text = await env.KV.get(key, { cacheTtl: 600 });
+  let text = catalogMemo.key === key && Date.now() - catalogMemo.at < 600_000 ? catalogMemo.text : await env.KV.get(key, { cacheTtl: 600 });
   if (!text) {
     const uid = randomHex(8);
     const o = await civicJSON(env, uid, "get_main", { ...baseFields(cfg, uid), timestamp: "0" });
@@ -33,6 +36,7 @@ async function catalog(env) {
     text = JSON.stringify({ at: Date.now(), tables: keep });
     await softPut(env, key, text, { expirationTtl: 6 * 3600 });
   }
+  catalogMemo = { key, text, at: Date.now() };
   return new Response(text, { headers: { "content-type": "application/json", "cache-control": "no-store" } });
 }
 
@@ -162,8 +166,8 @@ async function admin(req, env, url, ctx) {
   if (req.method === "POST" && p === "key") return setKey(env, await body(req));
   if (req.method === "POST" && p === "run") return json({ ok: true, results: await poll(env) });
   if (req.method === "GET" && p === "status") {
-    const subs = (await env.KV.get("wpush:subs", "json")) || {};
-    return json({ ok: true, mode: await getMode(env), alertIds: Object.keys(subs).length, key: await readKeyState(env), config: { ...((await getConfig(env)) || {}), key: undefined } });
+    const alerts = await ledger(env).alertStats();
+    return json({ ok: true, mode: await getMode(env), alertIds: alerts.ids, alerts, key: await readKeyState(env), config: { ...((await getConfig(env)) || {}), key: undefined } });
   }
   throw new HttpError(404, "not_found", "No such owner action.");
 }

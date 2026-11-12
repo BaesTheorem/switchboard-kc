@@ -48,11 +48,17 @@ export async function markKey(env, state) {
   if (keyState.state === state) return;
   const prior = await env.KV.get("civic:state", "json");
   keyState = { state, at: Date.now() };
+  stateMemo = { value: prior?.state === state ? prior : keyState, at: Date.now() };
   if (prior?.state !== state) await softPut(env, "civic:state", JSON.stringify(keyState));
 }
 
+let stateMemo = { value: null, at: 0 };
+
+/** The key's state, kept a minute in this isolate (the app asks at each start). */
 export async function readKeyState(env) {
-  return (await env.KV.get("civic:state", { type: "json", cacheTtl: 60 })) || { state: "unknown", at: 0 };
+  if (stateMemo.value && Date.now() - stateMemo.at < 60_000) return stateMemo.value;
+  stateMemo = { value: (await env.KV.get("civic:state", { type: "json", cacheTtl: 60 })) || { state: "unknown", at: 0 }, at: Date.now() };
+  return stateMemo.value;
 }
 
 async function signature(cfg, uid) {
