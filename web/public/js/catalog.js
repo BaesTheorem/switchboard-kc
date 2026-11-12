@@ -4,6 +4,7 @@
 // know (the city adds one) lands in "Other". Ported from Sections.swift.
 
 import { isUpdateRequestName, linkIcon, linkName, subId, subName } from "./models.js";
+import { isPoliceLink, POLICE_TYPES } from "./police.js";
 
 export const SECTIONS = [
   { id: "trash", title: "Trash & Recycling", icon: "delete",
@@ -98,7 +99,10 @@ export const phoneHref = (p) => `${p.text ? "sms" : "tel"}:${p.number.replace(/\
 
 /**
  * Every report type, page, and phone number, for the A to Z list. Each item:
- * { title, detail, icon, kind: "report"|"link"|"phone"|"streetcar", cat?, sub?, link?, phone? }.
+ * { title, detail, icon, kind: "report"|"link"|"phone"|"streetcar"|"police", cat?, sub?, link?, phone? }.
+ * The police report types are in the list, so a search for "theft" finds the
+ * police screen. The city's own link to the police report page is left out:
+ * that screen takes its place.
  */
 export function directory(cats, links) {
   const out = [];
@@ -108,11 +112,15 @@ export function directory(cats, links) {
     for (const s of c.subs) out.push({ title: subName(s), detail: `${c.displayName} · ${section}`, icon: c.icon, kind: "report", cat: c, sub: s });
   }
   for (const l of links) {
+    if (isPoliceLink(l)) continue;
     const where = SECTIONS.find((s) => ownsLink(s, l))?.title || "City";
     out.push({ title: linkName(l.name), detail: `Web page · ${where}`, icon: linkIcon(l.name), kind: "link", link: l });
   }
   for (const p of [...PHONES_PINNED, ...PHONES_MORE]) out.push({ title: p.name, detail: p.number, icon: p.text ? "sms" : "call", kind: "phone", phone: p });
   out.push({ title: "KC Streetcar problem", detail: "Streetcar Authority, not 311", icon: "tram", kind: "streetcar" });
+  for (const t of [...POLICE_TYPES, { name: "Copy of a report" }]) {
+    out.push({ title: `Police report, ${t.name[0].toLowerCase()}${t.name.slice(1)}`, detail: "Police Department, not 311", icon: "local_police", kind: "police" });
+  }
   return out.sort((a, b) => a.title.localeCompare(b.title, "en", { sensitivity: "base" }));
 }
 

@@ -1,5 +1,5 @@
-// What is wrong? The KC Streetcar shortcut, the A to Z list, then the nine
-// sections. The Services tab shows it as its home ("No photo" lands here);
+// What is wrong? The police and KC Streetcar shortcuts (neither is part of
+// 311), the A to Z list, then the nine sections. The Services tab shows it as its home ("No photo" lands here);
 // the Report tab shows it after a photo, with the photo on top. Ported from
 // SectionGrid in ReportBrowse.swift.
 
@@ -35,6 +35,11 @@ export default function view(main, _params, ctx) {
       return;
     }
     render(body, html`<div class="stack s12">
+      <a class="plain tile accent stack s8" href="#/${tab}/police">
+        ${icon("local_police")}
+        <span class="sub strong">Police report</span>
+        <span class="caption muted">Theft, damage, a crash with no injury, and more. Goes to the Police Department, not 311.</span>
+      </a>
       <a class="plain tile accent stack s8" href="#/${tab}/streetcar">
         ${icon("tram")}
         <span class="sub strong">KC Streetcar</span>

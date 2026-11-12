@@ -38,28 +38,25 @@ stays, and each person can operate a copy of it.
 
 ## Police reports
 
-Today the city's app has a menu link, "Make a Police Report", to a page of the
-Kansas City Police Department. Switchboard shows the same link in Health &
-Safety, and the police non-emergency number in the City tab.
+Done on the web on 2026-11-12: a Police report screen, above KC Streetcar on
+the Services tab. It has 911 and the non-emergency number, the department's
+conditions for an online report, its 13 report types (each one opens the
+department's own form, in English or Spanish), and the way to a copy of a
+report. The A to Z list finds a police report by its type. The facts are from
+the department's pages, with the date of the read, in `web/public/js/police.js`.
 
-Found on 2026-11-12: the link goes to `www.kcpd.org`, and the certificate of
-that host expired on 2026-10-17. A browser shows a warning. The page now lives
-at `kcpolice.org/crime/make-a-police-report-online/`.
+The city's app links to the police report page through `www.kcpd.org`, and
+the certificate of that host expired on 2026-10-17. The web app does not use
+that link.
 
-The plan, in steps:
+Open:
 
-1. Send people to the `kcpolice.org` address, not to the address in the city's menu.
-2. Make the police a line of its own. The police department is not a city
-   department and not part of 311, so this follows the rule of the app: the
-   report goes to the office that owns the problem.
-3. On that screen: 911 first for an emergency, then the types of report that
-   the department takes online (in plain words), the online report itself, the
-   non-emergency number, and how to get a copy of a report.
-
-Not known: the full list of report types (the page refuses automated reads,
-so a person must read it), and if the department's online system has an
-interface that accepts a report with the spot and the photo filled in. Until
-then the app opens the department's own form.
+- The iPhone app still shows the city's link.
+- The list of report types is a copy. Read the department's page again from
+  time to time, or make a check that compares the two.
+- It is not known if the department's online system has an interface that
+  accepts a report with the spot and the photo filled in. Until then the app
+  opens the department's own form.
 
 ## Pay city bills and tickets
 

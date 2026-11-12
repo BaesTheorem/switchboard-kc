@@ -100,3 +100,39 @@ test("KC Streetcar form: the nearest stop, the report types, and the channels", 
   await expect(page.getByRole("button", { name: /Email the Authority/ }).first()).toBeEnabled();
   expect(await axe(page)).toEqual([]);
 });
+
+test("Police report: above the streetcar, the department's forms, the numbers, and the way to a copy", async ({ context }) => {
+  const { page } = await ownerPage(context);
+  await page.goto("/#/services");
+  // Neither is part of 311, and the police come first.
+  await expect(page.locator("#body a.tile.accent .sub.strong")).toHaveText(["Police report", "KC Streetcar"], { timeout: 20_000 });
+  await page.locator("#body a.tile.accent").first().click();
+  await expect(page.locator("#title")).toHaveText("Police report");
+  await expect(page.getByText("Not part of 311. This goes to the Kansas City Police Department.")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Call 911" })).toHaveAttribute("href", "tel:911");
+  await expect(page.getByRole("link", { name: "Call 816-234-5111" })).toHaveAttribute("href", "tel:8162345111");
+  // Thirteen report types: twelve open the department's form for that type, one opens a department page.
+  const forms = page.locator("#pd-list a");
+  await expect(forms).toHaveCount(13);
+  expect(await forms.evaluateAll((as) => as.filter((a) => a.href.startsWith("https://secure.coplogic.com/dors/startreport/300005194/")).length)).toBe(12);
+  await expect(forms.first()).toHaveAttribute("href", /\/300010003$/);
+  await expect(page.getByRole("link", { name: /Request a report online/ })).toHaveAttribute("href", "https://secure.coplogic.com/rar/startrequest/200000962/");
+  await expect(page.getByRole("link", { name: /Call Criminal Records: 816-234-5100/ })).toHaveAttribute("href", "tel:8162345100");
+  // The city's own link goes to a host whose certificate expired. No link here uses that host.
+  expect(await page.locator('a[href*="kcpd.org"]').count()).toBe(0);
+  expect(await axe(page)).toEqual([]);
+  expect(await drawnIcons(page)).toEqual([]);
+  await page.getByRole("button", { name: "Español" }).click();
+  await expect(forms.first()).toHaveAttribute("href", /\/300010003\/es$/);
+  await expect(page.getByRole("link", { name: /Request a report online/ })).toHaveAttribute("href", /\/200000962\/es$/);
+  // The A to Z list finds a police report by its type, and Health & Safety opens the same screen.
+  await page.goto("/#/services/all");
+  await page.getByLabel("Search everything").fill("lost property");
+  await page.getByRole("link", { name: /Police report, lost property/ }).click();
+  await expect(page.locator("#title")).toHaveText("Police report");
+  await page.goto("/#/services/section/safety");
+  await page.getByRole("link", { name: "Make a police report" }).click();
+  await expect(page.locator("#title")).toHaveText("Police report");
+  expect(page.errors).toEqual([]);
+});
+

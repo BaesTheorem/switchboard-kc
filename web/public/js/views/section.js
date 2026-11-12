@@ -5,6 +5,7 @@
 import { categoriesIn, linksIn, sectionById } from "../catalog.js";
 import { bag, html, icon, render, safeUrl } from "../lib/html.js";
 import { linkIcon, linkName, subId, subName } from "../models.js";
+import { isPoliceLink } from "../police.js";
 import { listen, S } from "../state.js";
 import { spinner } from "../ui.js";
 import { wirePicks } from "./directory.js";
@@ -19,8 +20,11 @@ export default function view(main, params, ctx) {
     render(main, html`<div class="screen stack">
       ${links.length ? html`<section class="stack s8" aria-labelledby="pages-h">
         <h2 class="section-head" id="pages-h">Pages</h2>
-        <div class="rows">${links.map((l) => html`<a class="item" href="${safeUrl(l.url)}" target="_blank" rel="noopener">
-          ${icon(linkIcon(l.name))}<span class="grow sub">${linkName(l.name)}</span>${icon("open_in_new", "trail")}</a>`)}</div>
+        <div class="rows">${links.map((l) => (isPoliceLink(l)
+          // The app's own screen, not the city's link: that link goes to a host with an expired certificate.
+          ? html`<a class="item" href="#/${ctx.tab}/police">${icon("local_police")}<span class="grow sub">Make a police report</span>${icon("chevron_right", "trail")}</a>`
+          : html`<a class="item" href="${safeUrl(l.url)}" target="_blank" rel="noopener">
+          ${icon(linkIcon(l.name))}<span class="grow sub">${linkName(l.name)}</span>${icon("open_in_new", "trail")}</a>`))}</div>
       </section>` : ""}
       ${categoriesIn(S.categories, sec).map((c) => html`<section class="stack s8" aria-label="${c.displayName}">
         <h2 class="section-head">${icon(c.icon)}<span>${c.displayName}</span></h2>

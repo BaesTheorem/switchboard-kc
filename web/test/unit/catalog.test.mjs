@@ -86,7 +86,7 @@ const TABLES = {
 test("directory: every report type, page, and phone number, A to Z", () => {
   const { categories, links } = readCatalog(TABLES);
   const items = directory(categories, links);
-  // localizedCaseInsensitiveCompare order of the 35 titles.
+  // localizedCaseInsensitiveCompare order of the 49 titles: 35 from the catalog and the phone list, and 14 for the police.
   assert.deepEqual(items.map((i) => i.title), [
     "Animal bite, after hours", "Barking dogs (KC Pet Project)", "Beekeeper registration", "Call 311",
     "Civil Rights and Equal Opportunity", "Crosswalk Restoration Program", "Environmental compliance, illicit discharge",
@@ -95,6 +95,11 @@ test("directory: every report type, page, and phone number, A to Z", () => {
     "KC Streetcar See Say (text dispatch)", "KC Water, account shut off", "KC Water, lead service line hotline",
     "KCPD community complaints", "KCPD information", "KCPD records", "KCPD video requests", "MoDOT (highways and ramps)",
     "Municipal Court", "Parks facility reservations", "PIAC sidewalk requests", "Police non-emergency",
+    "Police report, accident: hit and run", "Police report, accident: no injury", "Police report, child custody violation",
+    "Police report, copy of a report", "Police report, drug activity tip", "Police report, extra patrol request",
+    "Police report, fraudulent use of a credit device", "Police report, identity theft", "Police report, lost property",
+    "Police report, phone harassment", "Police report, property or vehicle damage", "Police report, shoplifting (loss under $2,000)",
+    "Police report, theft (value under $2,000)", "Police report, traffic complaint",
     "Pothole in the Alley", "Pothole in the Street", "Regulated industries licenses", "Schedule a bulky item pickup",
     "Streetlights", "Tow lot (7750 E Front St)", "Towed vehicles, reclaim", "Traffic calming",
     "Wildlife (Lakeside Nature Center)",
@@ -132,6 +137,20 @@ test("directory: every report type, page, and phone number, A to Z", () => {
   assert.equal(sc.kind, "streetcar");
   assert.equal(sc.detail, "Streetcar Authority, not 311");
   assert.equal(sc.icon, "tram");
+
+  const pd = by("Police report, theft (value under $2,000)");
+  assert.equal(pd.kind, "police");
+  assert.equal(pd.detail, "Police Department, not 311");
+  assert.equal(pd.icon, "local_police");
+});
+
+test("directory: the police screen takes the place of the city's police report link", () => {
+  const { categories, links } = readCatalog(TABLES);
+  const city = { name: "Make a Police Report", url: "https://www.kcpd.org/crime/make-a-police-report-online/" };
+  const items = directory(categories, [...links, city]);
+  assert.equal(items.filter((i) => i.kind === "link" && /police/i.test(i.title)).length, 0);
+  assert.equal(items.filter((i) => i.kind === "police").length, 14);
+  assert.ok(!items.some((i) => i.link?.url.includes("kcpd.org")));
 });
 
 test("generalLinks keeps only the links that no section claims", () => {

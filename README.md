@@ -29,6 +29,11 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
   Water & Sewer). Each section shows its sub-types under their category, and
   the city pages that belong with it, such as the bulky pickup scheduler.
   "Everything, A to Z" lists each report type, page, and phone number.
+  - Two cards at the top go to offices that are not part of 311. "Police
+    report" (web app) shows the police department's conditions for an online
+    report and its report types, opens the department's own form, and tells
+    how to get a copy of a report. "KC Streetcar" writes a report to the
+    Streetcar Authority.
 - **Reports.** Your reports and everyone else's, in a list or on one map.
   - On the map, your reports are dark markers with a person glyph, drawn
     on top of the public pins. Public pins have status colors.
