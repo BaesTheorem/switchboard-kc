@@ -11,6 +11,7 @@ import SwiftUI
 /// report goes from the user's own number or address and replies come back.
 enum Streetcar {
     static let seeSayNumber = "8168374800"
+    static let seeSayDisplay = "816-837-4800"
     static let email = "info@kcstreetcar.org"
     static let seeSayWeb = URL(string: "https://tellkcstreetcar.com")!
 
@@ -59,6 +60,7 @@ struct StreetcarForm: View {
     @State private var composer: Composer?
     @State private var showWeb = false
     @State private var result: String?
+    @Environment(\.openURL) private var openURL
 
     enum Composer: Identifiable { case sms, mail; var id: Int { hashValue } }
 
@@ -101,6 +103,20 @@ struct StreetcarForm: View {
                         Text("Not part of 311. This goes to the Streetcar Authority.").font(.subheadline).foregroundStyle(Theme.onSurfaceVariant)
                     }
                 }
+
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("See Say text line").font(.title2.weight(.semibold)).foregroundStyle(Theme.onPrimaryContainer)
+                    Text("A streetcar dispatcher reads it now and can text you back. For safety, behavior, cleanliness and damage.")
+                        .font(.subheadline).foregroundStyle(Theme.onPrimaryContainer.opacity(0.8))
+                    FilledButton(title: "Text \(Streetcar.seeSayDisplay)", icon: "sms") {
+                        if let u = URL(string: "sms:\(Streetcar.seeSayNumber)") { openURL(u) }
+                    }
+                    Text("For an emergency, call 911. Or write the report below, and the app adds the stop and the GPS point.")
+                        .font(.footnote).foregroundStyle(Theme.onPrimaryContainer.opacity(0.8))
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.primaryContainer, in: RoundedRectangle(cornerRadius: Theme.Shape.sheet, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 8) {
                     SectionLabel(text: "What happened")

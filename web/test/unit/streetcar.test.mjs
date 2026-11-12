@@ -4,7 +4,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  appleTouch, CARS, DEFAULT_KIND, KINDS, mailBody, mailSubject, mailtoHref, nearestStop, smsBody, smsHref, STOPS, whereText,
+  appleTouch, CARS, DEFAULT_KIND, KINDS, mailBody, mailSubject, mailtoHref, nearestStop, SEE_SAY_DIRECT, SEE_SAY_DISPLAY,
+  SEE_SAY_NUMBER, smsBody, smsHref, STOPS, whereText,
 } from "../../public/js/views/streetcar.js";
 
 const AT_STOP = { kind: { name: "Graffiti", dispatch: true }, details: "  Tag on the shelter glass.\n", onboard: false, car: "NA", stop: "Library (9th & Main)" };
@@ -79,4 +80,9 @@ test("appleTouch: iPhone and iPad yes, a Mac or Android no", () => {
   assert.equal(appleTouch({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", maxTouchPoints: 5 }, null), true);
   assert.equal(appleTouch({ userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", maxTouchPoints: 0 }, null), false);
   assert.equal(appleTouch({ userAgent: "Mozilla/5.0 (Linux; Android 14)", maxTouchPoints: 5 }, null), false);
+});
+
+test("the direct See Say link opens an empty text to the number the screen shows", () => {
+  assert.equal(SEE_SAY_DISPLAY.replace(/\D/g, ""), SEE_SAY_NUMBER);
+  assert.equal(SEE_SAY_DIRECT, "sms:8168374800");
 });

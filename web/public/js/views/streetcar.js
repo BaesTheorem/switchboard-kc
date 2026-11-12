@@ -15,6 +15,9 @@ import { contactSaved, draftFor, S } from "../state.js";
 import { acts, snack } from "../ui.js";
 
 export const SEE_SAY_NUMBER = "8168374800";
+/** The number as people write it, and a link that opens an empty text to it. */
+export const SEE_SAY_DISPLAY = "816-837-4800";
+export const SEE_SAY_DIRECT = `sms:${SEE_SAY_NUMBER}`;
 export const EMAIL = "info@kcstreetcar.org";
 export const SEE_SAY_WEB = "https://tellkcstreetcar.com";
 
@@ -131,6 +134,12 @@ export default function streetcar(main, params, ctx) {
           <div class="sub muted">Not part of 311. This goes to the Streetcar Authority.</div>
         </div>
       </div>
+      <section class="hero stack s12" aria-labelledby="sc-direct">
+        <h2 class="title2" id="sc-direct">See Say text line</h2>
+        <p class="sub muted">A streetcar dispatcher reads it now and can text you back. For safety, behavior, cleanliness and damage.</p>
+        <a class="btn" href="${safeUrl(SEE_SAY_DIRECT)}">${icon("sms")}<span>Text ${SEE_SAY_DISPLAY}</span></a>
+        <p class="caption muted">For an emergency, call 911. Or write the report below, and the app adds the stop and the GPS point.</p>
+      </section>
       <div class="stack s8">
         <h2 class="label"><label class="label" for="sc-kind">What happened</label></h2>
         <div class="card">
