@@ -52,8 +52,9 @@ that link.
 Open:
 
 - The iPhone app still shows the city's link.
-- The list of report types is a copy. Read the department's page again from
-  time to time, or make a check that compares the two.
+- The list of report types is a copy. `npm run check-sources` (in `web/`)
+  reads the department's page again and says what changed. It does not run
+  on a schedule yet.
 - It is not known if the department's online system has an interface that
   accepts a report with the spot and the photo filled in. Until then the app
   opens the department's own form.
@@ -70,8 +71,9 @@ with the date of the read, in `web/public/js/pay.js`.
 
 Open:
 
-- The list is a copy. Read the city's page again from time to time. That
-  page refuses most automated reads; a real Chrome gets through.
+- The list is a copy. `npm run check-sources` (in `web/`) reads the city's
+  page again and says what changed. That page refuses most automated reads;
+  the script uses a real Chrome, which gets through.
 - It is not known if an office has a public lookup for a balance or a due
   date. With one, the app can show "your water bill is due on" for the home
   address.
