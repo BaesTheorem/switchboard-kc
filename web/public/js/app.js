@@ -7,10 +7,11 @@ import { checkHealth, onKeyTrouble } from "./health.js";
 import { $ } from "./lib/html.js";
 import { DOWNTOWN, currentIfAllowed } from "./lib/geo.js";
 import { local, persist } from "./lib/store.js";
+import { reportScope } from "./models.js";
 import { route, start } from "./router.js";
 import {
   autoRequestUpdates, deviceId, flushQueue, loadConfig, loadMap, loadMyReports, loadQueue, loadSavedCatalog,
-  loadSavedMaps, loadSavedMine, recoverDeviceId, refreshCatalog, S,
+  loadSavedMaps, loadSavedMine, recoverDeviceId, refreshCatalog, S, visibleReports,
 } from "./state.js";
 import "./install.js";   // listens for the install prompt from the start
 import { applyAppearance } from "./theme.js";
@@ -75,9 +76,15 @@ async function boot() {
 
   started = true;
   await refreshCatalog();
-  // Start the map early: its city endpoint is slow.
-  currentIfAllowed().then((here) => loadMap(here || S.mapCenter || DOWNTOWN, "open"));
+  // Start everyone's map early, because its city endpoint is slow, but only
+  // when the Reports tab shows it: the person chose everyone's, or this
+  // device has no reports. A person with reports sees their own list first.
+  const everyone = () => reportScope(local.get("reportsOnlyMine", true), visibleReports().length, S.myState) === "everyone";
+  const warmMap = () => currentIfAllowed().then((here) => loadMap(here || S.mapCenter || DOWNTOWN, "open"));
+  const early = everyone();
+  if (early) warmMap();
   await loadMyReports();
+  if (!early && everyone()) warmMap();
   await foreground();
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("/sw.js").catch(() => {});
   deviceId();

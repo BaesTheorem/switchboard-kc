@@ -163,15 +163,21 @@ test("offline: the report waits in the queue and goes out when the server answer
   expect(issueFrom(submits[0]).subtype).toBe("Pothole in the Street");
 });
 
-test("reports: the public map loads pins, the list shows them, and a pin opens its detail", async ({ context }) => {
+test("reports: an id with no reports sees everyone's list, a row opens its detail, and the map draws the pins", async ({ context }) => {
   const { page } = await ownerPage(context);
   await page.goto("/#/reports");
-  await expect(page.locator("#map canvas")).toBeVisible({ timeout: 30_000 });
+  // The tab opens on the list. "Only mine" has nothing to show for this id, so the list is everyone's open reports.
+  await expect(page.getByRole("heading", { name: "Nearby" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("button", { name: "Open", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#only")).toHaveCount(0);
   await expect(page.locator("#caption")).toContainText(/[1-9]\d* nearby/, { timeout: 60_000 });
-  await page.getByRole("button", { name: "Show list" }).click();
-  await expect(page.getByRole("heading", { name: "Nearby" })).toBeVisible();
   expect(await axe(page)).toEqual([]);
-  await page.locator("[data-pub]").first().click();
+  // The pins land in groups and each group draws the list again. A redraw between the press and the release must not lose the tap.
+  const box = await page.locator("[data-pub]").first().boundingBox();
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.mouse.down();
+  await page.evaluate(async () => (await import("/js/state.js")).emit("map"));
+  await page.mouse.up();
   const sheet = page.locator("#sheet");
   await expect(sheet.locator(".track")).toBeVisible();
   await expect(sheet.locator(".spinner")).toBeHidden({ timeout: 30_000 });
@@ -180,7 +186,7 @@ test("reports: the public map loads pins, the list shows them, and a pin opens i
   await page.getByRole("button", { name: "Closed" }).click();
   await expect(page.getByRole("button", { name: "Closed" })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "Show map" }).click();
-  await expect(page.locator("#map canvas")).toBeVisible();
+  await expect(page.locator("#map canvas")).toBeVisible({ timeout: 30_000 });
   expect(page.errors).toEqual([]);
 });
 
@@ -195,9 +201,31 @@ test("my reports: a reports id with reports shows them, their detail, and the up
     added_on: now, history_object: [{ title: "Notes Added By staff", details: "Sent for review.", dateofupdate: "10/23/2026 12:00 PM", timestamp: now }] };
   await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [row] }) }));
   await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue }) }));
+  let mapCalls = 0;
+  await page.route("**/api/map", (route) => {
+    mapCalls++;
+    return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, response_status: { response_data: [] } }) });
+  });
   await page.goto("/#/reports");
-  await page.getByRole("button", { name: "Show list" }).click();
+  // The tab opens on the list of this id's reports, open and closed, and it does not ask the city for everyone's pins.
   await expect(page.getByRole("heading", { name: "Yours" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("button", { name: "All", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#only")).toContainText("Only mine");
+  await expect(page.getByRole("heading", { name: "Nearby" })).toHaveCount(0);
+  await expect(page.locator("#caption")).toHaveText("Past 1 year · 1 yours");
+  expect(mapCalls).toBe(0);
+  // "Everyone" adds the public reports, with their own status (Open), and "Only mine" takes them away again.
+  await page.locator("#only").click();
+  await expect(page.getByRole("heading", { name: "Nearby" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Open", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(() => mapCalls).toBeGreaterThan(0);
+  await page.locator("#only").click();
+  await expect(page.getByRole("heading", { name: "Nearby" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "All", exact: true })).toHaveAttribute("aria-pressed", "true");
+  // A status with no match says so.
+  await page.getByRole("button", { name: "Closed", exact: true }).click();
+  await expect(page.getByText("None of your reports are closed")).toBeVisible();
+  await page.getByRole("button", { name: "All", exact: true }).click();
   await page.locator("#list a.tile").first().click();
   await expect(page.locator(".track")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Timeline" })).toBeVisible({ timeout: 30_000 });

@@ -17,6 +17,7 @@ for (const scheme of ["light", "dark"]) {
     localStorage.setItem("dryRun", "true");
     localStorage.setItem("ownerToken", JSON.stringify(o));
     localStorage.setItem("deviceUID", JSON.stringify("5c5c5c5c5c5c5c5c"));
+    localStorage.setItem("reportsList", "false");   // the Reports tab opens on the list; the "map" screen is the map
   }, [env.ADMIN_TOKEN]);
   const p = await ctx.newPage();
   const shot = async (name, hash, wait, after) => {

@@ -281,3 +281,14 @@ export function lastPlowed(rows) {
   }
   return last;
 }
+
+/**
+ * Whose reports the Reports tab shows: "mine" or "everyone". "Only mine" needs
+ * reports to show, so a device that has none sees everyone's. Before the
+ * first answer about my reports (state "idle" or "loading") the scope stays
+ * "mine": the tab waits, and it does not ask the city for everyone's pins.
+ */
+export function reportScope(onlyMine, count, myState) {
+  if (!onlyMine) return "everyone";
+  return count > 0 || myState === "idle" || myState === "loading" ? "mine" : "everyone";
+}

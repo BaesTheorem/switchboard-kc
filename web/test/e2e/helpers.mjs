@@ -1,8 +1,11 @@
 // Shared set-up for the browser tests. The tests run against a deployed
 // server and read real city data, but they never file anything: every test
 // page answers /api/submit, /api/push/* and the key download itself.
+//
+// LOCAL_FILES=1 checks a change before its deploy: the pages, scripts and
+// styles come from web/public on this disk, and the API stays the deployed one.
 
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -56,6 +59,13 @@ export async function ownerPage(context, { device = TEST_DEVICE, contact = null,
     if (!localStorage.getItem("deviceUID")) localStorage.setItem("deviceUID", JSON.stringify(dev));
     if (c && !localStorage.getItem("contact")) localStorage.setItem("contact", JSON.stringify(c));
   }, [OWNER, device, contact]);
+  if (process.env.LOCAL_FILES) {
+    await context.route(`${BASE}/**`, (route) => {
+      const { pathname } = new URL(route.request().url());
+      const file = join(web, "public", pathname === "/" ? "index.html" : decodeURIComponent(pathname));
+      return !pathname.startsWith("/api/") && existsSync(file) && statSync(file).isFile() ? route.fulfill({ path: file }) : route.fallback();
+    });
+  }
   const page = await context.newPage();
   const submits = [];
   await page.route("**/api/submit", async (route) => {

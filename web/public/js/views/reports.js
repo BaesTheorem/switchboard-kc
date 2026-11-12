@@ -1,7 +1,8 @@
-// My reports and everyone else's on one map, or in a list. Mine are dark
-// person pins drawn on top; in the list they sit in a "Yours" section above
-// "Nearby". Open / Closed / All and a time scope apply to both; "Only mine"
-// hides everyone else. Ported from ReportsTab in OtherTabs.swift.
+// My reports and everyone else's, in a list or on one map. The tab opens on
+// the list of my own reports; a device with none sees everyone's. Mine are
+// dark person pins drawn on top of the map; in the list they sit in a "Yours"
+// section above "Nearby". Open / Closed / All and a time scope apply to both;
+// "Only mine" hides everyone else. Ported from ReportsTab in OtherTabs.swift.
 //
 // The web map draws every public pin as one WebGL circle layer, so it needs
 // no 250-pin cap. The list is the screen-reader view of the same reports.
@@ -11,7 +12,7 @@ import { DOWNTOWN, current, currentIfAllowed, meters } from "../lib/geo.js";
 import { bag, html, icon, on, render, safeUrl } from "../lib/html.js";
 import { local } from "../lib/store.js";
 import { dispose, makeMap } from "../map.js";
-import { stage } from "../models.js";
+import { reportScope, stage } from "../models.js";
 import {
   asTarget, cachedFullDetail, fullDetail, listen, loadMap, loadMyReports, S, visibleReports,
 } from "../state.js";
@@ -22,28 +23,36 @@ const SCOPES = [[365, "1 year"], [182, "6 months"], [90, "90 days"], [30, "30 da
 
 export default function view(main, _params, ctx) {
   const off = bag();
-  let status = sessionStorage.getItem("mapStatus") || "open";
   let scopeDays = local.get("mapScopeDays", 365);
-  let onlyMine = local.get("onlyMine", false);
-  let listMode = local.get("nearbyList", false);
+  // The first version kept these two choices as "onlyMine" and "nearbyList",
+  // and it opened on the map of everyone's reports.
+  let onlyMine = local.get("reportsOnlyMine", true);
+  let listMode = local.get("reportsList", true);
+  // Each scope keeps its own status: all of my reports, the open ones of everyone's.
+  const statusBy = { mine: sessionStorage.getItem("mineStatus") || "all", everyone: sessionStorage.getItem("mapStatus") || "open" };
+  let refreshing = false, alive = true;
   let center = S.mapCenter || DOWNTOWN;
   let selected = null;
   let m = null, mineMarkers = [], meMarker = null;
 
   const scopeLabel = () => (SCOPES.find(([d]) => d === scopeDays) || SCOPES[0])[1];
   const cutoff = () => Date.now() - scopeDays * 86400e3;
-  const issues = () => (S.map[status] || []).filter((i) => (i.submitted ?? Infinity) >= cutoff());
+  const scope = () => reportScope(onlyMine, visibleReports().length, S.myState);
+  const mineOnly = () => scope() === "mine";
+  const status = () => statusBy[scope()];
+  const issues = () => (S.map[status()] || []).filter((i) => (i.submitted ?? Infinity) >= cutoff());
   const mineIds = () => new Set(visibleReports().map((r) => r.id));
-  const mine = () => visibleReports().filter((r) => (status === "all" || (status === "open") === r.isOpen) && (r.added?.getTime() ?? Infinity) >= cutoff());
-  const others = () => { if (onlyMine) return []; const ids = mineIds(); return issues().filter((i) => !ids.has(i.id)); };
-  const loading = () => S.mapLoading.has(status);
+  const mine = () => visibleReports().filter((r) => (status() === "all" || (status() === "open") === r.isOpen) && (r.added?.getTime() ?? Infinity) >= cutoff());
+  const others = () => { if (mineOnly()) return []; const ids = mineIds(); return issues().filter((i) => !ids.has(i.id)); };
+  const loading = () => (mineOnly() ? refreshing || S.myState === "loading" : S.mapLoading.has(status()));
+  const noneOfMine = () => (status() === "all" ? `No reports of yours in the past ${scopeLabel()}` : `None of your reports are ${status()}`);
 
   render(main, html`<div class="mapwrap">
     <div class="map" id="map" ${listMode ? "hidden" : ""}></div>
     <div id="list" class="screen" ${listMode ? "" : "hidden"} style="position:absolute;inset:0;overflow:auto;padding-top:132px;max-width:none"></div>
     <div class="map-controls" role="toolbar" aria-label="Report filters">
       <div class="seg grow" role="group" aria-label="Status">
-        ${["open", "closed", "all"].map((s) => html`<button type="button" data-status="${s}" aria-pressed="${String(s === status)}">${s[0].toUpperCase() + s.slice(1)}</button>`)}
+        ${["open", "closed", "all"].map((s) => html`<button type="button" data-status="${s}" aria-pressed="${String(s === status())}">${s[0].toUpperCase() + s.slice(1)}</button>`)}
       </div>
       <span class="icon-btn scope" title="Reported in the past">${icon("date_range")}
         <select id="scope" aria-label="Reported in the past">
@@ -60,19 +69,22 @@ export default function view(main, _params, ctx) {
 
   // ---------- chrome ----------
   const paintChrome = () => {
-    for (const b of main.querySelectorAll("[data-status]")) b.setAttribute("aria-pressed", String(b.dataset.status === status));
+    for (const b of main.querySelectorAll("[data-status]")) b.setAttribute("aria-pressed", String(b.dataset.status === status()));
     render($("#refresh"), loading() ? html`<progress class="circle small" aria-label="Loading"></progress>` : icon("refresh"));
-    $("#refresh").setAttribute("aria-label", loading() ? "Loading" : "Search this area");
+    $("#refresh").setAttribute("aria-label", loading() ? "Loading" : mineOnly() ? "Refresh my reports" : "Search this area");
     const n = others().length, k = mine().length;
-    $("#caption").textContent = `Past ${scopeLabel()} · ${[k ? `${k} yours` : null, onlyMine ? null : `${n} nearby`].filter(Boolean).join(" · ")}`;
+    // "0 yours" is for a status with no match, not for the wait before the first answer.
+    const yours = k || (mineOnly() && visibleReports().length) ? `${k} yours` : null;
+    $("#caption").textContent = [`Past ${scopeLabel()}`, yours, mineOnly() ? null : `${n} nearby`].filter(Boolean).join(" · ");
     render($("#who"), visibleReports().length ? html`<button class="pill ${onlyMine ? "on" : ""}" type="button" id="only"
       aria-label="${onlyMine ? "Showing only your reports. Show everyone's" : "Showing everyone's reports. Show only yours"}">
       ${icon(onlyMine ? "person" : "groups")}<span>${onlyMine ? "Only mine" : "Everyone"}</span></button>` : "");
     const bottom = $("#bottom");
     if (selected && !listMode) render(bottom, pinCard(selected));
-    else if (S.mapError) render(bottom, html`<div class="error-box foot">${S.mapError}</div>`);
+    else if (S.mapError && !mineOnly()) render(bottom, html`<div class="error-box foot">${S.mapError}</div>`);
     else if (!loading() && !others().length && !mine().length && !listMode) {
-      render(bottom, html`<div class="pill" style="padding:8px 14px;font-size:13px">No ${status === "all" ? "" : `${status} `}reports here in the past ${scopeLabel()}.</div>`);
+      render(bottom, html`<div class="pill" style="padding:8px 14px;font-size:13px">${mineOnly() ? `${noneOfMine()}.`
+        : `No ${status() === "all" ? "" : `${status()} `}reports here in the past ${scopeLabel()}.`}</div>`);
     } else bottom.replaceChildren();
   };
 
@@ -146,20 +158,34 @@ export default function view(main, _params, ctx) {
   off(() => { for (const mk of mineMarkers) mk.remove(); dispose(m); m = null; });
 
   // ---------- list ----------
+  // The pins land in groups, and each group draws the list again. A redraw
+  // between the press and the release of a tap takes the row from under the
+  // pointer, and the browser then drops the click. So the list waits for the
+  // release, and a redraw keeps the keyboard focus on its row.
+  let held = false, stale = false, holdTimer = 0;
+  const letGo = () => {
+    held = false;
+    if (stale && alive) { stale = false; paintList(); }
+  };
   const paintList = () => {
     if (!listMode) return;
+    if (held) { stale = true; return; }
+    const focused = $("#list").contains(document.activeElement) ? document.activeElement : null;
+    const focusKey = focused?.dataset.pub ? `[data-pub="${focused.dataset.pub}"]` : focused?.getAttribute("href") ? `a[href="${focused.getAttribute("href")}"]` : null;
     const rows = others().map((i) => [i, meters(center, i)]).sort((a, b) => a[1] - b[1]);
     const shown = rows.slice(0, 300);
     const openCount = visibleReports().filter((r) => r.isOpen).length;
     const ms = mine();
     render($("#list"), html`<div class="stack s20" style="max-width:720px;margin:0 auto">
+      ${S.myState === "failed" ? empty({ icon: "cloud_off", title: "Cannot load your reports", message: S.myError || "", action: { label: "Try again", attr: "data-retry" } }) : ""}
       ${ms.length || S.queued.length ? html`<section class="stack s12" aria-labelledby="yours-h">
         <div class="row"><h2 class="label grow" id="yours-h">Yours</h2>
           ${openCount ? html`<a class="link" href="#/reports/updates">${icon("notifications_active")}<span>&nbsp;Request updates</span></a>` : ""}</div>
         ${S.queued.map((q) => html`<div class="card row">${icon("cloud_upload", "open-text")}<div class="stack s4"><p class="sub strong">${q.title}</p><p class="caption muted">Waiting to send</p></div></div>`)}
         ${ms.map((r) => reportCard(r, `#/reports/mine/${r.id}`))}
-      </section>` : ""}
-      ${onlyMine ? "" : html`<section class="stack s8" aria-labelledby="near-h">
+      </section>` : !mineOnly() ? "" : !visibleReports().length ? spinner()
+        : empty({ icon: "search_off", title: noneOfMine(), message: "Try another status or a longer time." })}
+      ${mineOnly() ? "" : html`<section class="stack s8" aria-labelledby="near-h">
         <h2 class="label" id="near-h">Nearby</h2>
         ${!rows.length ? (loading() ? spinner() : empty({ icon: "search_off", title: "No reports", message: "Try another status or a longer time." })) : html`
         <div class="rows">${shown.map(([i, d]) => html`<button class="item" type="button" data-pub="${i.id}" style="align-items:flex-start">
@@ -171,20 +197,53 @@ export default function view(main, _params, ctx) {
         ${rows.length > shown.length ? html`<p class="caption muted">Showing the ${shown.length} nearest of ${rows.length}.</p>` : ""}`}
       </section>`}
     </div>`);
+    if (focusKey) $("#list").querySelector(focusKey)?.focus({ preventScroll: true });
   };
 
   const paint = () => { paintChrome(); paintMap(); paintList(); };
-  const load = (force = false) => loadMap(center, status, force);
+  // Everyone's pins take the city about 6 s per call, so "only mine" does not ask for them.
+  const load = (force = false) => (mineOnly() ? null : loadMap(center, status(), force));
+  let scopeShown = scope();
+  /** Draws again, and loads the pins when the scope went to everyone's (a toggle, or a device with no reports). */
+  const rescope = () => {
+    const changed = scope() !== scopeShown;
+    scopeShown = scope();
+    if (changed) selected = null;
+    paint();
+    if (changed) load();
+  };
 
   // ---------- events ----------
-  off(on(main, "click", "[data-status]", (e, b) => { status = b.dataset.status; sessionStorage.setItem("mapStatus", status); selected = null; paint(); load(); }));
+  off(on(main, "click", "[data-status]", (e, b) => {
+    statusBy[scope()] = b.dataset.status;
+    sessionStorage.setItem(mineOnly() ? "mineStatus" : "mapStatus", b.dataset.status);
+    selected = null;
+    paint();
+    load();
+  }));
   off(on(main, "change", "#scope", (e) => { scopeDays = Number(e.target.value); local.set("mapScopeDays", scopeDays); selected = null; paint(); }));
-  off(on(main, "click", "#refresh", () => load(true)));
-  off(on(main, "click", "#only", () => { onlyMine = !onlyMine; local.set("onlyMine", onlyMine); selected = null; paint(); }));
+  const refreshMine = async () => {
+    refreshing = true;
+    paintChrome();
+    await loadMyReports();
+    refreshing = false;
+    if (alive) paintChrome();
+  };
+  off(() => { alive = false; clearTimeout(holdTimer); });
+  off(on(main, "pointerdown", "#list", () => { clearTimeout(holdTimer); held = true; holdTimer = setTimeout(letGo, 5000); }));   // never held for long
+  // The click comes after the release (later still on a touch screen), so the redraw waits a moment more.
+  const up = () => { if (held) { clearTimeout(holdTimer); holdTimer = setTimeout(letGo, 350); } };
+  const cancel = () => { if (held) { clearTimeout(holdTimer); letGo(); } };   // the press became a scroll
+  addEventListener("pointerup", up);
+  addEventListener("pointercancel", cancel);
+  off(() => { removeEventListener("pointerup", up); removeEventListener("pointercancel", cancel); });
+  off(on(main, "click", "#refresh", () => (mineOnly() ? refreshMine() : load(true))));
+  off(on(main, "click", "[data-retry]", refreshMine));
+  off(on(main, "click", "#only", () => { onlyMine = !onlyMine; local.set("reportsOnlyMine", onlyMine); rescope(); }));
   off(on(main, "click", "#me", async () => { const p = await current(); if (p && m) { showMe(p); m.map.easeTo({ center: [p.lng, p.lat] }); } }));
   off(on(main, "click", "#mode", async () => {
     listMode = !listMode;
-    local.set("nearbyList", listMode);
+    local.set("reportsList", listMode);
     selected = null;
     $("#map").hidden = listMode;
     $("#list").hidden = !listMode;
@@ -198,7 +257,7 @@ export default function view(main, _params, ctx) {
   off(on(main, "click", "[data-details]", () => selected && publicDetail(selected)));
   off(on(main, "click", "[data-pub]", (e, b) => { const i = issues().find((x) => x.id === b.dataset.pub); if (i) publicDetail(i); }));
   off(wireRequestUpdates(main, (id) => { const i = issues().find((x) => x.id === id); return i ? asTarget(i) : null; }));
-  off(listen("map", paint), listen("mine", paint), listen("detail", paintList), listen("queue", paintList));
+  off(listen("map", paint), listen("mine", rescope), listen("detail", paintList), listen("queue", paintList));
 
   // A tapped alert opens its report (the service worker sends the path).
   paint();

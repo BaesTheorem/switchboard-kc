@@ -29,13 +29,17 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
   Water & Sewer). Each section shows its sub-types under their category, and
   the city pages that belong with it, such as the bulky pickup scheduler.
   "Everything, A to Z" lists each report type, page, and phone number.
-- **Reports.** Your reports and everyone else's on one map, or in a list.
+- **Reports.** Your reports and everyone else's, in a list or on one map.
   - On the map, your reports are dark markers with a person glyph, drawn
     on top of the public pins. Public pins have status colors.
   - In the list, a "Yours" section with your report cards sits above
     "Nearby", which is sorted by distance.
   - An "Everyone / Only mine" chip filters. Open, Closed, All and a time
     scope (1 year by default, 6 months, 90 days, 30 days) apply to both.
+  - The web app opens this tab on the list of your own reports, open and
+    closed. With no reports of your own, it shows everyone's open reports.
+    It keeps the choices that you make after that. The iPhone app opens on
+    the map of everyone's.
   - "Request updates" files a "311 Request Update" for your open reports.
   - "Add a note" on one of your reports sends a note to the staff. It goes
     into the report's history, and it cannot be changed or deleted. The box

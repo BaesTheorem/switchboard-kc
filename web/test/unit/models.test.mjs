@@ -4,7 +4,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  Category, cityCaseNumber, cleanName, epoch, lastPlowed, mapIssue, myReport, num, parseQuestions, reportDetail, stage, str, stripHTML,
+  Category, cityCaseNumber, cleanName, epoch, lastPlowed, mapIssue, myReport, num, parseQuestions, reportDetail, reportScope, stage, str,
+  stripHTML,
 } from "../../public/js/models.js";
 
 const H = 3600e3;
@@ -322,4 +323,27 @@ test("lastPlowed is 0 for no rows and for rows with no time", () => {
   assert.equal(lastPlowed([]), 0);
   assert.equal(lastPlowed(null), 0);
   assert.equal(lastPlowed([{ eventname: "Winter Storm", lastserviced: null }, {}]), 0);
+});
+
+// ---------- the Reports tab's scope ----------
+
+test("reportScope shows my reports when the device has some", () => {
+  for (const state of ["idle", "loading", "loaded", "failed"]) assert.equal(reportScope(true, 6, state), "mine");
+});
+
+test("reportScope shows everyone's when the device has no reports", () => {
+  assert.equal(reportScope(true, 0, "loaded"), "everyone");
+  assert.equal(reportScope(true, 0, "failed"), "everyone");
+});
+
+test("reportScope waits for the first answer before it shows everyone's", () => {
+  assert.equal(reportScope(true, 0, "idle"), "mine");
+  assert.equal(reportScope(true, 0, "loading"), "mine");
+});
+
+test("reportScope shows everyone's when the person chose that", () => {
+  for (const state of ["idle", "loading", "loaded", "failed"]) {
+    assert.equal(reportScope(false, 6, state), "everyone");
+    assert.equal(reportScope(false, 0, state), "everyone");
+  }
 });
