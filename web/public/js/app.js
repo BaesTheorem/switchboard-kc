@@ -14,7 +14,11 @@ import {
   loadSavedMaps, loadSavedMine, recoverDeviceId, refreshCatalog, S, visibleReports,
 } from "./state.js";
 import "./install.js";   // listens for the install prompt from the start
+import { recordStart } from "./startup.js";
 import { applyAppearance } from "./theme.js";
+
+// Start times for Settings > Details, in ms since the page began to load. Every script is in at this line.
+const marks = { files: performance.now() };
 
 const v = (name) => () => import(`./views/${name}.js`);
 
@@ -61,10 +65,14 @@ async function foreground() {
 async function boot() {
   applyAppearance(local.get("appearance", "auto"));
   await recoverDeviceId();
+  marks.id = performance.now();
   persist();
   loadSavedMine();
   await Promise.all([loadSavedCatalog(), loadQueue(), loadSavedMaps()]);
+  marks.saved = performance.now();
   start();
+  marks.screen = performance.now();
+  recordStart(marks);
 
   let config;
   try {

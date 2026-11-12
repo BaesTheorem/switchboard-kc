@@ -9,6 +9,7 @@ import { dateTime, relative } from "../lib/format.js";
 import { html, icon, on, render } from "../lib/html.js";
 import { local } from "../lib/store.js";
 import { deviceId, listen, loadMyReports, S, useDeviceId } from "../state.js";
+import { seconds, startLog, startParts } from "../startup.js";
 import { applyAppearance } from "../theme.js";
 import { sheet, snack } from "../ui.js";
 import { canPrompt, installed, onInstallChange, promptInstall, stepsList } from "../install.js";
@@ -16,6 +17,16 @@ import { passkeysSupported, savedToPasskey } from "../passkey.js";
 import { alertState, reportsIdChanged, sendTest, turnOff, turnOn } from "./alerts.js";
 import { restoreNow, saveNow } from "./keep.js";
 
+
+/** How long the app took to start: the last start, and the slowest one on record with where its time went. */
+function startRows() {
+  const { last, slowest } = startLog();
+  const row = (name, rec) => html`<div class="stack s4" style="padding:14px 16px"><div class="row"><span class="sub grow">${name}</span>
+    <span class="sub muted">${seconds(rec.screen)}</span></div>
+    <p class="caption muted">${[rec === slowest ? dateTime(new Date(rec.at)) : null, startParts(rec), rec === slowest && rec.slowFile ? `slowest file ${rec.slowFile}` : null,
+      rec.installed ? "Home Screen app" : null].filter(Boolean).join(" · ")}</p></div>`;
+  return html`${last?.screen != null ? row("Last start", last) : ""}${slowest ? row("Slowest start", slowest) : ""}`;
+}
 
 const statusText = () => ({
   unknown: "Not checked yet", ok: "Working", offline: "No connection to the server", error: "The server did not answer",
@@ -61,6 +72,7 @@ export function openSettings() {
         <div class="row" style="padding:14px 16px"><span class="sub grow">City app version</span><span class="sub muted">${H.detail?.key?.app_version || "none"}</span></div>
         <div class="row" style="padding:14px 16px"><span class="sub grow">API address</span><span class="sub muted">${H.detail?.key?.host || ""}</span></div>
         ${H.detail?.key?.updated ? html`<div class="row" style="padding:14px 16px"><span class="sub grow">Key set</span><span class="sub muted">${dateTime(H.detail.key.updated)}</span></div>` : ""}
+        ${startRows()}
       </div></section>
 
     <section class="stack s8" aria-labelledby="id-h"><h3 class="label" id="id-h">My reports</h3>

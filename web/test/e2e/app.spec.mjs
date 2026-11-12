@@ -44,6 +44,9 @@ test("report home, the five tabs, and settings", async ({ context }) => {
   await expect(sheet.getByRole("heading", { name: "Settings" })).toBeVisible();
   await expect(sheet.getByText(TEST_DEVICE)).toBeVisible();
   await expect(sheet.getByText("Working")).toBeVisible({ timeout: 20_000 });
+  // Details shows how long this start took, and where the time went.
+  await expect(sheet.getByText("Last start")).toBeVisible();
+  await expect(sheet.getByText(/first screen \d+\.\d s/)).toBeVisible();
   await sheet.getByRole("button", { name: "Dark" }).click();
   await expect(page.locator("body")).toHaveClass(/dark/);
   await sheet.getByLabel("Paste an id to restore").fill("not-an-id");
