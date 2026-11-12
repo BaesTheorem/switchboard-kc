@@ -21,11 +21,14 @@ function copy(from, to) {
 
 // Beer CSS: keep only the Outlined icon font, served from here. Its other
 // @font-face rules and CDN fallbacks would load fonts from jsDelivr, which the
-// app's Content-Security-Policy refuses anyway.
+// app's Content-Security-Policy refuses anyway. The font waits (block), where
+// Beer CSS swaps: on a slow first load "swap" draws each icon as its name
+// ("account_balance"), and the names run over the tab bar.
 mkdirSync(join(pub, "vendor/beercss"), { recursive: true });
 writeFileSync(join(pub, "vendor/beercss/beer.min.css"), readFileSync(join(nm, "beercss/dist/cdn/beer.min.css"), "utf8")
   .replace(/@font-face\{font-family:Material Symbols (Rounded|Sharp|Subset);[^}]*\}/g, "")
-  .replace(/,url\(https:\/\/cdn\.jsdelivr\.net[^)]*\) format\("woff2"\)/g, ""));
+  .replace(/,url\(https:\/\/cdn\.jsdelivr\.net[^)]*\) format\("woff2"\)/g, "")
+  .replace(/font-display:swap/g, "font-display:block"));
 copy(join(nm, "beercss/LICENSE"), join(pub, "vendor/beercss/LICENSE"));
 for (const f of ["maplibre-gl.mjs", "maplibre-gl-worker.mjs", "maplibre-gl-shared.mjs", "maplibre-gl.css"]) {
   copy(join(nm, "maplibre-gl/dist", f), join(pub, "vendor/maplibre", f));

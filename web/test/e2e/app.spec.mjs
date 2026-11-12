@@ -55,6 +55,21 @@ test("report home, the five tabs, and settings", async ({ context }) => {
   expect(page.errors).toEqual([]);
 });
 
+test("the five tabs fit a 320 px screen (an iPhone with Display Zoom)", async ({ context }) => {
+  const { page } = await ownerPage(context);
+  await page.setViewportSize({ width: 320, height: 693 });
+  await page.goto("/#/meetings");   // the longest label, in its bold (selected) form
+  await expect(page.locator("#title")).toHaveText("City meetings");
+  await page.evaluate(() => document.fonts.ready);
+  const m = await page.evaluate(() => {
+    const nav = document.querySelector("nav#tabs");
+    const tabs = [...nav.querySelectorAll("a")];
+    return { bar: nav.scrollWidth - nav.clientWidth, right: Math.max(...tabs.map((a) => a.getBoundingClientRect().right)),
+      label: Math.max(...tabs.map((a) => a.scrollWidth - a.clientWidth)), count: tabs.length };
+  });
+  expect(m).toEqual({ bar: 0, right: 320, label: 0, count: 5 });
+});
+
 test("file a pothole report: section, type, questions, location, send", async ({ context }) => {
   const { page, submits } = await ownerPage(context, { contact: { firstName: "Test", lastName: "Person", email: "test@example.com", phone: "" } });
   await page.goto("/#/services");

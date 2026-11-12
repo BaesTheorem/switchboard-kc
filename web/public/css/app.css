@@ -155,7 +155,12 @@ nav.bottom#tabs {
   height: calc(var(--nav) + var(--safe-bottom)); padding-bottom: var(--safe-bottom);
   background: var(--surface-container); justify-content: space-around;
 }
-nav.bottom#tabs > a { flex: 1; color: var(--on-surface-variant); }
+/* Five tabs must fit a 320 px screen (an iPhone with Display Zoom). Beer CSS
+   gives each tab at least 56 px and puts 16 px between them: 360 px in all. */
+nav.bottom#tabs { gap: 0; padding-inline: 0; }
+nav.bottom#tabs > a { flex: 1; min-inline-size: 0; color: var(--on-surface-variant); }
+nav.bottom#tabs > a > span { white-space: nowrap; }
+@media (max-width: 359px) { nav.bottom#tabs > a > span { font-size: 12px; } }
 nav.bottom#tabs > a > i { padding: 4px 20px; border-radius: 16px; overflow: visible; }
 nav.bottom#tabs > a[aria-current="page"] { color: var(--on-surface); font-weight: 600; }
 nav.bottom#tabs > a[aria-current="page"] > i { background: var(--secondary-container); color: var(--on-secondary-container); font-variation-settings: "FILL" 1; }
