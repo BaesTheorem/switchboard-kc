@@ -1,11 +1,14 @@
 // The service worker: the app shell offline, and ticket alerts.
-// - App files: cache first, refreshed in the background (bin/deploy changes
-//   VERSION, which starts a new cache and drops the old one).
+// - App files: from the cache of this version, and a file in it is never
+//   replaced. bin/deploy changes VERSION, which starts a new cache with every
+//   file and drops the old one. So the files of one version never mix with
+//   the files of the next, and an open of the app asks the server for the
+//   page only, not for each file again.
 // - /api and map tiles: always the network; the app keeps its own saved
 //   copies of city data.
 // - push: shows the notification the server sent; a tap opens the report.
 
-const VERSION = "20261112T1946";
+const VERSION = "20261112T2216";
 const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",
@@ -57,9 +60,15 @@ self.addEventListener("fetch", (e) => {
   e.respondWith((async () => {
     const c = await caches.open(CACHE);
     const hit = await c.match(e.request);
-    const net = fetch(e.request).then((r) => { if (r.ok) c.put(e.request, r.clone()); return r; }).catch(() => null);
-    if (hit) { e.waitUntil(net); return hit; }
-    return (await net) || Response.error();
+    if (hit) return hit;
+    // Not in the cache (a file outside SHELL, or one that failed at the install): get it one time and keep it.
+    try {
+      const r = await fetch(e.request);
+      if (r.ok) e.waitUntil(c.put(e.request, r.clone()));
+      return r;
+    } catch {
+      return Response.error();
+    }
   })());
 });
 

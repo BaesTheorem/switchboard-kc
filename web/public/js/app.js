@@ -20,6 +20,27 @@ import { applyAppearance } from "./theme.js";
 // Start times for Settings > Details, in ms since the page began to load. Every script is in at this line.
 const marks = { files: performance.now() };
 
+// A deploy brings a new service worker, and it takes over while this page
+// still runs the scripts of the old version. A screen that loads after that
+// comes from the new version and does not fit the old scripts (a new card
+// with no route for it, which sent a tap to the home screen on 2026-11-12).
+// So the page loads again, one time, when a new worker takes over. It waits
+// while a person fills a form or has a sheet open, until the next screen.
+if ("serviceWorker" in navigator) {
+  let worker = navigator.serviceWorker.controller, waiting = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const first = !worker;   // the first install: the page and the worker have the same version
+    worker = navigator.serviceWorker.controller;
+    if (first || waiting) return;
+    const again = () => { sessionStorage.setItem("workerReload", String(Date.now())); location.reload(); };
+    const busy = /\/(form|streetcar)\b/.test(location.hash) || !!document.querySelector("dialog[open], .picker")
+      || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+    // After a reload a moment ago, the next one also waits for the person. So a worker file that changes at each read cannot make a loop.
+    const recent = Date.now() - Number(sessionStorage.getItem("workerReload") || 0) < 15000;
+    if (busy || recent) { waiting = true; addEventListener("hashchange", again, { once: true }); } else again();
+  });
+}
+
 const v = (name) => () => import(`./views/${name}.js`);
 
 // Report tab
