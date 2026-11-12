@@ -391,12 +391,22 @@ dialog#sheet {
 }
 dialog#sheet[open] { transform: translate(-50%, 0); }
 dialog#sheet::backdrop { display: block !important; visibility: visible; opacity: 1; background: rgba(0,0,0,.4); }
+/* On dark surfaces a 40% dim leaves the page as bright as the sheet. */
+body.dark dialog#sheet::backdrop { background: rgba(0,0,0,.6); }
 dialog#sheet .sheet-head { position: sticky; top: 0; z-index: 2; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; padding: 12px 8px; background: var(--surface); }
 dialog#sheet .sheet-head h2 { margin: 0; font-size: 17px; font-weight: 600; text-align: center; }
 dialog#sheet .sheet-head .end { justify-self: end; }
 dialog#sheet .sheet-body { padding: 0 16px calc(24px + var(--safe-bottom)); }
-@media (min-width: 760px) {
-  dialog#sheet { inset: auto auto 24px 50%; border-radius: var(--radius-sheet); }
+/* A large window shows the sheet as a dialog in the space between the app bar
+   and the tabs, so it covers neither of them. The bar is 64 px tall there. */
+@media (min-width: 760px) and (min-height: 600px) {
+  dialog#sheet {
+    --sheet-top: calc(var(--safe-top) + 64px + 16px);
+    --sheet-bottom: calc(var(--nav) + var(--safe-bottom) + 16px);
+    inset-block: var(--sheet-top) var(--sheet-bottom); margin-block: auto; block-size: fit-content;
+    max-block-size: calc(100dvh - var(--sheet-top) - var(--sheet-bottom));
+    border-radius: var(--radius-sheet);
+  }
 }
 #snack.active { z-index: 70; bottom: calc(var(--nav) + var(--safe-bottom) + 8px); }
 
