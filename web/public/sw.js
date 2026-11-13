@@ -11,7 +11,7 @@
 //   sends the update request that the app kept on this device, then shows
 //   what it did (worker/asks.js has the full sequence).
 
-const VERSION = "20261113T0047";
+const VERSION = "20261113T2208";
 const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",

@@ -3,6 +3,7 @@
 // server checks a report and then does not pass it on, and helpers.mjs also
 // answers /api/submit inside the page.
 
+import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { axe, BASE, drawnIcons, issueFrom, jpegWithGps, KC, OWNER, ownerPage, TEST_DEVICE } from "./helpers.mjs";
 
@@ -386,6 +387,67 @@ test("my reports: a note goes to the city only after the confirm, and the box cl
   await expect(page.getByLabel("Note for staff")).toHaveValue("");
   await expect(page.getByText("Notes Added By Citizen")).toBeVisible();
   expect(await axe(page)).toEqual([]);
+});
+
+test("my reports: a note with a photo goes on an update request from its timeline entry", async ({ context }) => {
+  // Fixture data only: the list, the details and the note call are all answered here.
+  const { page } = await ownerPage(context);
+  const now = Math.floor(Date.now() / 1000);
+  const main = { id: "9000006", name: "Streets and Sidewalks", sub_type: "Pothole in the Street", status: "received", description: "Deep hole.", address: "1 Test St", added_on: String(now - 20 * 86400) };
+  const ask = { id: "9100006", name: "311 Request Update", status: "new", added_on: String(now - 2 * 86400),
+    description: "Please send an update on myKCMO app report 9000006: Pothole in the Street at 1 Test St." };
+  const issues = {
+    [main.id]: { status: "received", type: main.name, subtype: main.sub_type, address: main.address, description: main.description, citizen_allow_to_send_note: 1,
+      history_object: [{ title: "Status Changed", details: "Received", dateofupdate: "10/24/2026 09:00 AM", timestamp: now - 19 * 86400 }] },
+    [ask.id]: { status: "new", type: ask.name, subtype: "", address: main.address, description: ask.description, citizen_allow_to_send_note: 1, added_on: ask.added_on, history_object: [] },
+  };
+  const notes = [];
+  await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [main, ask] }) }));
+  await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json",
+    body: JSON.stringify({ ok: true, issue: issues[route.request().postDataJSON().id] }) }));
+  await page.route("**/api/note", async (route) => {
+    const req = route.request();
+    const form = await new Request("http://test/", { method: "POST", headers: { "content-type": req.headers()["content-type"] }, body: req.postDataBuffer() }).formData();
+    // WebKit leaves the file bytes out of the body Playwright shows, so only Chromium can read the zip here.
+    const zip = form.get("file_zip");
+    const { readZip } = await import("../../public/js/lib/zip.js");
+    const names = await readZip(new Uint8Array(await zip.arrayBuffer())).then((m) => [...m.keys()], () => null);
+    notes.push({ device: form.get("device"), id: form.get("id"), text: form.get("text"), names });
+    const id = form.get("id");
+    issues[id] = { ...issues[id], history_object: [...issues[id].history_object,
+      { title: "Notes Added By Citizen", details: form.get("text"), staff_upload: "https://example.org/n1.jpeg", dateofupdate: "11/13/2026 04:30 PM", timestamp: now - 60 }] };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue: issues[id] }) });
+  });
+  await page.goto("/#/reports/mine/9000006");
+  await expect(page.getByRole("heading", { name: "Add a note" })).toBeVisible({ timeout: 30_000 });
+  // Both the report and its update request take notes, so the box asks where the note goes.
+  const to = page.getByLabel("Add the note to");
+  await expect(to).toHaveValue("9000006");
+  await page.getByRole("button", { name: "Add a note to this request" }).click();
+  await expect(to).toHaveValue("9100006");
+  await expect(page.getByLabel("Note for staff")).toBeFocused();
+  // A photo alone is enough to send.
+  const send = page.getByRole("button", { name: "Send note" });
+  await expect(send).toBeDisabled();
+  await page.locator("#note-library").setInputFiles(join(import.meta.dirname, "fixtures/photo.jpg"));
+  await expect(page.getByRole("img", { name: "Photo 1 of 1 for the note" })).toBeVisible();
+  await expect(send).toBeEnabled();
+  await page.getByLabel("Note for staff").fill("Photo from today.");
+  await send.click();
+  await expect(page.locator("#sheet")).toContainText("update request 9100006");
+  await page.locator("#sheet").getByRole("button", { name: "Send note" }).click();
+  await expect(page.getByText("Note sent to update request 9100006")).toBeVisible();
+  expect(notes).toHaveLength(1);
+  expect(notes[0]).toMatchObject({ device: TEST_DEVICE, id: "9100006", text: "Photo from today." });
+  if (test.info().project.name === "android") {
+    expect(notes[0].names).toHaveLength(1);
+    expect(notes[0].names[0]).toMatch(/^CAM\d{13}\.jpeg$/);
+  }
+  await expect(page.getByRole("img", { name: "Photo 1 of 1 for the note" })).toHaveCount(0);
+  await expect(page.getByText("Update request 9100006: Notes Added By Citizen")).toBeVisible();
+  await expect(page.getByRole("img", { name: "Photo 1 with this entry" })).toBeVisible();
+  expect(await axe(page)).toEqual([]);
+  expect(page.errors).toEqual([]);
 });
 
 test("my reports: a closed report takes one rating, and it goes to the city only after the confirm", async ({ context }) => {

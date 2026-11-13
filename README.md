@@ -54,9 +54,12 @@ at the git tag `iphone-app-final`.
     no reports of your own, it shows everyone's open reports. It keeps the
     choices that you make after that.
   - "Request updates" files a "311 Request Update" for your open reports.
-  - "Add a note" on one of your reports sends a note to the staff. It goes
-    into the report's history, and it cannot be changed or deleted. The box
-    shows only when the city allows notes on that report.
+  - "Add a note" on one of your reports sends a note and up to 4 photos to
+    the staff. The note can go on the report or on one of its update
+    requests: pick one in the box, or use "Add a note to this request" on
+    the request's entry in the timeline. It goes into that history, and it
+    cannot be changed or deleted. The box shows only when the city allows
+    notes on that report or request.
   - "Rate the city's work" on one of your resolved or closed reports sends
     1 to 5 stars and an optional comment to the city's 311 system. A report
     takes one rating, and it cannot be changed.

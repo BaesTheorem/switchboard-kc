@@ -683,6 +683,19 @@ staff to close two reports filed in error [probe]. Flat parts
 No `device_id` part is sent. The device comes only from the JWT `deviceuid` claim. The app
 does not send a comment that has neither text nor photos.
 
+The app sends text and photos as **two separate calls** [code:
+`RAIReportDetailActivity.call_submitApi`, read 2026-11-13]. The send button calls
+`call_submitApi(null, text)`: text, no `attachments`, no zip. Each photo pick calls
+`postImage()`, which makes the zip and then `call_submitApi(names, "")`: `notes` is `""` and
+`attachments` is set. The app scales note photos to fit 800x800 (`MediaObject(..., 800, 800)`),
+not 1000x1000 as for a new report. `hide_add_photos` is not read by this screen: the photo
+button shows whenever the note box shows. Switchboard sends a note with photos the same way,
+text first, then one call with all the photos (`web/worker/notes.js`). The photo call has not
+been probed yet: the first real one is the test.
+
+A photo comment shows in `history_object[].staff_upload` [guess: the only URL field on a
+history entry]. The web app shows those URLs as photos on the timeline entry.
+
 Response (top-level envelope): the app checks that `response_message` contains `"success"`
 (case-insensitive). Then `response_data` is an **array** whose `[0]` is the updated issue
 object (section 5.1 fields) [code: `parseStaffCommentAPIControllerResponse`].

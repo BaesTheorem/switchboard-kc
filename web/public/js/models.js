@@ -263,7 +263,8 @@ export function reportDetail(d) {
     photos: httpsOnly(d.issue_image),
     added: epoch(d, "added_on"),
     canAddNote: String(d.citizen_allow_to_send_note ?? "") === "1",
-    timeline: hist.map((h) => ({ title: str(h, "title"), details: stripHTML(str(h, "details")), when: str(h, "dateofupdate"), at: epoch(h, "timestamp") })),
+    timeline: hist.map((h) => ({ title: str(h, "title"), details: stripHTML(str(h, "details")), when: str(h, "dateofupdate"), at: epoch(h, "timestamp"),
+      photos: httpsOnly(str(h, "staff_upload").split(";").map((u) => u.trim())) })),
   };
 }
 

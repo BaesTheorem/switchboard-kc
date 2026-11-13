@@ -36,7 +36,7 @@ files and forwards the API calls the app makes:
 | Public map | `reported_issues_map` |
 | Duplicate check | `check_duplicate_issue` |
 | File a report or an update request | `report_an_issue` |
-| A note on one of my reports | `add_comments_citizen` |
+| A note or photos on one of my reports or update requests | `add_comments_citizen` |
 | A rating of one of my closed reports | `rai_report_rating` |
 | The city's notices (kept 10 minutes) | `notification_history` |
 | A moved API base | `token/get_baseurl` |

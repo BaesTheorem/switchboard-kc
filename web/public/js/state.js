@@ -9,6 +9,7 @@ import { Draft, KANSAS_CITY } from "./draft.js";
 import { dateTime, relative, shortDate } from "./lib/format.js";
 import { meters } from "./lib/geo.js";
 import { idb, local } from "./lib/store.js";
+import { zipStore } from "./lib/zip.js";
 import { dueForUpdate, Kind, lastAskedAt, mapIssue, myReport, readCatalog, reference, reportDetail, requestsNaming, subId, UPDATE_TEXT, WEEK } from "./models.js";
 
 export const S = {
@@ -210,9 +211,26 @@ export async function detail(id, scope = "mine") {
   return reportDetail(o.issue);
 }
 
-/** Sends a REAL note to staff on one of my reports, then reloads its detail. */
-export async function addNote(id, text) {
-  const o = await api("note", { body: { device: deviceId(), id, text } });
+/**
+ * Sends a REAL note to staff on one of my reports (a report or an update
+ * request), with up to 4 photo blobs, then keeps the city's new detail.
+ * Text alone goes as JSON; photos go as the city's photo ZIP.
+ */
+export async function addNote(id, text, photos = []) {
+  let o;
+  if (photos.length) {
+    const now = Date.now();
+    const entries = [];
+    for (const [i, b] of photos.entries()) entries.push({ name: `CAM${now + i}.jpeg`, data: new Uint8Array(await b.arrayBuffer()) });
+    const f = new FormData();
+    f.append("device", deviceId());
+    f.append("id", id);
+    f.append("text", text);
+    f.append("file_zip", zipStore(entries), `${now}_images.zip`);
+    o = await api("note", { form: f });
+  } else {
+    o = await api("note", { body: { device: deviceId(), id, text } });
+  }
   if (o.issue) {
     S.details[id] = { at: Date.now(), issue: o.issue };
     idb.set(`detail:${id}`, S.details[id]);
@@ -253,8 +271,8 @@ function merged(base, requests) {
     const rd = cachedDetail(r.id);
     if (!rd) continue;
     const at = rd.added || r.added;
-    d.timeline.push({ title: "Update requested", details: `Update request ${r.id}, now ${rd.status}.`, when: dateTime(at), at });
-    d.timeline.push(...rd.timeline.map((e) => ({ ...e, title: `Update request ${r.id}: ${e.title}` })));
+    d.timeline.push({ title: "Update requested", details: `Update request ${r.id}, now ${rd.status}.`, when: dateTime(at), at, request: r.id });
+    d.timeline.push(...rd.timeline.map((e) => ({ ...e, title: `Update request ${r.id}: ${e.title}`, request: r.id })));
   }
   d.timeline.sort((a, b) => (a.at?.getTime() || 0) - (b.at?.getTime() || 0));
   return d;

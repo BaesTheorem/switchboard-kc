@@ -5,7 +5,8 @@
 
 import { isAskFor, makeTicket, readTicket, TICKET_LIFE } from "./asks.js";
 import { burst, gate, getMode, isAdmin, ledger, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
-import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
+import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail } from "./civic.js";
+import { addNote, photoNames } from "./notes.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { notices } from "./notices.js";
 import { calendarFeed, gtfs, hud, meetings } from "./open.js";
@@ -134,18 +135,34 @@ async function submit(req, env, who, owner) {
   return json({ ok, message: String(st.response_message || ""), work_order: String(st.work_order || "") }, ok ? 200 : 422);
 }
 
-/** Sends a REAL note to staff on one of this id's reports. */
+/**
+ * Sends a REAL note to staff on one of this id's reports: text, photos, or
+ * both. JSON for text only; multipart (device, id, text, file_zip) with photos.
+ */
 async function note(req, env) {
-  const b = await body(req);
+  if (Number(req.headers.get("content-length") || 0) > 12 * 1024 * 1024) throw new HttpError(413, "too_large", "The photos are too large.");
+  let b, zip = null;
+  if ((req.headers.get("content-type") || "").includes("multipart/form-data")) {
+    const form = await req.formData();
+    b = { device: form.get("device"), id: form.get("id"), text: form.get("text") };
+    zip = form.get("file_zip");
+  } else {
+    b = await body(req);
+  }
   const uid = deviceId(b.device);
   const id = str(b.id, 20).replace(/\D/g, "");
   const text = String(b.text ?? "").trim();
   if (!id) throw new HttpError(400, "bad_id", "Name the report.");
-  if (!text) throw new HttpError(400, "empty_note", "Write the note first.");
   if (text.length > 2000) throw new HttpError(413, "too_long", "Keep the note under 2,000 characters.");
+  let photos = null;
+  if (zip && typeof zip !== "string" && zip.size > 0) {
+    if (zip.size > 10 * 1024 * 1024) throw new HttpError(413, "too_large", "The photos are too large.");
+    photos = { blob: zip, names: await photoNames(await zip.arrayBuffer()) };
+  }
+  if (!text && !photos) throw new HttpError(400, "empty_note", "Write the note or add a photo first.");
   // Test runs send this header: the checks above run, and nothing goes to the city.
-  if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, dry: true, issue: null });
-  return json({ ok: true, issue: await addNote(env, uid, id, text) });
+  if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, dry: true, issue: null, photos: photos?.names.length || 0 });
+  return json({ ok: true, issue: await addNote(env, uid, id, text, photos) });
 }
 
 /**

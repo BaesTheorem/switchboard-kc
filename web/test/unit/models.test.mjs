@@ -347,3 +347,12 @@ test("reportScope shows everyone's when the person chose that", () => {
     assert.equal(reportScope(false, 0, state), "everyone");
   }
 });
+
+test("reportDetail reads the photos of a timeline entry from staff_upload (docs/API.md section 5.1)", () => {
+  const d = reportDetail({ history_object: [
+    { title: "Notes Added By Citizen", staff_upload: "https://example.org/a.jpeg; https://example.org/b.jpeg;", timestamp: 2 },
+    { title: "Status Changed", staff_upload: "", timestamp: 1 },
+    { title: "Bad", staff_upload: "javascript:alert(1);http://example.org/c.jpeg", timestamp: 3 },
+  ] });
+  assert.deepEqual(d.timeline.map((e) => e.photos), [[], ["https://example.org/a.jpeg", "https://example.org/b.jpeg"], []]);
+});
