@@ -1,6 +1,7 @@
 // Ticket alerts on the web (Push.swift). The server checks this id's reports
 // every minute and pushes a notification when city staff change one. It keeps
-// the reports id and this browser's push subscription, nothing else.
+// the reports id and this browser's push subscription, and one mark: that this
+// device sends update requests when the app is closed (state.js prepareAsks).
 //
 // iPhone and iPad allow web push only for an app added to the Home Screen
 // (iOS 16.4 and later), and only after a tap, so the offer explains that.
@@ -9,7 +10,7 @@ import { api } from "../api.js";
 import { html, icon, on } from "../lib/html.js";
 import { installCard, installed, isIOS } from "../install.js";
 import { local } from "../lib/store.js";
-import { deviceId, S } from "../state.js";
+import { autoEnabled, deviceId, reachOf, S } from "../state.js";
 import { snack } from "../ui.js";
 
 export const supported = () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
@@ -24,6 +25,9 @@ export async function alertState() {
   return sub && local.get("alertsFor") === deviceId() ? "on" : "off";
 }
 
+/** True when this device can send an update request with no person: automatic requests are on, and there is an email or a phone. */
+const canAsk = () => autoEnabled() && !!reachOf();
+
 const keyBytes = (b64) => Uint8Array.from(atob(b64.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((b64.length + 3) % 4)), (c) => c.charCodeAt(0));
 
 /** Turns alerts on. Must run from a tap. */
@@ -34,9 +38,22 @@ export async function turnOn() {
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(S.config.vapid) });
-  await api("push/subscribe", { body: { device: deviceId(), previous: local.get("alertsFor"), subscription: sub.toJSON() } });
+  const auto = canAsk();
+  await api("push/subscribe", { body: { device: deviceId(), previous: local.get("alertsFor"), subscription: sub.toJSON(), auto } });
   local.set("alertsFor", deviceId());
   local.set("alertsChoice", "on");
+  local.set("alertsAuto", auto);
+}
+
+/** Tells the server when this device starts or stops sending update requests while the app is closed. */
+export async function syncAuto() {
+  const auto = canAsk();
+  if (local.get("alertsAuto", false) === auto || (await alertState()) !== "on") return;
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  if (!sub) return;
+  await api("push/subscribe", { body: { device: deviceId(), previous: local.get("alertsFor"), subscription: sub.toJSON(), auto } });
+  local.set("alertsAuto", auto);
 }
 
 export async function turnOff() {
@@ -48,6 +65,7 @@ export async function turnOff() {
     await sub.unsubscribe().catch(() => {});
   }
   local.del("alertsFor");
+  local.del("alertsAuto");
 }
 
 /** After Settings > Restore, move the subscription to the new id. */

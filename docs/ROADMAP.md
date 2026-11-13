@@ -4,21 +4,34 @@ The goal is one web app that does all that the iPhone app does. Then the
 project has no dependency on an app store. `WEB-PARITY.md` compares the two
 apps screen by screen. These items are open.
 
-## Update requests from the server
+## Update requests while the app is closed
 
-The iPhone app sends update requests for earlier reports in the background
-(AutoUpdates). A web app gets no background time. Thus the web app sends them
-only when it is open, at most one time in 6 hours.
+Done on the web on 2026-11-12, with no contact details on the server.
 
-The plan: the Worker cron reads each subscribed reports id one time each
-minute for ticket alerts. It can also send the update requests that are due
-(7 days after the report and 7 days after the last update request).
+An update request contains a way to reach the person, and only the device
+keeps that. So the device sends the request, and the server only says when:
 
-The open decision: an update request contains the contact details of the
-person. Today only the device keeps them. To send update requests from the
-server, the server must also keep them, for each person who sets this to on.
-Before this work starts, select if that is permitted, and how long the server
-keeps the details.
+1. The app keeps one filled update request for each open report in the
+   device's storage.
+2. The Worker cron, which reads each subscribed reports id for ticket
+   alerts, finds a report that is due (7 days with no movement and no
+   update request).
+3. It pushes an "ask" to one device of that id, with a ticket that works one
+   time for 15 minutes.
+4. The service worker on the device sends the kept request with the ticket,
+   and shows a notification. The ticket takes the place of the robot check.
+
+`web/worker/asks.js` has the rules. This needs ticket alerts to be on. On an
+iPhone, that needs the app on the Home Screen.
+
+Open:
+
+- No report was due when this shipped, so no request went to the city on
+  this path yet. The browser test delivers a push to the service worker
+  against a local server. Look at the first real one.
+- A device that is off for more than 15 minutes misses the ask. The server
+  asks again the next day.
+- An id with no alerts gets requests only when the app is open.
 
 ## A web app with no server between it and the city
 

@@ -24,7 +24,9 @@ export class Ledger extends DurableObject {
   alertUnsubscribe(uid, endpoint) { this.alerts.unsubscribe(uid, endpoint); }
   alertSubs(uid) { return this.alerts.subsFor(uid); }
   alertBatch(minute) { return this.alerts.batch(minute); }
-  alertSave(updates, gone) { this.alerts.save(updates, gone); }
+  alertSave(updates, gone, asks) { this.alerts.save(updates, gone, asks); }
+  alertRedeem(uid, report, exp) { return this.alerts.redeem(uid, report, exp); }
+  alertRelease(uid, report, exp) { this.alerts.release(uid, report, exp); }
   alertImport(subs, state) { return this.alerts.importOnce(subs, state); }
   alertStats() { return this.alerts.stats(); }
 

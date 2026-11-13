@@ -45,20 +45,21 @@ export function jpegWithGps(lat, lng) {
 }
 
 /**
- * A page signed in as the owner, with a fresh test reports id and a KC
- * position. Returns { page, submits } where submits collects every report
- * the app tried to file.
+ * A page signed in as the owner (or as a visitor, with `visitor: true`), with
+ * a fresh test reports id and a KC position. Returns { page, submits } where
+ * submits collects every report the app tried to file.
  */
-export async function ownerPage(context, { device = TEST_DEVICE, contact = null, duplicate = { level: "0", message: "" } } = {}) {
+export async function ownerPage(context, { device = TEST_DEVICE, contact = null, duplicate = { level: "0", message: "" }, visitor = false } = {}) {
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation(KC);
   await context.addInitScript(([owner, dev, c]) => {
     // Belt and braces: even if a mock below is bypassed, the server refuses to send a report to the city.
     localStorage.setItem("dryRun", "true");
-    if (!localStorage.getItem("ownerToken")) localStorage.setItem("ownerToken", JSON.stringify(owner));
+    // `visitor`: a page with no owner token, as each person but the owner has. The server then asks for the robot check.
+    if (owner && !localStorage.getItem("ownerToken")) localStorage.setItem("ownerToken", JSON.stringify(owner));
     if (!localStorage.getItem("deviceUID")) localStorage.setItem("deviceUID", JSON.stringify(dev));
     if (c && !localStorage.getItem("contact")) localStorage.setItem("contact", JSON.stringify(c));
-  }, [OWNER, device, contact]);
+  }, [visitor ? null : OWNER, device, contact]);
   if (process.env.LOCAL_FILES) {
     await context.route(`${BASE}/**`, (route) => {
       const { pathname } = new URL(route.request().url());

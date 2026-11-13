@@ -324,6 +324,38 @@ test("my reports: a reports id with reports shows them, their detail, and the up
   expect(await axe(page)).toEqual([]);
 });
 
+test("a visitor's update request has a robot check token (the owner's page hid a request that had none)", async ({ context }) => {
+  // Fixture data only. The robot check is a stand-in that gives a token at once: Cloudflare's own check does not pass in a test browser.
+  await context.addInitScript(() => {
+    window.turnstile = { render: (_el, o) => { setTimeout(() => o.callback("test-robot-token"), 10); return "w1"; }, remove: () => {} };
+  });
+  const { page, submits } = await ownerPage(context, { visitor: true, contact: { firstName: "Test", lastName: "Person", email: "test@example.org", phone: "" } });
+  const now = Math.floor(Date.now() / 1000);
+  const row = { id: "9000005", name: "Streets and Sidewalks", sub_type: "Pothole in the Street", status: "Assigned", description: "A deep hole.",
+    address: "1 Test St", added_on: String(now - 10 * 86400), updated_on: new Date((now - 10 * 86400) * 1000).toISOString().slice(0, 19).replace("T", " ") };
+  const issue = { status: "Assigned", type: row.name, subtype: row.sub_type, address: row.address, description: row.description, added_on: now - 10 * 86400, history_object: [] };
+  // After the request goes out, the id's list has it, as the city's list does.
+  const asked = () => (submits.length ? [{ id: "9100005", name: "311 Request Update", status: "new", added_on: String(now), description: issueFrom(submits[0]).notes }] : []);
+  await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [row, ...asked()] }) }));
+  await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, issue }) }));
+  // The app does not send the request by itself in this test: the test is about the button.
+  await page.addInitScript(() => localStorage.setItem("autoAt", JSON.stringify(Date.now())));
+  await page.goto("/#/reports/mine/9000005");
+  await expect(page.getByRole("heading", { name: "Timeline" }).or(page.getByRole("button", { name: "Request update" })).first()).toBeVisible({ timeout: 30_000 });
+  // This page is a visitor's: the server sees no owner.
+  expect(await page.evaluate(() => localStorage.getItem("ownerToken"))).toBeNull();
+  await page.getByRole("button", { name: "Request update" }).click();
+  await page.locator("#sheet").getByRole("button", { name: "Request update" }).click();
+  await expect.poll(() => submits.length).toBe(1);
+  // The screen then shows the request, and the button waits 7 days.
+  await expect(page.getByText(/Update asked/).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Request update" })).toBeDisabled();
+  const body = submits[0].body.toString("latin1");
+  expect(/name="turnstile"\r\n\r\ntest-robot-token\r\n/.test(body)).toBe(true);
+  expect(issueFrom(submits[0]).notes).toMatch(/^Please send an update on myKCMO app report 9000005: Pothole in the Street at 1 Test St/);
+  expect(page.errors).toEqual([]);
+});
+
 test("my reports: a note goes to the city only after the confirm, and the box clears", async ({ context }) => {
   // Fixture data only: the list, the detail and the note call are all answered here.
   const { page } = await ownerPage(context);

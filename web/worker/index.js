@@ -3,6 +3,7 @@
 // app makes, each built here from checked fields, never a raw passthrough.
 // auth.js decides who may call it (anyone, unless the owner pauses it).
 
+import { isAskFor, makeTicket, readTicket, TICKET_LIFE } from "./asks.js";
 import { burst, gate, getMode, isAdmin, ledger, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
 import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
@@ -96,22 +97,39 @@ async function submit(req, env, who, owner) {
     if (head[0] !== 0x50 || head[1] !== 0x4b) throw new HttpError(400, "bad_zip", "The photos are not a zip file.");
     files.push({ name: "file_zip", blob: zip, filename: `${Date.now()}_images.zip` });
   }
-  // The owner (the owner token) skips the robot check; everyone else passes it.
-  if (!owner) await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
+  // An update request that a device sends when its app is closed has a ticket from this server (asks.js).
+  // The ticket is for one report, and the request must be an update request that names it, with no photos.
+  let ask = null;
+  if (form.get("ticket")) {
+    const report = str(form.get("report"), 20).replace(/\D/g, "");
+    const caseNumber = str(form.get("case"), 40);
+    const exp = await readTicket((await vapid(env)).privateKey, uid, report, caseNumber, form.get("ticket"));
+    if (!exp || files.length || !isAskFor(issue, report, caseNumber)) throw new HttpError(403, "bad_ticket", "This update request is past its time. Open the app to send it.");
+    ask = { report, exp };
+  }
+  // The owner (the owner token) skips the robot check, and a ticket takes its place; everyone else passes it.
+  if (!owner && !ask) await turnstile(env, form.get("turnstile"), req.headers.get("cf-connecting-ip"));
   // Test runs send this header: every check above runs, and nothing goes to the city.
   if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, message: "Dry run: not sent to the city.", work_order: "DRYRUN", dry: true });
+  // A ticket works one time.
+  if (ask && !(await ledger(env).alertRedeem(uid, ask.report, ask.exp))) throw new HttpError(409, "ticket_used", "This update request went to the city already.");
   // One of today's slots is taken before the city call and given back if the report does not get through.
-  const slot = await reserve(env, "submit", who, Number(env.SUBMIT_DAILY || 10));
+  let slot;
   let o;
   try {
+    slot = await reserve(env, "submit", who, Number(env.SUBMIT_DAILY || 10));
     o = await civicJSON(env, uid, "report_an_issue", { issue_details: details }, files);
   } catch (e) {
-    await refund(env, slot);
+    if (slot) await refund(env, slot);
+    if (ask) await ledger(env).alertRelease(uid, ask.report, ask.exp);
     throw e;
   }
   const st = o.response_status || {};
   const ok = String(st.response_code) === "1";
-  if (!ok) await refund(env, slot);
+  if (!ok) {
+    await refund(env, slot);
+    if (ask) await ledger(env).alertRelease(uid, ask.report, ask.exp);
+  }
   return json({ ok, message: String(st.response_message || ""), work_order: String(st.work_order || "") }, ok ? 200 : 422);
 }
 
@@ -198,6 +216,14 @@ async function admin(req, env, url, ctx) {
   if (req.method === "POST" && p === "mode") { await setMode(env, (await body(req)).mode); return json({ ok: true, mode: await getMode(env) }); }
   if (req.method === "POST" && p === "key") return setKey(env, await body(req));
   if (req.method === "POST" && p === "run") return json({ ok: true, results: await poll(env) });
+  // A ticket for one report of one id, as the cron makes it (asks.js). For tests of the ticket path with a dry run.
+  if (req.method === "POST" && p === "ticket") {
+    const b = await body(req);
+    const uid = deviceId(b.device);
+    const report = str(b.report, 20).replace(/\D/g, "");
+    const exp = Date.now() + TICKET_LIFE;
+    return json({ ok: true, ticket: await makeTicket((await vapid(env)).privateKey, uid, report, str(b.case, 40), exp), exp });
+  }
   if (req.method === "GET" && p === "status") {
     const alerts = await ledger(env).alertStats();
     return json({ ok: true, mode: await getMode(env), alertIds: alerts.ids, alerts, key: await readKeyState(env), config: { ...((await getConfig(env)) || {}), key: undefined } });

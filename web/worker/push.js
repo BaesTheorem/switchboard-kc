@@ -4,8 +4,9 @@
 // subscription with its reports id. A cron reads each id's reports every
 // minute and pushes new timeline entries, the same rules as push/worker.js
 // for the iPhone app:
-// - An update request is never reported on its own. Its activity goes out
-//   under the report it names.
+// - An update request is never reported on its own. What staff do with it
+//   goes out under the report it names. The request itself is the person's
+//   own act, and gets no alert.
 // - The first look at an id records what exists and sends nothing.
 // - State is saved only after a push is accepted, so a failure retries.
 //
@@ -15,8 +16,12 @@
 // values of the first version (wpush:subs, wpush:state) are read one time,
 // to move their content, and nothing reads them after that.
 // None of it holds report text, addresses, or contact data.
+//
+// The same run asks a device to send an update request for a report that is
+// due (asks.js).
 
 import { buildPushPayload } from "@block65/webcrypto-web-push";
+import { askMessage, deviceFor, dueReports, makeTicket, TICKET_LIFE, toAsk } from "./asks.js";
 import { ledger } from "./auth.js";
 import { myReports, reportDetail } from "./civic.js";
 import { b64url, deviceId, HttpError, json } from "./util.js";
@@ -69,7 +74,8 @@ function checkSubscription(s) {
 
 export async function subscribe(env, b) {
   const uid = deviceId(b.device);
-  const sub = checkSubscription(b.subscription);
+  // `auto`: the device keeps filled update requests and sends one when this server asks (asks.js).
+  const sub = { ...checkSubscription(b.subscription), auto: b.auto === true };
   // Read the id's reports once: this checks the city key and that the id works.
   await myReports(env, uid);
   const store = ledger(env);
@@ -98,15 +104,15 @@ async function moveFromKV(env, store, known = false) {
   moved = true;
 }
 
-/** Sends one message to every subscription of an id. Returns the endpoints the push service says are gone. */
-async function send(env, subs, message) {
+/** Sends one message to every subscription of an id. Returns the endpoints the push service says are gone. `ttl` is how long the push service keeps it for a device that is off, in seconds. */
+async function send(env, subs, message, ttl = 6 * 3600) {
   const keys = await vapid(env);
   const v = { subject: env.VAPID_SUBJECT || "mailto:admin@example.com", publicKey: keys.publicKey, privateKey: keys.privateKey };
   const gone = [];
   let ok = 0;
   for (const s of subs) {
     try {
-      const payload = await buildPushPayload({ data: JSON.stringify(message), options: { ttl: 6 * 3600, urgency: "normal", topic: message.tag?.slice(0, 32) } }, s, v);
+      const payload = await buildPushPayload({ data: JSON.stringify(message), options: { ttl, urgency: "normal", topic: message.tag?.slice(0, 32) } }, s, v);
       const r = await fetch(s.endpoint, payload);
       if (r.status === 404 || r.status === 410) gone.push(s.endpoint);
       else if (r.ok) ok++;
@@ -145,7 +151,24 @@ function requestsFor(report, mine) {
   return mine.filter((r) => isUpdateRequest(r) && keys.some((k) => String(r.description || "").includes(k)));
 }
 
+const OWN_REQUEST = "Update requested";
 const sig = (rows) => rows.map((r) => `${r.id}:${r.status}|${r.updated_on}`).sort().join(",");
+/** The part of a signature that staff change: each report's status. The update time is left out. */
+export const statusPart = (s) => String(s || "").split(",").map((x) => x.split("|")[0]).join(",");
+/**
+ * Minutes between two looks at the timeline of a report whose update time moves and whose status does not.
+ * The city's own sync writes a new update time each minute to some open reports (a "Missed Trash" report on
+ * 2026-11-10: 835 minutes in sequence). One timeline read each minute for such a report is too much.
+ */
+export const QUIET = 15;
+
+/** True when the run must read the report's timeline: its signature is new, and a move of only the update time waits QUIET minutes. */
+export function mustLook(prior, s, minute) {
+  if (!prior) return true;
+  if (prior.sig === s) return false;
+  if (statusPart(prior.sig) !== statusPart(s)) return true;
+  return minute - (prior.at || 0) >= QUIET;
+}
 const entryKey = (e) => `${Math.floor(e.at)}|${e.title}`;
 const entries = (d, prefix = "") =>
   (d.history_object || []).map((h) => ({ at: Number(h.timestamp || 0), title: prefix + String(h.title || ""), details: String(h.details || "").replace(/<[^>]+>/g, "").trim() }));
@@ -154,7 +177,7 @@ async function timeline(env, uid, report, requests) {
   const rows = entries(await reportDetail(env, uid, report.id));
   for (const q of requests) {
     const d = await reportDetail(env, uid, q.id);
-    rows.push({ at: Number(d.added_on || 0), title: "Update requested", details: `Update request ${q.id}` });
+    rows.push({ at: Number(d.added_on || 0), title: OWN_REQUEST, details: `Update request ${q.id}` });
     rows.push(...entries(d, `Update request ${q.id}: `));
   }
   return rows.sort((a, b) => a.at - b.at);
@@ -189,8 +212,9 @@ export async function poll(env, when = Date.now()) {
   if (!turn.batch.length) return [];
   const updates = [];
   const gone = [];
+  const asks = [];
   const results = [];
-  for (const { uid, subs, seeded, seen } of turn.batch) {
+  for (const { uid, subs, seeded, seen, asked } of turn.batch) {
     const changed = {};
     try {
       const all = await myReports(env, uid);
@@ -199,25 +223,37 @@ export async function poll(env, when = Date.now()) {
         const requests = requestsFor(report, all);
         const s = sig([report, ...requests]);
         const prior = seen[report.id];
-        if (prior && prior.sig === s) continue;
+        if (!mustLook(prior, s, minute)) continue;
         const tl = await timeline(env, uid, report, requests);
         const known = new Set(prior?.keys || []);
-        const fresh = tl.filter((e) => !known.has(entryKey(e)));
+        // An update request that the person (or their device) sent is not news to them. What staff do with it is.
+        const fresh = tl.filter((e) => !known.has(entryKey(e)) && e.title !== OWN_REQUEST);
         if (fresh.length && seeded && prior) {
           const r = await send(env, subs, message(report, fresh));
           gone.push(...r.gone.map((endpoint) => [uid, endpoint]));
           if (!r.ok) continue;   // keep the old state: the next run tries again
         }
-        changed[report.id] = { sig: s, keys: [...new Set([...known, ...tl.map(entryKey)])].slice(-200) };
+        changed[report.id] = { sig: s, keys: [...new Set([...known, ...tl.map(entryKey)])].slice(-200), at: minute };
       }
       // The first look records what exists and sends nothing.
       if (!seeded || Object.keys(changed).length) updates.push({ uid, seen: changed });
-      results.push({ uid: uid.slice(0, 4), reports: all.length });
+      // One ask in a run for an id: its device sends the update request for a report that is due (asks.js).
+      const device = seeded ? deviceFor(subs, when) : null;
+      const due = device ? toAsk(dueReports(all, when), asked, when)[0] : null;
+      let askedNow = 0;
+      if (due) {
+        const exp = when + TICKET_LIFE;
+        const ticket = await makeTicket((await vapid(env)).privateKey, uid, due.id, due.caseNumber, exp);
+        const r = await send(env, [device], askMessage(due, ticket), TICKET_LIFE / 1000);
+        gone.push(...r.gone.map((endpoint) => [uid, endpoint]));
+        if (r.ok) { asks.push({ uid, report: due.id, at: when, exp }); askedNow = 1; }
+      }
+      results.push({ uid: uid.slice(0, 4), reports: all.length, ...(askedNow ? { asked: askedNow } : {}) });
     } catch (e) {
       results.push({ uid: uid.slice(0, 4), error: String(e.code || e.message || e) });
       if (e.code === "key_rejected" || e.code === "no_key") break;
     }
   }
-  if (updates.length || gone.length) await store.alertSave(updates, gone);
+  if (updates.length || gone.length || asks.length) await store.alertSave(updates, gone, asks);
   return results;
 }

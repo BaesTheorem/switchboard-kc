@@ -9,7 +9,7 @@ import { Draft, KANSAS_CITY } from "./draft.js";
 import { dateTime, relative, shortDate } from "./lib/format.js";
 import { meters } from "./lib/geo.js";
 import { idb, local } from "./lib/store.js";
-import { Kind, mapIssue, myReport, readCatalog, reportDetail, subId, UPDATE_TEXT } from "./models.js";
+import { dueForUpdate, Kind, lastAskedAt, mapIssue, myReport, readCatalog, reference, reportDetail, requestsNaming, subId, UPDATE_TEXT, WEEK } from "./models.js";
 
 export const S = {
   config: null,
@@ -85,7 +85,7 @@ const drafts = {};
 export const draftFor = (tab) => (drafts[tab === "services" ? "services" : "report"] ||= new Draft(tab === "services" ? "services" : "report"));
 
 export const contactSaved = () => ({ firstName: "", lastName: "", email: "", phone: "", ...local.get("contact", {}) });
-export const saveContact = (c) => local.set("contact", c);
+export const saveContact = (c) => { local.set("contact", c); emit("contact"); };
 
 // ---------- config ----------
 
@@ -219,10 +219,7 @@ export const asTarget = (x) => ("submitted" in x
   : x);
 
 /** The update requests in my reports that name this report. */
-export function updateRequestsFor(t) {
-  const keys = [`report ${t.id}`, ...(t.caseNumber ? [`#${t.caseNumber}`] : [])];
-  return S.myReports.filter((r) => r.isUpdateRequest && keys.some((k) => r.description.includes(k)));
-}
+export const updateRequestsFor = (t) => requestsNaming(t, S.myReports);
 
 function merged(base, requests) {
   const d = { ...base, timeline: [...base.timeline] };
@@ -414,12 +411,11 @@ export async function flushQueue() {
 
 // ---------- update requests ----------
 
-const WEEK = 7 * 86400e3;
-export const reference = (t) => (t.caseNumber ? `request #${t.caseNumber}` : `myKCMO app report ${t.id}`);
+export { reference };
 
 export function lastAsked(t) {
-  const ds = updateRequestsFor(t).map((r) => r.added?.getTime()).filter(Boolean);
-  return ds.length ? new Date(Math.max(...ds)) : null;
+  const at = lastAskedAt(t, S.myReports);
+  return at ? new Date(at) : null;
 }
 
 /** Why an update request is not allowed yet, or null. Requests open 7 days after filing and 7 days after the last request. */
@@ -431,14 +427,10 @@ export function tooSoon(t, now = Date.now()) {
   return null;
 }
 
-export function isDue(r, now = Date.now()) {
-  if (!r.isOpen || r.isUpdateRequest) return false;
-  const last = Math.max(r.lastMovement?.getTime() || 0, lastAsked(r)?.getTime() || 0);
-  return now - last >= WEEK;
-}
+export const isDue = (r, now = Date.now()) => dueForUpdate(r, S.myReports, now);
 
-/** Files one "311 Request Update" naming the report. A REAL city request. */
-export async function fileUpdateRequest(t, method, contact) {
+/** The filled "311 Request Update" form that names the report. */
+export function updateDraft(t, method, contact) {
   const cat = updateCategory(S.categories);
   if (!cat) throw new Error("The city's update form is not loaded yet.");
   const reach = method === "Email" ? contact.email : contact.phone;
@@ -456,10 +448,50 @@ export async function fileUpdateRequest(t, method, contact) {
   }
   const filed = t.added ? dateTime(t.added) : "";
   d.notes = `${UPDATE_TEXT} ${reference(t)}: ${t.label}${t.address ? ` at ${t.address}` : ""}${filed ? `, filed ${filed}` : ""}.`;
-  return submit(d, contact);
+  return d;
+}
+
+/**
+ * Files one "311 Request Update" naming the report. A REAL city request.
+ * It passes the robot check as each report does. (From 2026-10-23 to
+ * 2026-11-12 it sent no token, and the server refused each request that did
+ * not come from the owner.)
+ */
+export async function fileUpdateRequest(t, method, contact) {
+  const d = updateDraft(t, method, contact);
+  return submit(d, contact, await (await import("./robot.js")).robotToken());
 }
 
 export const autoEnabled = () => local.get("autoRequestUpdates", true);
+
+/** How the city answers an update request, from the saved contact details: { method, reach }, or null with no email and no phone. */
+export function reachOf(contact = contactSaved()) {
+  if (contact.email) return { method: "Email", reach: contact.email };
+  if (contact.phone) return { method: "Phone Call", reach: contact.phone };
+  return null;
+}
+
+/**
+ * Keeps one filled update request for each open report in this device's
+ * storage. The service worker sends one of them when the server says that a
+ * report is due and the app is closed (sw.js). The contact details stay on
+ * this device until then. With automatic requests off, or with no email and
+ * no phone, the device keeps none. Returns the number kept.
+ */
+export async function prepareAsks() {
+  const how = reachOf();
+  if (!autoEnabled() || !how) { await idb.del("asks"); return 0; }
+  // The catalog is not loaded yet: keep what is there.
+  if (!updateCategory(S.categories)) return -1;
+  const contact = contactSaved();
+  const asks = {};
+  for (const r of visibleReports().filter((x) => x.isOpen)) {
+    const { issue } = await updateDraft(r, how.method, contact).payload(deviceId(), contact, cityId());
+    asks[r.id] = { issueJSON: JSON.stringify(issue), label: r.label };
+  }
+  await idb.set("asks", asks);
+  return Object.keys(asks).length;
+}
 
 /** Asks about every due report, if automatic requests are on and a contact is saved. At most every 6 hours. */
 export async function autoRequestUpdates() {

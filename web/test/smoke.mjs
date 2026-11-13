@@ -121,5 +121,38 @@ await check("guard: a rating of a report that is not in the id's list is refused
   const r = await post("rate", { device: stranger, id: mine[0]?.id || "1", rating: 5 }, dry);
   if (r.status !== 404) throw new Error(`HTTP ${r.status}`);
 });
+// The ticket of an update request that a device sends when its app is closed (worker/asks.js). The owner makes a
+// ticket for an id that has no reports. The two calls after that are a visitor's (no owner token, so another
+// count of writes), and they have the dry-run header.
+{
+  const stranger = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const city = (await (await fetch(`${base}/api/config`)).json()).city;
+  let ticket = "";
+  const ask = (report) => {
+    const f = new FormData();
+    f.append("device", stranger);
+    f.append("issue_details", JSON.stringify({ city_id: city, menu_id: "10871", deviceuid: stranger, device_id: stranger, name: "311 Request Update",
+      notes: "Please send an update on myKCMO app report 9000001: Pothole in the Street.", files_metadata: [] }));
+    f.append("ticket", ticket);
+    f.append("report", report);
+    f.append("case", "");
+    return fetch(`${base}/api/submit`, { method: "POST", headers: { "x-kc311-dry-run": "1" }, body: f });
+  };
+  await check("ticket: the owner gets one", async () => {
+    const o = await ok(await post("admin/ticket", { device: stranger, report: "9000001", case: "" }));
+    ticket = o.ticket;
+    if (!/^\d{13}\.[\w-]{43}$/.test(ticket)) throw new Error("not a ticket");
+  });
+  await check("ticket: it takes the place of the robot check for an update request about its report", async () => {
+    const r = await ask("9000001");
+    const o = await r.json();
+    if (r.status !== 200 || !o.dry) throw new Error(`HTTP ${r.status} ${o.error || ""}`);
+  });
+  await check("ticket: it does not work for another report", async () => {
+    const r = await ask("9000002");
+    const o = await r.json();
+    if (r.status !== 403 || o.error !== "bad_ticket") throw new Error(`HTTP ${r.status} ${o.error || ""}`);
+  });
+}
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

@@ -7,8 +7,11 @@
 // - /api and map tiles: always the network; the app keeps its own saved
 //   copies of city data.
 // - push: shows the notification the server sent; a tap opens the report.
+// - push of the type "ask": a report had no updates for 7 days. This worker
+//   sends the update request that the app kept on this device, then shows
+//   what it did (worker/asks.js has the full sequence).
 
-const VERSION = "20261113T0007";
+const VERSION = "20261113T0033";
 const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",
@@ -72,16 +75,71 @@ self.addEventListener("fetch", (e) => {
   })());
 });
 
+const show = (d) => self.registration.showNotification(d.title || "Switchboard KC", {
+  body: d.body || "A report changed.",
+  tag: d.tag || "kc311",
+  icon: "/icons/icon-192.png",
+  badge: "/icons/favicon-64.png",
+  data: { url: d.url || "/#/reports" },
+});
+
+/** One value of the app's storage: the "kv" store of the "switchboard" database (js/lib/store.js). */
+function stored(key) {
+  return new Promise((resolve) => {
+    const open = indexedDB.open("switchboard", 1);
+    open.onupgradeneeded = () => open.result.createObjectStore("kv");
+    open.onerror = () => resolve(undefined);
+    open.onsuccess = () => {
+      try {
+        const get = open.result.transaction("kv", "readonly").objectStore("kv").get(key);
+        get.onsuccess = () => resolve(get.result);
+        get.onerror = () => resolve(undefined);
+      } catch {
+        resolve(undefined);
+      }
+    };
+  });
+}
+
+/**
+ * Sends the update request that the app kept for this report (state.js
+ * prepareAsks), with the server's ticket in the place of the robot check.
+ * The contact details are in the kept request, and they go from this device
+ * to the city in this one call. True when the city took the request.
+ */
+async function sendAsk(d) {
+  try {
+    const kept = (await stored("asks"))?.[d.report];
+    if (!kept || !d.ticket) return false;
+    const issue = JSON.parse(kept.issueJSON);
+    const now = Date.now();
+    issue.timestamp = String(now);
+    issue.offline_timestamp = now;
+    const f = new FormData();
+    f.append("device", issue.deviceuid);
+    f.append("issue_details", JSON.stringify(issue));
+    f.append("ticket", d.ticket);
+    f.append("report", d.report);
+    f.append("case", d.case || "");
+    const r = await fetch("/api/submit", { method: "POST", body: f });
+    const o = await r.json().catch(() => null);
+    return r.ok && o?.ok === true;
+  } catch {
+    return false;
+  }
+}
+
+/** A notification shows for each push, sent or not: Safari takes the subscription away after pushes that show nothing. */
+async function ask(d) {
+  const url = d.url || `/#/reports/mine/${d.report}`;
+  if (await sendAsk(d)) return show({ ...d, url });
+  return show({ title: "Time to ask the city for an update", body: `${d.label || "A report"} had no updates in 7 days. Open the app to send the request.`, tag: d.tag, url });
+}
+
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data?.json() || {}; } catch { d = { title: "Switchboard KC", body: e.data?.text() || "" }; }
-  e.waitUntil(self.registration.showNotification(d.title || "Switchboard KC", {
-    body: d.body || "A report changed.",
-    tag: d.tag || "kc311",
-    icon: "/icons/icon-192.png",
-    badge: "/icons/favicon-64.png",
-    data: { url: d.url || "/#/reports" },
-  }));
+  e.waitUntil(d.type === "ask" ? ask(d) : show(d));
 });
 
 self.addEventListener("notificationclick", (e) => {

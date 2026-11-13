@@ -10,8 +10,8 @@ import { local, persist } from "./lib/store.js";
 import { reportScope } from "./models.js";
 import { route, start } from "./router.js";
 import {
-  autoRequestUpdates, deviceId, flushQueue, loadConfig, loadMap, loadMyReports, loadQueue, loadSavedCatalog,
-  loadSavedMaps, loadSavedMine, recoverDeviceId, refreshCatalog, S, visibleReports,
+  autoRequestUpdates, deviceId, flushQueue, listen, loadConfig, loadMap, loadMyReports, loadQueue, loadSavedCatalog,
+  loadSavedMaps, loadSavedMine, prepareAsks, recoverDeviceId, refreshCatalog, S, visibleReports,
 } from "./state.js";
 import "./install.js";   // listens for the install prompt from the start
 import { recordStart } from "./startup.js";
@@ -83,7 +83,29 @@ async function foreground() {
   await checkHealth();
   await flushQueue();
   await autoRequestUpdates();
+  keepAsksReady();
 }
+
+let asksTimer = 0;
+/**
+ * For the time when the app is closed: this device keeps a filled update
+ * request for each open report, and the server knows that this device sends
+ * them (state.js prepareAsks, views/alerts.js syncAuto). Runs again after the
+ * reports, the contact details or the switch change.
+ */
+function keepAsksReady() {
+  clearTimeout(asksTimer);
+  asksTimer = setTimeout(async () => {
+    if (!started) return;
+    try {
+      await prepareAsks();
+      await (await import("./views/alerts.js")).syncAuto();
+    } catch { /* the next start tries again */ }
+  }, 1500);
+}
+listen("mine", keepAsksReady);
+listen("contact", keepAsksReady);
+listen("catalog", keepAsksReady);
 
 async function boot() {
   applyAppearance(local.get("appearance", "auto"));

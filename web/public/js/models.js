@@ -220,6 +220,35 @@ export function myReport(d, now = Date.now()) {
   return r;
 }
 
+// ---------- update requests ----------
+//
+// These rules have no state, so the app and the server (worker/asks.js) use
+// the same code.
+
+export const WEEK = 7 * 86400e3;
+
+/** How an update request names a report: by its case number, else by its MyCivic id. */
+export const reference = (t) => (t.caseNumber ? `request #${t.caseNumber}` : `myKCMO app report ${t.id}`);
+
+/** True when the text of an update request names report `t`. A longer number that starts with the same digits is another report. */
+export function namesReport(text, t) {
+  const s = String(text || "");
+  const has = (k) => new RegExp(`${k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?!\\d)`).test(s);
+  return has(`report ${t.id}`) || (!!t.caseNumber && has(`#${t.caseNumber}`));
+}
+
+/** The update requests in `mine` (rows from myReport) that name report `t`. */
+export const requestsNaming = (t, mine) => mine.filter((r) => r.isUpdateRequest && namesReport(r.description, t));
+
+/** When the newest update request for `t` was filed, in ms, or 0. */
+export const lastAskedAt = (t, mine) => Math.max(0, ...requestsNaming(t, mine).map((r) => r.added?.getTime() || 0));
+
+/** True when an open report had no movement and no update request for 7 days. */
+export function dueForUpdate(r, mine, now = Date.now()) {
+  if (!r.isOpen || r.isUpdateRequest) return false;
+  return now - Math.max(r.lastMovement?.getTime() || 0, lastAskedAt(r, mine)) >= WEEK;
+}
+
 /** Detail of one report. Reporter contact fields are never read. */
 export function reportDetail(d) {
   const hist = [...(Array.isArray(d.history_object) ? d.history_object : [])]

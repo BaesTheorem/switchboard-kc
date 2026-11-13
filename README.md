@@ -81,11 +81,16 @@ the credits.
 ## Update requests
 
 Update requests open 7 days after a report is filed and 7 days after the
-last update request (`Store.tooSoon`). Before that, the button is greyed out
-with the date it opens, everywhere in the app. With "Ask automatically" on
-(the default), the app files one for each report that has had no movement
-and no update request for 7 days. It checks at launch, when it comes to the
-foreground, and in background refresh.
+last update request. Before that, the button is greyed out with the date it
+opens, everywhere in the app. With "Ask automatically" on (the default), the
+app files one for each report that has had no movement and no update request
+for 7 days. It checks when it opens and when it comes to the foreground.
+
+With ticket alerts on, the web app also asks while it is closed. The server
+finds the report that is due and pushes an "ask" to your device, and the
+device sends the request that it kept. Your email or phone stays on the
+device and goes to the city only inside a request. `web/worker/asks.js` has
+the sequence.
 
 ## How it works
 

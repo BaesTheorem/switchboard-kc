@@ -7,7 +7,7 @@
 
 import { bag, html, icon, on, render } from "../lib/html.js";
 import { local } from "../lib/store.js";
-import { autoEnabled, contactSaved, fileUpdateRequest, listen, loadMyReports, S, saveContact, tooSoon, visibleReports } from "../state.js";
+import { autoEnabled, contactSaved, emit, fileUpdateRequest, listen, loadMyReports, S, saveContact, tooSoon, visibleReports } from "../state.js";
 import { empty, spinner } from "../ui.js";
 
 export default function view(main, _params, ctx) {
@@ -78,7 +78,7 @@ export default function view(main, _params, ctx) {
   const autoSection = () => html`<section class="stack s8">
     <div class="rows"><label class="toggle-row" for="u-auto"><span class="grow sub">Ask automatically</span>
       <span class="switch"><input type="checkbox" id="u-auto" ${autoEnabled() ? "checked" : ""}><span></span></span></label></div>
-    <p class="caption muted" style="padding:0 4px">When a report has had no updates and no update request for 7 days, the app asks the city and sends you a notification. It checks when you open the app. It needs your email or phone above.</p>
+    <p class="caption muted" style="padding:0 4px">When a report has had no updates and no update request for 7 days, the app asks the city and sends you a notification. It checks when you open the app. With alerts on, it also asks while the app is closed: the server tells this device that a report is due, and this device sends the request. It needs your email or phone above. They stay on this device, and they go to the city only in a request.</p>
   </section>`;
 
   const send = async () => {
@@ -117,6 +117,7 @@ export default function view(main, _params, ctx) {
   }));
   off(on(main, "change", "#u-auto", (e) => {
     local.set("autoRequestUpdates", e.target.checked);
+    emit("contact");
     if (e.target.checked && "Notification" in window && Notification.permission === "default") Notification.requestPermission();
   }));
   off(on(main, "click", "[data-send]", send));
