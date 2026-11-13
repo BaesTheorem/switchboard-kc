@@ -8,6 +8,7 @@ import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_C
 import { relayApk, setKey, testCandidates } from "./keys.js";
 import { calendarFeed, gtfs, hud, meetings } from "./open.js";
 import { poll, subscribe, test as pushTest, unsubscribe, vapid } from "./push.js";
+import { ratingBlock, ratingDetails, STARS } from "./rating.js";
 import { body, deviceId, HttpError, json, randomHex, softPut } from "./util.js";
 
 export { Ledger } from "./ledger.js";
@@ -128,6 +129,38 @@ async function note(req, env) {
   return json({ ok: true, issue: await addNote(env, uid, id, text) });
 }
 
+/**
+ * Sends a REAL rating (1 to 5 stars) of one of this id's closed reports.
+ * The city's call names a report by its number alone. This server reads the
+ * id's own list first, and sends the rating only for a report that is in the
+ * list, is closed, and has no rating.
+ */
+async function rate(req, env) {
+  const b = await body(req);
+  const uid = deviceId(b.device);
+  const id = str(b.id, 20).replace(/\D/g, "");
+  const rating = Number(b.rating);
+  const text = String(b.text ?? "").trim();
+  if (!id) throw new HttpError(400, "bad_id", "Name the report.");
+  if (!STARS.includes(rating)) throw new HttpError(400, "bad_rating", "Select 1 to 5 stars.");
+  if (text.length > 2000) throw new HttpError(413, "too_long", "Keep the comment under 2,000 characters.");
+  const cfg = await getConfig(env);
+  if (!cfg) throw new HttpError(503, "no_key", "The server has no city API key yet.");
+  const row = (await myReports(env, uid)).find((r) => String(r.id) === id);
+  const block = ratingBlock(row);
+  if (block === "not_yours") throw new HttpError(404, "not_yours", "This report is not in your list.");
+  if (block === "not_closed") throw new HttpError(409, "not_closed", "The city takes a rating only after it closes the report.");
+  if (block === "rated") throw new HttpError(409, "rated", "This report has a rating already.");
+  const details = ratingDetails(cfg.city_id, API_VERSION, uid, row, rating, text);
+  // Test runs send this header: the checks above run, and nothing goes to the city.
+  if (req.headers.get("x-kc311-dry-run") === "1") return json({ ok: true, dry: true, would_send: details });
+  const o = await civicJSON(env, uid, "rai_report_rating", { rating_details: JSON.stringify(details) });
+  const st = o.response_status || {};
+  const message = String(st.response_message || o.response_message || "");
+  if (String(st.response_code) !== "1") throw new HttpError(422, "rating_refused", message || "The city did not take the rating.");
+  return json({ ok: true, message });
+}
+
 let lastProbe = 0;
 async function health(env, url) {
   const cfg = await getConfig(env);
@@ -202,6 +235,10 @@ async function route(req, env, ctx, url) {
   if (p === "/api/note") {
     await burst(env, "WRITES", g.who);
     return note(req, env);
+  }
+  if (p === "/api/rate") {
+    await burst(env, "WRITES", g.who);
+    return rate(req, env);
   }
   const b = await body(req);
   switch (p) {

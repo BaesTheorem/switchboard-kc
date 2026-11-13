@@ -311,6 +311,18 @@ select.input { appearance: auto; -webkit-appearance: menulist; }
 .toggle-row .switch { margin: 0; flex: none; }
 .field-label { font-size: 15px; font-weight: 600; display: block; margin-bottom: 8px; }
 
+/* The rating of a closed report: five radio buttons, each drawn as a star in
+   a 44 px tap target. The input is hidden from sight and keeps the keyboard. */
+.stars { display: flex; gap: 4px; }
+.stars label.star { display: grid; place-items: center; inline-size: 44px; block-size: 44px; margin: 0; border-radius: 50%; cursor: pointer; color: var(--outline); }
+.stars label.star.on { color: var(--primary); }
+.stars label.star > i { --_size: 32px; }
+.stars input:focus-visible + label.star { outline: 3px solid var(--primary); outline-offset: -2px; }
+.stars input:disabled + label.star { opacity: .5; cursor: default; }
+.stars.shown { flex: none; gap: 0; color: var(--outline); }
+.stars.shown > i { --_size: 22px; }
+.stars.shown > i.on { color: var(--primary); }
+
 /* ---------- status ---------- */
 
 .track { display: flex; flex-direction: column; gap: 8px; }

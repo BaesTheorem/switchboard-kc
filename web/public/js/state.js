@@ -195,6 +195,22 @@ export async function addNote(id, text) {
   return o;
 }
 
+/**
+ * Sends a REAL rating (1 to 5 stars, with an optional comment) of one of my
+ * closed reports, then reads my reports again. The city keeps one rating for
+ * each report. If the city's list is slow to show it, this device shows it.
+ */
+export async function rateReport(id, rating, text = "") {
+  const o = await api("rate", { body: { device: deviceId(), id, rating, text } });
+  if (!o.dry) local.set("ratedHere", { ...local.get("ratedHere", {}), [id]: rating });
+  await loadMyReports().catch(() => {});
+  emit("mine");
+  return o;
+}
+
+/** The rating of one of my reports: the city's value, or the one this device sent. 0 when it has none. */
+export const ratingOf = (r) => r?.rating || Number(local.get("ratedHere", {})[r?.id]) || 0;
+
 export const cachedDetail = (id) => (S.details[id] ? reportDetail(S.details[id].issue) : null);
 
 /** Anything an update request can name: one of my reports or a public pin. */

@@ -57,7 +57,7 @@ for (const f of files(pub)) {
   for (const re of patterns) for (const m of src.matchAll(re)) for (const g of m.slice(1)) if (g && /_|^[a-z]{3,}$/.test(g)) names.add(g);
 }
 // Words the patterns catch that are not icons.
-for (const w of ["open", "closed", "all", "auto", "light", "dark", "email", "invite", "off", "mine", "public", "yes", "no", "sms", "tel"]) {
+for (const w of ["open", "closed", "all", "auto", "light", "dark", "email", "invite", "off", "mine", "everyone", "public", "yes", "no", "sms", "tel"]) {
   if (!["sms"].includes(w)) names.delete(w);
 }
 const sorted = [...names].sort();

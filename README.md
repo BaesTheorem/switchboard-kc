@@ -48,14 +48,17 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
   - "Add a note" on one of your reports sends a note to the staff. It goes
     into the report's history, and it cannot be changed or deleted. The box
     shows only when the city allows notes on that report.
+  - "Rate the city's work" (web app) on one of your resolved or closed
+    reports sends 1 to 5 stars and an optional comment to the city's 311
+    system. A report takes one rating, and it cannot be changed.
 - **City.** City phone numbers (311, police non-emergency, the streetcar, and
   25 more from the city's own catalog text), and the city pages that no
   section claims.
+  - "Pay a bill or a ticket" (web app) lists each payment the city takes
+    online and opens the payment page of the office that owns it.
 
 The cog at the top right of each screen opens Settings: the theme (Auto,
 Light, Dark), the API status with a manual key refresh, your reports id, and
-  - "Pay a bill or a ticket" (web app) lists each payment the city takes
-    online and opens the payment page of the office that owns it.
 the credits.
 
 ## Filing a report

@@ -185,6 +185,11 @@ export const isUpdateRequestName = (name) => String(name || "").toLowerCase().in
  * hours ahead of the real time; `updated_on`, a UTC string, is right. Filing
  * time is the earlier of the two, never later than now.
  */
+/** The star values of a rating, as the city's app sends them. */
+export const STARS = [1, 2, 3, 4, 5];
+/** The city's app offers a rating for the statuses "resolved" and "close". A canceled report gets none. */
+export const closedForRating = (status) => /^(resolved|closed?)$/i.test(String(status ?? "").trim());
+
 export function myReport(d, now = Date.now()) {
   const updatedOn = utcString(str(d, "updated_on"));
   const addedCandidates = [epoch(d, "added_on"), updatedOn].filter(Boolean).map((x) => x.getTime());
@@ -207,6 +212,11 @@ export function myReport(d, now = Date.now()) {
   r.label = r.subcategory || r.category;
   r.isUpdateRequest = isUpdateRequestName(r.category) || r.description.trim().startsWith(UPDATE_TEXT);
   r.isOpen = stage(r.status) !== 3;
+  // The city says hasRated "no" until the report has a rating. A row with no such field gets no rating control.
+  const unrated = str(d, "hasRated").trim().toLowerCase() === "no";
+  const stars = Math.round(num(d, "ratingValue") || 0);
+  r.rating = !unrated && STARS.includes(stars) ? stars : 0;
+  r.canRate = unrated && !r.isUpdateRequest && closedForRating(r.status);
   return r;
 }
 

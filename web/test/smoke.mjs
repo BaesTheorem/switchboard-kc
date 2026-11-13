@@ -109,5 +109,17 @@ await check("guard: a report for another city id is refused", async () => {
   const r = await fetch(`${base}/api/submit`, { method: "POST", headers: { "x-admin-token": env.ADMIN_TOKEN }, body: f });
   if (r.status !== 400) throw new Error(`HTTP ${r.status}`);
 });
+// The rating route. Each call has the dry-run header, so no rating goes to the city.
+// (The server allows 4 writes a minute for each caller: keep the writes in this file to 4 or less.)
+const dry = { ...owner, "x-kc311-dry-run": "1" };
+await check("guard: a rating of 0 stars is refused", async () => {
+  const r = await post("rate", { device, id: "1", rating: 0 }, dry);
+  if (r.status !== 400) throw new Error(`HTTP ${r.status}`);
+});
+await check("guard: a rating of a report that is not in the id's list is refused", async () => {
+  const stranger = [...crypto.getRandomValues(new Uint8Array(8))].map((b) => b.toString(16).padStart(2, "0")).join("");
+  const r = await post("rate", { device: stranger, id: mine[0]?.id || "1", rating: 5 }, dry);
+  if (r.status !== 404) throw new Error(`HTTP ${r.status}`);
+});
 console.log(failed ? `${failed} failed` : "all passed");
 process.exit(failed ? 1 : 0);

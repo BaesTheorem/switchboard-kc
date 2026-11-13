@@ -4,12 +4,15 @@
 import { html, icon, on } from "../lib/html.js";
 import { relative } from "../lib/format.js";
 import { categoryIcon } from "../models.js";
-import { cachedDetail, contactSaved, fileUpdateRequest, lastAsked, loadMyReports, reference, saveContact, tooSoon } from "../state.js";
+import { cachedDetail, contactSaved, fileUpdateRequest, lastAsked, loadMyReports, ratingOf, reference, saveContact, tooSoon } from "../state.js";
 import { sheet, snack, track } from "../ui.js";
 
 /** One of my reports as a card: type, status track, number, last movement. */
 export function reportCard(r, href) {
   const asked = lastAsked(r);
+  const stars = ratingOf(r);
+  // The card asks for a rating for 30 days after the report closes. After that, the report's own screen still takes one.
+  const askRating = !stars && r.canRate && r.lastMovement && Date.now() - r.lastMovement.getTime() < 30 * 86400e3;
   return html`<a class="plain tile" href="${href}">
     <div class="stack s8">
       <div class="row base">
@@ -24,6 +27,8 @@ export function reportCard(r, href) {
         ${r.lastMovement ? html`<span>updated ${relative(r.lastMovement)}</span>` : ""}
       </div>
       ${asked ? html`<div class="row s4 caption primary-text">${icon("notifications_active")}<span>Update asked ${relative(asked)}</span></div>` : ""}
+      ${stars ? html`<div class="row s4 caption muted">${icon("star", "fill")}<span>You gave ${stars} of 5 stars</span></div>` : ""}
+      ${askRating ? html`<div class="row s4 caption primary-text">${icon("star")}<span>Rate the city's work</span></div>` : ""}
     </div>
   </a>`;
 }

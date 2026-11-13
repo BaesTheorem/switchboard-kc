@@ -339,7 +339,18 @@ Response (no envelope) [probe, empty for a fresh device]:
 ```
 
 `my_issues[]` element fields the app reads [code: `ResponseParser.parseReport_Response`].
-These were not observed live, because no report exists for the probe device:
+A live row, read 2026-11-12 for a device with six reports, has these 61 keys [probe]:
+`actual_status, added_on, address, car_details, category, citizen_allow_to_send_note, city,
+city_report_id, cityhash_id, color, commend_info, crime_info, cross_street, description,
+display_incident_attachments, display_incident_descriptions, display_wo, form_data,
+hasRated, hide_add_photos, history_object, id, inspection_code, inspection_time,
+issue_image, issue_type, issue_type_id, last_action_date, last_visited_timestamp, latitude,
+light_pole_number, longitude, make, model, name, new_update_count, permit_no, permit_type,
+plate, rai_issue_type, ratingColor, ratingID, ratingValue, report_type, state, status,
+statuscolorcode, sub_type, subcategory, subtype, thirdparty, thirdparty_call_timestamp,
+thirdparty_id, thirdparty_params, thirdparty_type, timestamp, type, updated_on,
+updated_timestamp, url, zip`. `status` is not in one letter case: one report had
+`"Resolved"` and four had `"resolved"`.
 
 | Field | Definition |
 | --- | --- |
@@ -352,6 +363,7 @@ These were not observed live, because no report exists for the probe device:
 | `added_on`, `updated_timestamp`, `last_action_date` | epoch seconds (strings) |
 | `last_visited_timestamp`, `new_update_count` | unread badge |
 | `display_wo` | the work order / case number to show |
+| `hasRated`, `ratingValue`, `ratingID`, `ratingColor` | the rating of a closed report (section 9): `"no"`, `0`, `0`, `0` until it has one |
 
 `has_more` is `"0"`/`0` when the list is at the end.
 
@@ -686,18 +698,38 @@ The comment box is gated by `citizen_allow_to_send_note` and `hide_add_photos`.
 
 ## 9. `rai_report_rating` (rate a resolved report). WRITES
 
-Not called. Multipart [code: `FeedbackNoteFragment.callSubmit` / `callSubmitRAIReportRating`]:
+Called one time on 2026-11-12, to give 5 stars to a resolved "Missed Trash" report
+[probe]. One multipart part
+[code: `FeedbackNoteFragment.callSubmit` / `callSubmitRAIReportRating`]:
 
 - `rating_details`: JSON string
   `{"city_id","device_id","deviceuid","first_name","last_name","email_address","phone_number","rating","report_id","notes","api_version":"6.0"}`
-  - `rating` is the index of the selected star as a string. The range (0-based or 1-based)
-    is not known [guess: 0..4 or 1..5].
-  - `report_id` is the `myissues` element's **`city_report_id`**, not `id`.
-  - The contact keys are named `email_address` / `phone_number` here (not `email` / `phone`),
-    and are sent only if contact info exists locally.
-- `file_zip`: ZIP named `feedbackImages.zip` (optional).
+  - `rating` is the star value as a string, `"1"` to `"5"`. The five stars have the tags
+    1 to 5, and the app refuses 0 with "Please select rating." [code]. The probe sent `"5"`.
+  - `report_id` is the `myissues` element's **`city_report_id`**, not `id`. (The two had
+    the same value for each of the six reports read on 2026-11-12.)
+  - `notes` is the comment. The app refuses an empty one ("Please enter your feedback.")
+    [code]. The server took `""` [probe].
+  - The contact keys are named `email_address` / `phone_number` here (not `email` / `phone`).
+    The app asks for user info before a rating and sends the four keys [code]. The server
+    took a rating with none of the four [probe].
+- No file goes out. The screen has photo buttons and builds `feedbackImages.zip`, but
+  `RAIReportAPICaller.submitRAIRating(@Url, @PartMap)` has no file parameter [code].
 
-Response: `{"response_status":{"response_code":1,"response_message":"..."}}`. `1` is success, `0` is failure.
+Response [probe]:
+`{"response_status":{"response_code":1,"response_message":"Thank you for submitting rating on #62, your rating has been submitted successfully"}}`.
+`1` is success, `0` is failure [code]. After the call, the report's `myissues` row had
+`hasRated: "yes"`, `ratingValue: "5"`, `ratingID: "62"` and `ratingColor: "205,85,235"`
+[probe]. Before it, the row had `hasRated: "no"` and the number `0` in the other three.
+
+**The city's app cannot open this screen.** `MyReportRowViewHolder.onBindViewHolder` shows
+the rate button on a row with the status "resolved" or "close". Two lines after that
+block then hide the button and the emoji for each row [code, app 2025.020, version name
+2025.7.6]. The rating in the probe got the number 62.
+
+Not tested: a rating for a report that another device filed, and a second rating for the
+same report. The Switchboard server reads the id's own `myissues` list first. It sends a
+rating only for a report in that list that is resolved or closed and has `hasRated: "no"`.
 
 ## 10. Other endpoints (for reference, not probed)
 
@@ -728,9 +760,9 @@ Response: `{"response_status":{"response_code":1,"response_message":"..."}}`. `1
    immediately, or only after the CRM sync (`thirdparty_call_timestamp`)?
 5. Does the server pair `files_metadata[].filename` with the ZIP entry names, or does it take
    all ZIP entries in order?
-6. The `rating` index base for `rai_report_rating`.
+6. Answered 2026-11-12: `rating` is `"1"` to `"5"` (section 9).
 7. Does the server enforce `description_required` / `no_entry` / `mandatory_contact_info`
    (the Android app does not)?
-8. `myissues` element fields are from the parser only. No live non-empty sample exists.
+8. Answered 2026-11-12: section 4 has the keys of a live `myissues` row.
 9. Is `searchNearestIssue` really limited to approximately 90 days and every status
    (the probe saw `received`, `canceled`, `resolved`, `new`)?

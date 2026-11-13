@@ -83,8 +83,13 @@ Open:
 Compared on 2026-11-12 with the calls in the city's Android app (`API.md`)
 and with its live menu. Switchboard shows all the menu links.
 
-- **Rate a closed report** (`rai_report_rating`): stars, a note and photos.
-  The call is in the app's code. It is not confirmed that Kansas City uses it.
+- **Rate a closed report** (`rai_report_rating`). Done on the web on
+  2026-11-12: the screen of a resolved or closed report has five stars and an
+  optional comment, and the report card asks for a rating for 30 days. The
+  city's server took a 5-star rating that day and shows it in the report
+  list. The city's own app has the rating screen and hides the button that
+  opens it (`API.md` section 9). Open: it is not known if 311 staff read the
+  ratings. Ask the city.
 - **Remove a report from my list** (`delete_report_from_device`).
 - **The city's own message inbox** (`register_device`, `notification_history`,
   `update_notification_status`): messages that the city sends to every phone.

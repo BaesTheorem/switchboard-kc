@@ -355,3 +355,67 @@ test("my reports: a note goes to the city only after the confirm, and the box cl
   await expect(page.getByText("Notes Added By Citizen")).toBeVisible();
   expect(await axe(page)).toEqual([]);
 });
+
+test("my reports: a closed report takes one rating, and it goes to the city only after the confirm", async ({ context }) => {
+  // Fixture data only: the list, the detail and the rating call are all answered here.
+  const { page } = await ownerPage(context);
+  const now = Math.floor(Date.now() / 1000);
+  let closed = { id: "9000003", city_report_id: "9000003", name: "Trash  Recycling  Bulky Services", sub_type: "Missed Trash", status: "Resolved",
+    description: "The trash is still at the curb.", address: "1 Test St", added_on: String(now - 3 * 86400), hasRated: "no", ratingValue: 0 };
+  const open = { ...closed, id: "9000004", city_report_id: "9000004", name: "Streets and Sidewalks", sub_type: "Pothole in the Street", status: "Assigned" };
+  const issue = (r) => ({ status: r.status, type: r.name, subtype: r.sub_type, address: r.address, description: r.description, citizen_allow_to_send_note: 0,
+    history_object: [{ title: "Status Changed", details: `Status changed to ${r.status}`, dateofupdate: "11/10/2026 01:08 PM", timestamp: now - 86400 }] });
+  const ratings = [];
+  await page.route("**/api/myissues", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, my_issues: [closed, open] }) }));
+  await page.route("**/api/detail", (route) => route.fulfill({ status: 200, contentType: "application/json",
+    body: JSON.stringify({ ok: true, issue: issue(route.request().postDataJSON().id === open.id ? open : closed) }) }));
+  await page.route("**/api/rate", async (route) => {
+    ratings.push(route.request().postDataJSON());
+    closed = { ...closed, hasRated: "yes", ratingValue: ratings.at(-1).rating };
+    await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, message: "Thank you for your feedback." }) });
+  });
+  // The card of the closed report asks for a rating. The card of the open report does not.
+  await page.goto("/#/reports");
+  await expect(page.locator("#list a.tile").filter({ hasText: "Missed Trash" })).toContainText("Rate the city's work", { timeout: 30_000 });
+  await expect(page.locator("#list a.tile").filter({ hasText: "Pothole" })).not.toContainText("Rate the city's work");
+  await page.goto("/#/reports/mine/9000004");
+  await expect(page.getByRole("heading", { name: "Timeline" })).toBeVisible({ timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: "Rate the city's work" })).toHaveCount(0);
+  await page.goto("/#/reports/mine/9000003");
+  await expect(page.getByRole("heading", { name: "Rate the city's work" })).toBeVisible({ timeout: 30_000 });
+  const send = page.getByRole("button", { name: "Send rating" });
+  await expect(send).toBeDisabled();
+  await expect(page.getByRole("radio")).toHaveCount(5);
+  expect(await axe(page)).toEqual([]);
+  expect(await drawnIcons(page)).toEqual([]);
+  // A tap on the fourth star sets four. Each star is a tap target of 44 px or more.
+  await page.locator('label[for="star-4"]').click();
+  await expect(page.getByRole("radio", { name: "4 stars" })).toBeChecked();
+  await expect(page.locator(".stars label.on")).toHaveCount(4);
+  expect(await page.locator(".stars label.star").evaluateAll((ls) => ls.every((l) => l.offsetWidth >= 44 && l.offsetHeight >= 44))).toBe(true);
+  // The arrow keys move the rating, as in each radio group, and the focus stays on the stars.
+  await page.getByRole("radio", { name: "4 stars" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("radio", { name: "5 stars" })).toBeChecked();
+  await expect(page.getByRole("radio", { name: "5 stars" })).toBeFocused();
+  await expect(page.locator(".stars label.on")).toHaveCount(5);
+  await page.getByLabel("Comment for the city (optional)").fill("Fast work.");
+  await expect(send).toBeEnabled();
+  await send.click();
+  await expect(page.locator("#sheet")).toContainText("Send 5 stars to the city?");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  expect(ratings).toEqual([]);
+  await send.click();
+  await page.locator("#sheet").getByRole("button", { name: "Send rating" }).click();
+  await expect(page.getByRole("heading", { name: "Your rating" })).toBeVisible();
+  expect(ratings).toEqual([{ device: TEST_DEVICE, id: "9000003", rating: 5, text: "Fast work." }]);
+  await expect(page.getByRole("img", { name: "5 of 5 stars" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Send rating" })).toHaveCount(0);
+  await expect(page.getByRole("radio")).toHaveCount(0);
+  await page.locator("#sheet").evaluate((d) => Promise.all(d.getAnimations({ subtree: true }).map((a) => a.finished))).catch(() => {});
+  expect(await axe(page)).toEqual([]);
+  // The list card shows the rating that the report has.
+  await page.goto("/#/reports");
+  await expect(page.locator("#list a.tile").filter({ hasText: "Missed Trash" })).toContainText("You gave 5 of 5 stars");
+  expect(page.errors).toEqual([]);
+});
