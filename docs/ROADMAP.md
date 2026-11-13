@@ -61,7 +61,7 @@ Open:
 
 ## Pay city bills and tickets
 
-Done on the web on 2026-11-12: a Pay screen, from a row on the Services tab.
+Done on the web on 2026-11-12: a Pay screen, from a card on the City tab.
 It lists 12 payments by the paper that the person has (water bill, parking
 ticket, court ticket, taxes, ambulance bill, permit fee and more). Each one
 opens the payment page of the office that owns it. The app takes no card

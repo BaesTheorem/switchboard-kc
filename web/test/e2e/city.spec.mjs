@@ -140,8 +140,27 @@ test("Police report: above the streetcar, the department's forms, the numbers, a
 
 test("Pay: each bill and ticket opens the payment page of its office", async ({ context }) => {
   const { page } = await ownerPage(context);
+  // The Pay card is on the City tab, under Health and help. The Services tab does not show it.
   await page.goto("/#/services");
-  await page.getByRole("link", { name: /Pay a bill or a ticket/ }).click();
+  await expect(page.getByRole("link", { name: /KC Streetcar/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /Pay a bill or a ticket/ })).toHaveCount(0);
+  await page.goto("/#/city");
+  const card = page.getByRole("link", { name: /Pay a bill or a ticket/ });
+  await expect(card).toHaveCount(1);
+  expect(await page.evaluate(() => {
+    const top = (re) => [...document.querySelectorAll("main a")].find((a) => re.test(a.textContent)).getBoundingClientRect().top;
+    return top(/Health and help/) < top(/Pay a bill or a ticket/) && top(/Pay a bill or a ticket/) < top(/Call 311/);
+  })).toBe(true);
+  // The search finds the card by the name of a payment, and hides it for other words.
+  const search = page.getByRole("searchbox").first();
+  await search.fill("water bill");
+  await expect(card).toBeVisible();
+  await search.fill("tow lot");
+  await expect(card).toHaveCount(0);
+  await search.fill("");
+  expect(await axe(page)).toEqual([]);
+  await card.click();
+  await expect(page).toHaveURL(/#\/city\/pay$/);
   await expect(page.locator("#title")).toHaveText("Pay");
   await expect(page.getByText("This app takes no card numbers.")).toBeVisible();
   const rows = page.locator("#pay-list a");

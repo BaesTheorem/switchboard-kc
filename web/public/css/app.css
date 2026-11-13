@@ -458,8 +458,8 @@ ul.rows { list-style: none; margin: 0; padding: 0; }
 .badge-help { display: inline-block; vertical-align: middle; margin-inline-start: 6px; padding: 2px 6px; border-radius: 999px; font-size: 11px; font-weight: 600; background: var(--error-container); color: var(--on-error-container); }
 
 /* Health and help. */
-.help-card .tile > i:first-child { --_size: 28px; }
-.help-card .tile > i:last-child { --_size: 20px; }
+.help-card .tile > i:first-child, .door-card .tile > i:first-child { --_size: 28px; }
+.help-card .tile > i:last-child, .door-card .tile > i:last-child { --_size: 20px; }
 .item.need > i:first-child { color: var(--error); }
 
 /* The City tab's search field, with its icon and a clear button inside. */

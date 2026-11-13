@@ -13,7 +13,7 @@ Checked on 2026-10-20 with the browser tests in `web/test/e2e`.
 | Health and help card (HealthHelp) | Same | |
 | Near you: trash day, leaf and brush zone, plowing (CivicData) | Changed | The iPhone app reads them for the device's position and names no place. The web app reads them for a home address that the person sets, and the card names the address. Away from home, the position gives another street's trash day. No water outage line: its host (maps.kcwater.info) stopped resolving in October 2026, so the iPhone check fails too. |
 | "Make a police report online", a link to the city's page (ReportBrowse) | New | A Police report screen above KC Streetcar: 911 and the non-emergency number, the department's conditions, its 13 report types (each opens the department's own form, English or Spanish), and how to get a copy of a report. The city's link goes to a host whose certificate expired on 2026-10-17. |
-| "Pay Online", a link to the city's page | New | A Pay screen with 12 payments, each one tap from the payment page of its office. |
+| "Pay Online", a link to the city's page | New | A Pay card on the City tab, under Health and help. It opens a Pay screen with 12 payments, each one tap from the payment page of its office. |
 | None | New | A card on the Report tab asks for the home address and the contact details, and says that the app stores both on the device only. Settings > Your details changes them. |
 | Passkey card on the Report tab after the first report | Changed | The web app shows it from the first open. A closed card says that Settings > My reports has the same buttons. |
 | Reports waiting to send, with Retry (ReportTab) | Same | A report the city refuses stays in the list with the reason and a Remove button. |

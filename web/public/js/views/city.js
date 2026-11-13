@@ -1,9 +1,10 @@
-// The City tab: Health and help, the city's phone numbers, license offices
-// and transit, and the city pages that no Report section claims. The search
-// field filters all of it. Ported from CityTab in OtherTabs.swift.
+// The City tab: Health and help, the Pay card, the city's phone numbers,
+// license offices and transit, and the city pages that no Report section
+// claims. The search field filters all of it. Ported from CityTab in
+// OtherTabs.swift.
 
 import { generalLinks, PHONES_MORE, PHONES_PINNED, phoneHref } from "../catalog.js";
-import { isPayLink } from "../pay.js";
+import { isPayLink, PAYMENTS } from "../pay.js";
 import { $, bag, html, icon, on, render, safeUrl } from "../lib/html.js";
 import { linkIcon, linkName } from "../models.js";
 import { listen, S } from "../state.js";
@@ -28,12 +29,24 @@ const phoneRow = (p) => html`<a class="item" href="${safeUrl(phoneHref(p))}">
   <span class="grow stack s4"><span>${p.name}</span><span class="caption muted mono">${p.number}</span></span>
 </a>`;
 
-// The city's "Pay Online" link opens the app's own Pay screen, which has each payment one tap away.
-const linkRow = (l) => (isPayLink(l)
-  ? html`<a class="item" href="#/city/pay">${icon("payments")}<span class="grow">Pay a bill or a ticket</span>${icon("chevron_right", "trail")}</a>`
-  : html`<a class="item" href="${safeUrl(l.url)}" target="_blank" rel="noopener">
+const linkRow = (l) => html`<a class="item" href="${safeUrl(l.url)}" target="_blank" rel="noopener">
   ${icon(linkIcon(l.name))}<span class="grow">${linkName(l.name)}</span>${icon("open_in_new", "trail")}
-</a>`);
+</a>`;
+
+// The Pay card opens the app's Pay screen, which has each payment one tap
+// away. It takes the place of the city's "Pay Online" link in the list of
+// city pages. A search finds it by its name or by the name of a payment.
+const PAY_WORDS = `pay a bill or a ticket pay online ${PAYMENTS.map((p) => p.name).join(" ")}`;
+const payCard = () => html`<a class="plain door-card" href="#/city/pay" data-go="/city/pay">
+  <span class="tile row top">
+    ${icon("payments", "primary-text")}
+    <span class="grow stack s4">
+      <span class="headline">Pay a bill or a ticket</span>
+      <span class="caption muted">Water bill, parking and court tickets, taxes, permits, and more.</span>
+    </span>
+    ${icon("chevron_right", "muted")}
+  </span>
+</a>`;
 
 function list() {
   // The name and the number are matched as one run of text, as on the iPhone.
@@ -41,14 +54,16 @@ function list() {
   const pinned = PHONES_PINNED.filter(phone);
   const more = PHONES_MORE.filter(phone);
   const travel = matches(query, TRAVEL);
-  const links = generalLinks(S.links).filter((l) => matches(query, linkName(l.name)));
+  const pay = matches(query, PAY_WORDS);
+  const links = generalLinks(S.links).filter((l) => !isPayLink(l) && matches(query, linkName(l.name)));
   // Open while searching, so the matches show.
   const open = showMore || query !== "";
-  const count = pinned.length + more.length + (travel ? 2 : 0) + links.length;
+  const count = pinned.length + more.length + (travel ? 2 : 0) + (pay ? 1 : 0) + links.length;
   return {
     count,
     tpl: html`
     ${helpCard("#/city/help")}
+    ${pay ? payCard() : ""}
     ${pinned.length || more.length ? html`<section class="stack s8">
       ${label("Phone numbers")}
       <div class="rows">
