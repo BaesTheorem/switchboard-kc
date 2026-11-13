@@ -1,11 +1,12 @@
 # Switchboard KC
 
 An unofficial client for Kansas City, Missouri 311, with KC Streetcar
-reports added: an iPhone app (`ios/`) and a web app (`web/`) that installs
-from the browser on any phone. Both use the same backend as the city's
-official myKCMO app, and both use stock Material Design 3. iPhone testers get
-the app through TestFlight. The project was called KC 311 until October 2026;
-some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
+reports, city meetings and city services added. It is a web app (`web/`)
+that installs from the browser on any phone, with no app store. It uses the
+same backend as the city's official myKCMO app, and stock Material Design 3.
+
+The owner's server is at **https://switchboard.commonlot.io**. Anyone can
+open it.
 
 > **Unofficial.** This app is not made, approved, or supported by the City of
 > Kansas City, Missouri, by Tyler Technologies (the maker of myKCMO and the
@@ -13,27 +14,35 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
 > into the city's real 311 system. For an emergency, call 911.
 
 <p align="center">
-  <img src="docs/screenshots/report.png" width="200" alt="Report tab">
-  <img src="docs/screenshots/services.png" width="200" alt="Services tab">
-  <img src="docs/screenshots/map.png" width="200" alt="Reports map">
-  <img src="docs/screenshots/city.png" width="200" alt="City tab">
+  <img src="web/docs/screenshots/report-light.png" width="180" alt="Report tab">
+  <img src="web/docs/screenshots/services-light.png" width="180" alt="Services tab">
+  <img src="web/docs/screenshots/map-dark.png" width="180" alt="Reports map, dark">
+  <img src="web/docs/screenshots/city-light.png" width="180" alt="City tab">
 </p>
+
+The project was called KC 311 until October 2026. Until November 2026 it
+also had an iPhone app, and the web app started as a port of it. A comment
+or a test that names a `.swift` file refers to that app. Its last version is
+at the git tag `iphone-app-final`.
 
 ## Tabs
 
 - **Report.** Take a photo or pick one from the library, then select the
   problem. "No photo" opens the Services tab. The home screen shows your
   open reports; tap one to see it.
+  - A card asks one time for your home address and your contact details.
+    The address gives your trash day, your leaf and brush zone, and when
+    your street was plowed. The app keeps both on your device only.
 - **Services.** Every service in one place. The city's 41 categories overlap,
   so the app groups them into nine sections (for example Trash & Recycling,
   Water & Sewer). Each section shows its sub-types under their category, and
   the city pages that belong with it, such as the bulky pickup scheduler.
   "Everything, A to Z" lists each report type, page, and phone number.
   - Two cards at the top go to offices that are not part of 311. "Police
-    report" (web app) shows the police department's conditions for an online
-    report and its report types, opens the department's own form, and tells
-    how to get a copy of a report. "KC Streetcar" writes a report to the
-    Streetcar Authority.
+    report" shows the police department's conditions for an online report
+    and its report types, opens the department's own form, and tells how to
+    get a copy of a report. "KC Streetcar" writes a report to the Streetcar
+    Authority.
 - **Reports.** Your reports and everyone else's, in a list or on one map.
   - On the map, your reports are dark markers with a person glyph, drawn
     on top of the public pins. Public pins have status colors.
@@ -48,21 +57,26 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
   - "Add a note" on one of your reports sends a note to the staff. It goes
     into the report's history, and it cannot be changed or deleted. The box
     shows only when the city allows notes on that report.
-  - "Rate the city's work" (web app) on one of your resolved or closed
-    reports sends 1 to 5 stars and an optional comment to the city's 311
-    system. A report takes one rating, and it cannot be changed.
-- **City.** City phone numbers (311, police non-emergency, the streetcar, and
-  25 more from the city's own catalog text), and the city pages that no
-  section claims.
-  - City notices (web app): what the city sends to every phone with its own
-    app, for example a holiday trash delay. The Report tab shows a notice
-    above your trash day until you hide it. The City tab keeps the list.
-  - "Pay a bill or a ticket" (web app) lists each payment the city takes
-    online and opens the payment page of the office that owns it.
+  - "Rate the city's work" on one of your resolved or closed reports sends
+    1 to 5 stars and an optional comment to the city's 311 system. A report
+    takes one rating, and it cannot be changed.
+- **Meetings.** The meetings of the City Council, its committees and the
+  city's boards, with the agenda, the way to join, the rule for public
+  comment, and calendar subscriptions. The list comes from
+  [Common Lot](https://github.com/BaesTheorem/common-lot).
+- **City.** Health and help (crisis lines, food, shelter, clinics), city
+  phone numbers (311, police non-emergency, the streetcar, and 25 more from
+  the city's own catalog text), license offices, buses and the streetcar,
+  and the city pages that no section claims.
+  - City notices: what the city sends to every phone with its own app, for
+    example a holiday trash delay. The Report tab shows a notice above your
+    trash day until you hide it. The City tab keeps the list.
+  - "Pay a bill or a ticket" lists each payment the city takes online and
+    opens the payment page of the office that owns it.
 
 The cog at the top right of each screen opens Settings: the theme (Auto,
-Light, Dark), the API status with a manual key refresh, your reports id, and
-the credits.
+Light, Dark), your details, ticket alerts, your reports id with the ways to
+keep it, the API status with a manual key refresh, and the credits.
 
 ## Filing a report
 
@@ -89,35 +103,42 @@ opens, everywhere in the app. With "Ask automatically" on (the default), the
 app files one for each report that has had no movement and no update request
 for 7 days. It checks when it opens and when it comes to the foreground.
 
-With ticket alerts on, the web app also asks while it is closed. The server
+With ticket alerts on, the app also asks while it is closed. The server
 finds the report that is due and pushes an "ask" to your device, and the
 device sends the request that it kept. Your email or phone stays on the
 device and goes to the city only inside a request. `web/worker/asks.js` has
 the sequence.
 
+## Ticket alerts
+
+Settings > Ticket alerts turns on a notification for each change that city
+staff make to one of your reports, usually in approximately one minute. The
+server checks your reports each minute. It keeps your reports id, this
+browser's push address, and the times and titles of the timeline entries
+that it sent already. Turn the switch off to delete them. A tap on an alert opens the report. On an iPhone or an iPad, alerts
+need the app on the Home Screen (iOS 16.4 or later).
+
 ## How it works
 
+**The server.** A browser cannot call the city's API itself: the API sends
+no CORS headers, and its signing key must not be in public JavaScript. So
+the app comes with a small server, a Cloudflare Worker (`web/worker/`), that
+serves the app's files and forwards only the calls that the app makes.
+`web/README.md` explains the design, the limits, and the data that the
+server keeps.
+
 **The API key.** The official Android app (`com.civicapps.kansascitymo`)
-signs each call with an HS256 JWT and a key that ships in the APK. The app
-gets that key by itself (`KeyRefresher.swift`):
-1. It downloads the newest APK from APKPure and unzips its code files.
-2. It finds the strings with the shape of the key, the city id, and the app
-   version.
-3. It keeps the combination that the server accepts.
+signs each call with an HS256 JWT and a key that ships in the APK. The
+server keeps that key. When the city rejects it, the app downloads the
+newest APK through the server and reads the strings with the shape of the
+key, and the server saves the first one that the city accepts. The key is
+not in this repo.
 
-`APIHealth.swift` checks the API with one signed read at launch, on
-foreground, and in background refresh (at most every 6 hours). Any request
-that fails for a key or access reason also goes to it. The repair follows the
-official app: it asks `get_baseurl` for the current API address, then gets
-the key from the newest APK if that does not help. Automatic key downloads
-run at most once in 6 hours. A fresh install has its key in approximately 20
-seconds. The key is not in this repo.
-
-**No accounts.** KCMO turns off logins, so the server files "my reports"
-under a device id. The app makes the id on first launch and saves it in the
-iCloud Keychain as well as in its settings. The Keychain copy survives
-deleting the app and moves to a new iPhone with the Apple ID. Settings shows
-the id and can restore a saved one.
+**No accounts.** KCMO turns off logins, so the city files "my reports" under
+a device id. The app makes the id on first use and keeps it on the device.
+Settings can copy it, save it as a file, save it to a passkey, and restore
+it. The passkey is storage, not a login: a password manager carries the id
+to your other devices.
 
 **Case numbers.** Only some categories go to the city's case system
 (potholes, trees, animals, bridges, signals). The app reads that number from
@@ -126,66 +147,28 @@ and more) are worked inside myKCMO and never get one, so the app shows the
 myKCMO report number for them.
 
 **Speed.**
-- Every screen shows its saved copy at once and refreshes in the background:
-  the catalog (at most every 6 hours), my reports, report details, and map
-  pins (after 15 minutes).
-- The city's map endpoint takes approximately 6 seconds per call and fails
-  for some mixes of categories. The app asks in parallel groups of five and
-  splits a failed group. It draws only the 250 pins nearest the map's center,
-  because MapKit stalls with thousands of markers.
-- The client sends no cookies. With a session cookie, the server handled the
-  parallel calls one at a time.
+- Each screen shows its saved copy at once and refreshes in the background:
+  the report types (kept 6 hours), my reports, report details, and map pins
+  (kept 15 minutes).
+- The city's map endpoint takes approximately 6 seconds for each call and
+  fails for some mixes of categories. The app asks in groups of five, all at
+  the same time, and splits a group that fails.
+- The server sends the city no cookies. With a session cookie, the city
+  handled parallel calls one at a time.
 
 **Times.** The numeric times in `myissues` run hours ahead (`added_on` by 2
 hours, `updated_timestamp` by 5 on 2026-10-05). The `updated_on` string is
 right, so the filing time is the earlier of the two and never later than
 now.
 
-**Data the app does not keep.** The app reads only the fields it shows.
-Saved report details leave out all contact fields of other people.
+**Data the app does not keep.** The app reads only the fields that it shows.
+The server removes the reporter's contact fields from each report detail
+before the detail leaves the server.
 
-`docs/API.md` records the endpoints and fields.
+`docs/API.md` records the endpoints and fields. `docs/ROADMAP.md` lists what
+is open.
 
-## Build and ship
-
-    brew install xcodegen
-    cp ios/Config/Signing.xcconfig.example ios/Config/Signing.xcconfig   # team id and bundle id prefix
-    ios/scripts/build.sh            # unsigned compile check
-    ios/scripts/testflight.sh       # archive and upload to TestFlight
-
-`testflight.sh` sets a timestamp build number and bundles only the key, the
-city id, and the app version, never a device id. Each tester's install makes
-its own id. The app record must exist in App Store Connect first.
-`install.sh` installs straight on a paired iPhone. Use it only for an app
-that is not on TestFlight.
-
-Optional: put a saved config at `ios/Config/civic-config.json` (or set
-`MYCIVIC_CONFIG`) with `key`, `city_id`, and `app_version`, so the first
-launch skips the key download.
-
-For screenshots in a headless simulator, use these launch arguments:
-- `-startTab 0|2|3|4` for Report, Reports, City, and Services.
-- `-startStep category|all|details|sub|streetcar` (`sub` with
-  `-startCategory trash`).
-- `-reportsList YES|NO` and `-reportsOnlyMine YES|NO` (Reports).
-- `-startUpdates YES`, `-openReport YES`, and `-selectPin YES|recent`.
-- `-showSettings YES`, `-appearance auto|light|dark`, and `-deviceUID <id>`.
-
-## Web app
-
-`web/` is the same app for any browser, with no app store: Report,
-Services, Reports and City, ticket alerts through Web Push, offline drafts,
-and the same rules as the iPhone app. A browser cannot call the city's API
-itself, so the web app comes with a small server (a Cloudflare Worker) that
-forwards only the calls the app makes. The web app also has a Meetings tab:
-the council, its committees and the city's boards, with agendas and calendar
-subscriptions, from [Common Lot](https://github.com/BaesTheorem/common-lot).
-Anyone with the address can use a
-server, and its owner can pause it. `web/README.md` explains the design, the limits, and the data
-the server keeps; `docs/WEB-PARITY.md` compares it with the iPhone app screen
-by screen.
-
-### Run your own web server
+## Run your own server
 
 Anyone can run a copy on Cloudflare's free plan, for a household or a
 neighborhood group:
@@ -194,15 +177,8 @@ neighborhood group:
 
 The button asks for an owner token. Open your server, and enter the token in
 Settings > Owner tools. Then send the server's address to the people who will
-use it. The steps are in `web/README.md`.
-
-## Ticket alerts
-
-Settings > Ticket alerts turns on a notification for each change that city
-staff make to one of your reports, usually within a minute. The alert
-server (`push/`, a Cloudflare Worker) checks your reports every minute. It
-keeps your reports id and this phone's notification token, nothing else.
-Turn the switch off to delete them. A tap on an alert opens the report.
+use it. Anyone with the address can use a server, and its owner can pause
+it. The steps, and the commands to build and test, are in `web/README.md`.
 
 ## Credits
 

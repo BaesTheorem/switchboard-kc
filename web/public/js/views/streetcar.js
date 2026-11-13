@@ -4,9 +4,9 @@
 //   with two-way text. For safety, behavior, cleanliness, and damage.
 // - Email to info@kcstreetcar.org is the main inbox. For tracker and display
 //   problems, service, and feedback.
-// The iPhone app attaches the photos in the system composer. A web page
-// cannot do that, so it opens Messages or Mail with the text only, and the
-// share sheet carries the photos.
+// A web page cannot attach photos in the system's message composer. So it
+// opens Messages or Mail with the text only, and the share sheet carries the
+// photos.
 
 import { current, meters } from "../lib/geo.js";
 import { bag, html, icon, on, render, safeUrl } from "../lib/html.js";

@@ -1,6 +1,6 @@
 // The reports id in a passkey. The city has no accounts: "my reports" are
-// the reports filed under a 16-character id, and the iPhone app keeps that
-// id in iCloud Keychain. A web app cannot reach the Keychain, but a passkey
+// the reports filed under a 16-character id. (The iPhone app that this project
+// had kept that id in iCloud Keychain.) A web app cannot reach the Keychain, but a passkey
 // can carry 64 bytes in its user handle, and passkeys sync through iCloud
 // Keychain, Google Password Manager and other password managers. So the
 // app saves the id as the user handle of a passkey for this site, and a

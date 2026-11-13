@@ -2,8 +2,7 @@
 //
 // The browser subscribes with this server's VAPID public key and sends the
 // subscription with its reports id. A cron reads each id's reports every
-// minute and pushes new timeline entries, the same rules as push/worker.js
-// for the iPhone app:
+// minute and pushes new timeline entries, with these rules:
 // - An update request is never reported on its own. What staff do with it
 //   goes out under the report it names. The request itself is the person's
 //   own act, and gets no alert.

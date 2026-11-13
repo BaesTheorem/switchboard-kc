@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Makes the web app's icons from the iPhone app icon, the one master.
+"""Makes the web app's icons from the one master, web/assets/icon-1024.png.
 
     python3 web/bin/icons.py
 
@@ -13,7 +13,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
-MASTER = ROOT / "ios/KC311/Resources/Assets.xcassets/AppIcon.appiconset/icon-1024.png"
+MASTER = ROOT / "web/assets/icon-1024.png"
 OUT = ROOT / "web/public/icons"
 
 im = Image.open(MASTER).convert("RGB")

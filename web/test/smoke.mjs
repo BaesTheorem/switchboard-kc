@@ -3,18 +3,18 @@
 // reports, one detail, one map group, the duplicate check, and the guards
 // (a bad origin, a bad device id). It files nothing.
 //   node test/smoke.mjs [base-url]
-// Uses ADMIN_TOKEN from web/.env (the owner may call everything) and the
-// device id in ../ios/Config/civic-config.json when present (else a new one).
+// Uses ADMIN_TOKEN from web/.env (the owner may call everything). SMOKE_DEVICE
+// in web/.env is a reports id with reports, for the "my reports" checks; with
+// none, the checks use an id that has no reports.
 
-import { existsSync, readFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const web = join(dirname(fileURLToPath(import.meta.url)), "..");
 const env = Object.fromEntries(readFileSync(join(web, ".env"), "utf8").split("\n").filter((l) => l.includes("=")).map((l) => l.split(/=(.*)/s).slice(0, 2)));
 const base = process.argv[2] || env.URL || "https://switchboard.commonlot.io";
-const cfgPath = join(web, "../ios/Config/civic-config.json");
-const device = (existsSync(cfgPath) && JSON.parse(readFileSync(cfgPath, "utf8")).device_uid) || "0123456789abcdef";
+const device = /^[0-9a-f]{16}$/.test(env.SMOKE_DEVICE || "") ? env.SMOKE_DEVICE : "0123456789abcdef";
 const owner = { "x-admin-token": env.ADMIN_TOKEN, "content-type": "application/json" };
 
 let failed = 0;

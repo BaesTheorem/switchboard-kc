@@ -1,8 +1,9 @@
 # Switchboard KC on the web
 
-The web version of Switchboard KC: the four tabs of the iPhone app (Report,
-Services, Reports, City) plus a Meetings tab, in any modern browser. It installs to the
-home screen as an app and has ticket alerts. The iPhone app is in `../ios`.
+Switchboard KC in any modern browser: the Report, Services, Reports,
+Meetings and City tabs. It installs to the home screen as an app and has
+ticket alerts. This file explains the server, its limits, and the data it
+keeps. `../README.md` describes what the app does.
 
 > **Unofficial.** This app is not made, approved, or supported by the City of
 > Kansas City, Missouri, by Tyler Technologies (the maker of myKCMO and the
@@ -24,7 +25,7 @@ The owner's server is at **https://switchboard.commonlot.io**, on the domain of
 A browser cannot call the city's API itself: the API sends no CORS headers,
 and its signing key must not be in public JavaScript. So the app comes with a
 small server, a Cloudflare Worker (`worker/`). The Worker serves the app's
-files and forwards the eight API calls the app makes:
+files and forwards the API calls the app makes:
 
 | App action | City endpoint |
 | --- | --- |
@@ -36,6 +37,8 @@ files and forwards the eight API calls the app makes:
 | Duplicate check | `check_duplicate_issue` |
 | File a report or an update request | `report_an_issue` |
 | A note on one of my reports | `add_comments_citizen` |
+| A rating of one of my closed reports | `rai_report_rating` |
+| The city's notices (kept 10 minutes) | `notification_history` |
 | A moved API base | `token/get_baseurl` |
 
 The Worker builds each call from checked fields. It is not an open proxy: a
@@ -60,8 +63,7 @@ device id. The app makes one on first use and keeps it on the device. Settings
 can copy it, save it as a file, save it to a passkey, and restore it. The
 passkey (`public/js/passkey.js`) is storage, not a login: the id is its user
 handle, so a password manager syncs it to the person's other devices, and a
-restore reads it back. The server sees none of this. The same id works in the
-iPhone app.
+restore reads it back. The server sees none of this.
 
 **Home Screen.** Report sent, the Report tab and Settings show how to add the
 app to the Home Screen (`public/js/install.js`): the browser's install prompt
@@ -85,6 +87,12 @@ address (or `COMMON_LOT_URL`).
 and sends a Web Push notification when city staff change one
 (`worker/push.js`). On iPhone and iPad, web push works only for an app added
 to the Home Screen (iOS 16.4 and later).
+
+**Update requests while the app is closed.** The same run finds a report
+with no movement and no update request for 7 days, and pushes an "ask" to
+one device of that id. The device's service worker sends the update request
+that the app kept on the device (`worker/asks.js`). The contact details in
+it go from the device to the city, and the server does not keep them.
 
 **Offline.** The service worker keeps the app's files, so the app opens with
 no connection. A report filed offline waits in a queue on the device and goes
@@ -127,21 +135,25 @@ To deploy from a computer instead:
     npx wrangler deploy
     npx wrangler secret put ADMIN_TOKEN
 
-`bin/deploy.mjs` does the same with the values in `web/.env` (gitignored),
-and gives the server its first city key from `../ios/Config/civic-config.json`
-when that file exists.
+`bin/deploy.mjs` does the same with the values in `web/.env` (gitignored).
 
 ## Data the server keeps
 
 Cloudflare KV holds:
 
 - the city key and API base,
-- for ticket alerts: each subscribed reports id with its push addresses, and
-  which timeline entries were already sent (times and titles only),
+- the server's own Web Push keys,
 - a cached copy of the report types.
 
-The ledger Durable Object holds the daily report count for each IP address,
-and deletes each count after three days.
+The ledger Durable Object (SQLite) holds:
+
+- the daily report count for each IP address, deleted after three days,
+- for ticket alerts: each subscribed reports id with its push addresses, a
+  mark on a device that sends update requests while its app is closed, which
+  timeline entries were already sent (times and titles only), and the time
+  of the last "ask" for each report.
+
+When the last device of an id turns alerts off, the server deletes the rows of that id.
 
 It keeps no report text, no address, no photo, and no contact details. The
 app keeps your reports, drafts, and contact details on your device only.
@@ -167,8 +179,8 @@ page sends `x-kc311-dry-run: 1`, so the server checks a report and then does
 not pass it on. Service workers are off in the tests, because Playwright's
 request mocks do not see a page that a service worker controls.
 
-`DESIGN.md` records the design. `../docs/WEB-PARITY.md` compares each screen
-with the iPhone app. `../docs/API.md` records the city's API.
+`DESIGN.md` records the design. `../docs/API.md` records the city's API.
+`../docs/ROADMAP.md` lists what is open.
 
 ## Credits
 

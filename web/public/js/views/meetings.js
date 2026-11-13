@@ -4,7 +4,7 @@
 // up, by day, and the boards by subject. A meeting opens a sheet with the
 // agenda, the public comment rule and add-to-calendar links. Calendar
 // subscriptions use this server's /cal/ feeds. The last list is saved, so the
-// screen opens with no connection. Web only: the iPhone app has no meetings.
+// screen opens with no connection.
 
 import { authHeaders } from "../api.js";
 import { bag, html, icon, on, render, safeUrl } from "../lib/html.js";

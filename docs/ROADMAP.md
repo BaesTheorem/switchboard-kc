@@ -1,8 +1,9 @@
 # Roadmap
 
-The goal is one web app that does all that the iPhone app does. Then the
-project has no dependency on an app store. `WEB-PARITY.md` compares the two
-apps screen by screen. These items are open.
+Switchboard KC is one web app, with no dependency on an app store. Until
+2026-11-12 the project also had an iPhone app (git tag `iphone-app-final`).
+On that day the web app did all that the iPhone app did, and the iPhone app
+and its alert server (`push/`) were removed. These items are done or open.
 
 ## Update requests while the app is closed
 
@@ -35,10 +36,10 @@ Open:
 
 ## A web app with no server between it and the city
 
-The iPhone app calls the city's API directly. A browser cannot do this,
-because the API sends no CORS headers, and the signing key must not be in
-public JavaScript. Thus the web app needs the Worker, and its limits count
-for each IP address, not for each person.
+A browser cannot call the city's API directly, because the API sends no
+CORS headers, and the signing key must not be in public JavaScript. Thus the
+web app needs the Worker, and its limits count for each IP address, not for
+each person.
 
 Only the city or its vendor can remove this dependency, with one of these:
 
@@ -64,7 +65,6 @@ that link.
 
 Open:
 
-- The iPhone app still shows the city's link.
 - The list of report types is a copy. `npm run check-sources` (in `web/`)
   reads the department's page again and says what changed. It does not run
   on a schedule yet.
@@ -117,12 +117,3 @@ and with its live menu. Switchboard shows all the menu links.
   from the public map call with one category. The city's call sends no
   position and answers for the full city.
 - **Mark an update as read on the city's side** (`read_history_timeline`).
-
-## When the web app replaces the iPhone app
-
-- Move all TestFlight testers to the web app. The same reports id works in
-  the two apps: on the iPhone, use Settings > My reports > Copy it, then
-  paste the id in Settings > My reports on the web.
-- Stop the `push/` Worker (iPhone alerts through APNs). This also gives the
-  account one more cron trigger.
-- Remove `ios/` from the repo, and the iPhone rows from `WEB-PARITY.md`.

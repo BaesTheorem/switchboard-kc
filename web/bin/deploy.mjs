@@ -5,10 +5,10 @@
 //   node bin/deploy.mjs --dry-run  bundle and check only
 //
 // Reads web/.env (gitignored): CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN,
-// ADMIN_TOKEN, and optionally TURNSTILE_SECRET. Missing values fall back to ../push/.env (CF_ACCOUNT_ID,
-// CF_API_TOKEN), and a missing ADMIN_TOKEN is made and saved to web/.env.
-// The first key comes from ../ios/Config/civic-config.json when it exists;
-// otherwise the app reads one from the city's Android app on first use.
+// ADMIN_TOKEN, and optionally TURNSTILE_SECRET. The two Cloudflare values can
+// also come from the environment, and a missing ADMIN_TOKEN is made and saved
+// to web/.env. A new server has no city key: the app reads one from the
+// city's Android app on first use.
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -28,11 +28,10 @@ function readEnv(file) {
 
 const envFile = join(web, ".env");
 const mine = readEnv(envFile);
-const push = readEnv(join(web, "../push/.env"));
 const env = {
   ...process.env,
-  CLOUDFLARE_ACCOUNT_ID: mine.CLOUDFLARE_ACCOUNT_ID || push.CF_ACCOUNT_ID || process.env.CLOUDFLARE_ACCOUNT_ID,
-  CLOUDFLARE_API_TOKEN: mine.CLOUDFLARE_API_TOKEN || push.CF_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN,
+  CLOUDFLARE_ACCOUNT_ID: mine.CLOUDFLARE_ACCOUNT_ID || process.env.CLOUDFLARE_ACCOUNT_ID,
+  CLOUDFLARE_API_TOKEN: mine.CLOUDFLARE_API_TOKEN || process.env.CLOUDFLARE_API_TOKEN,
 };
 if (!env.CLOUDFLARE_ACCOUNT_ID || !env.CLOUDFLARE_API_TOKEN) {
   console.error("Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in web/.env");
@@ -68,17 +67,3 @@ const sub = (await (await fetch(`https://api.cloudflare.com/client/v4/accounts/$
 })).json()).result?.subdomain;
 const base = mine.URL || `https://${name}.${sub}.workers.dev`;
 console.log(`Deployed: ${base}`);
-
-// Seed the city key once, through the owner endpoint (it tests the key first).
-const cfgPath = join(web, "../ios/Config/civic-config.json");
-if (existsSync(cfgPath)) {
-  const status = await fetch(`${base}/api/health`).then((r) => r.json()).catch(() => null);
-  if (!status?.key) {
-    const c = JSON.parse(readFileSync(cfgPath, "utf8"));
-    const r = await fetch(`${base}/api/admin/key`, {
-      method: "POST", headers: { "content-type": "application/json", "x-admin-token": admin },
-      body: JSON.stringify({ key: c.key, city_id: c.city_id, app_version: c.app_version, source: "deploy" }),
-    });
-    console.log("City key:", r.status, await r.text());
-  }
-}

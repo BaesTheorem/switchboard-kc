@@ -1,9 +1,8 @@
 # Design
 
-The web app keeps the iPhone app's design: stock Material Design 3 with a
-tonal scheme around one blue. The iPhone values are in
-`ios/KC311/Sources/Theme.swift`; `public/css/app.css` copies them as CSS
-variables. Change both together.
+Stock Material Design 3 with a tonal scheme around one blue. The values are
+CSS variables at the top of `public/css/app.css`. (They came from the iPhone
+app that this project had until November 2026.)
 
 ## Type
 

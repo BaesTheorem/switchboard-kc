@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Screenshots of the main screens on an iPhone-sized WebKit page, light and
-// dark, for the README and for a side-by-side check with the iPhone app.
+// dark, for the README.
 //   node test/screens.mjs [base-url]
 // Uses a fresh reports id (no reports) and a downtown position; files nothing.
 import { devices, webkit } from "@playwright/test";

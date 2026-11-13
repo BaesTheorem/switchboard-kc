@@ -1,5 +1,5 @@
-// Start-up: theme, storage, routes, and the background work the iPhone app
-// does at launch and on foreground (KC311App.swift): the API health check,
+// Start-up: theme, storage, routes, and the work the app does at launch and
+// each time it comes to the foreground: the API health check,
 // the offline queue, my reports, the map, and automatic update requests.
 
 import { onApiError } from "./api.js";
