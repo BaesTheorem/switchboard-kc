@@ -54,6 +54,9 @@ some internal names (the bundle id, the `kc311-push` Worker) keep the old name.
 - **City.** City phone numbers (311, police non-emergency, the streetcar, and
   25 more from the city's own catalog text), and the city pages that no
   section claims.
+  - City notices (web app): what the city sends to every phone with its own
+    app, for example a holiday trash delay. The Report tab shows a notice
+    above your trash day until you hide it. The City tab keeps the list.
   - "Pay a bill or a ticket" (web app) lists each payment the city takes
     online and opens the payment page of the office that owns it.
 

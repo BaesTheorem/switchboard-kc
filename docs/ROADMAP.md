@@ -104,10 +104,13 @@ and with its live menu. Switchboard shows all the menu links.
   opens it (`API.md` section 9). Open: it is not known if 311 staff read the
   ratings. Ask the city.
 - **Remove a report from my list** (`delete_report_from_device`).
-- **The city's own message inbox** (`register_device`, `notification_history`,
-  `update_notification_status`): messages that the city sends to every phone.
-  Switchboard sends its own alerts when a report changes, and it does not
-  receive the city's messages.
+- **The city's notices** (`notification_history`): what the city sends to
+  every phone, for example a holiday trash delay. Done on the web on
+  2026-11-12: the Report tab shows each notice of the past 30 days above the
+  trash day until the person hides it, and the City tab keeps the list. The
+  list is the same for each device, so the server reads it one time in ten
+  minutes for all people. Open: a notice sends no alert yet. The cron can
+  push a new one to each device with alerts on.
 - **Earlier reports of the same type on the location step**
   (`searchNearestIssue`). Done on the web on 2026-11-12, in another way: the
   form lists the open reports of the same type within 500 feet of the spot,

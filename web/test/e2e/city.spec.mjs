@@ -138,6 +138,58 @@ test("Police report: above the streetcar, the department's forms, the numbers, a
 
 
 
+test("City notices: the Report tab shows a notice until the person hides it, and the City tab keeps it", async ({ context }) => {
+  // Fixture data: the notice that the city had on 2026-11-12, one that is too old, and one with markup in its text.
+  const day = 86400e3;
+  const trash = { id: "18566", title: "Veteran's Day Holiday Trash & Recycling Collection Delay",
+    text: "In observance of the Veteran's Day Holiday on Wednesday, November 11th, Trash & Recycling Collection will be on a one-day delay the rest of the week. For more information, please visit HERE",
+    links: [{ text: "HERE", url: "https://www.kcmo.gov/trash" }], at: Date.now() - 2 * day };
+  const old = { id: "17000", title: "A notice from two months ago", text: "Old text.", links: [], at: Date.now() - 60 * day };
+  const markup = { id: "18570", title: "Snow <b>plan</b>", text: "Crews treat <i>primary</i> routes first.<script>window.bad = 1</script>", links: [{ text: "x", url: "javascript:window.bad = 2" }], at: Date.now() - 3 * day };
+  const { page } = await ownerPage(context, { notices: [old, markup, trash] });
+  await page.goto("/#/report");
+  const cards = page.locator("#notices section.notice");
+  await expect(cards).toHaveCount(2);
+  // Newest first, above the place of the trash day, with the link named by its address.
+  await expect(cards.first().getByRole("heading")).toHaveText("Veteran's Day Holiday Trash & Recycling Collection Delay");
+  await expect(cards.first()).toContainText("one-day delay the rest of the week");
+  await expect(cards.first()).toContainText(/From the city, \w{3} \d{1,2}, \d{4}/);
+  await expect(cards.first().getByRole("link", { name: "kcmo.gov/trash" })).toHaveAttribute("href", "https://www.kcmo.gov/trash");
+  expect(await page.evaluate(() => !!(document.querySelector("#notices").compareDocumentPosition(document.querySelector("#near")) & Node.DOCUMENT_POSITION_FOLLOWING))).toBe(true);
+  // Markup in a notice is text on the page, and an address that is not a web address goes nowhere.
+  await expect(cards.nth(1).getByRole("heading")).toHaveText("Snow <b>plan</b>");
+  expect(await cards.nth(1).locator("h2 *, p *, script").count()).toBe(0);
+  await expect(cards.nth(1).locator("p.prewrap")).toHaveText("Crews treat <i>primary</i> routes first.<script>window.bad = 1</script>");
+  await expect(cards.nth(1).getByRole("link")).toHaveAttribute("href", "#");
+  expect(await page.evaluate(() => window.bad)).toBeUndefined();
+  expect(await axe(page)).toEqual([]);
+  expect(await drawnIcons(page)).toEqual([]);
+  // Hidden on this tab, and it stays hidden.
+  await cards.first().getByRole("button", { name: "Hide this notice" }).click();
+  await expect(cards).toHaveCount(1);
+  await expect(page.getByText("City notices are on the City tab.")).toBeVisible();
+  // The choice is kept on the device, so the next open of the app has it. (No reload here: WebKit reports the calls that a reload stops as page errors.)
+  expect(await page.evaluate(() => JSON.parse(localStorage.getItem("noticesHidden")))).toEqual(["18566"]);
+  await page.goto("/#/services");
+  await page.goto("/#/report");
+  await expect(cards).toHaveCount(1);
+  await expect(cards.first().getByRole("heading")).toHaveText("Snow <b>plan</b>");
+  // The City tab has both, with no hide button, and its search finds a notice by its words.
+  await page.goto("/#/city");
+  await expect(page.getByRole("heading", { name: "City notices" })).toBeVisible();
+  const kept = page.locator("section.notice");
+  await expect(kept).toHaveCount(2);
+  await expect(page.getByRole("button", { name: "Hide this notice" })).toHaveCount(0);
+  const search = page.getByRole("searchbox").first();
+  await search.fill("recycling");
+  await expect(kept).toHaveCount(1);
+  await search.fill("tow lot");
+  await expect(kept).toHaveCount(0);
+  await search.fill("");
+  expect(await axe(page)).toEqual([]);
+  expect(page.errors).toEqual([]);
+});
+
 test("Pay: each bill and ticket opens the payment page of its office", async ({ context }) => {
   const { page } = await ownerPage(context);
   // The Pay card is on the City tab, under Health and help. The Services tab does not show it.

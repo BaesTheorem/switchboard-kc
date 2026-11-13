@@ -1,6 +1,6 @@
 // The Report tab's home: photo first (camera, library, or none), Health and
-// help, the card that asks for an address and contact details, facts for
-// that address, reports waiting to send, your open reports, and the cards
+// help, the card that asks for an address and contact details, the city's
+// notices, facts for that address, reports waiting to send, your open reports, and the cards
 // that keep them safe (Home Screen app, passkey). Ported from ReportTab.swift
 // and CivicData.swift (NearYou), which read the device's position instead.
 
@@ -10,11 +10,12 @@ import { meters } from "../lib/geo.js";
 import { bag, html, icon, render } from "../lib/html.js";
 import { local } from "../lib/store.js";
 import { lastPlowed } from "../models.js";
-import { draftFor, dropQueued, flushQueue, listen, S, visibleReports } from "../state.js";
+import { draftFor, dropQueued, flushQueue, hiddenNotices, listen, loadNotices, S, visibleReports } from "../state.js";
 import { installCard, wireInstallCard } from "../install.js";
 import { acts } from "../ui.js";
 import { helpCard } from "./help.js";
 import { keepCard, restoreCard, wireKeep } from "./keep.js";
+import { currentNotices, noticeCard, wireNotices } from "./notices.js";
 import { photoInputs, reportCard, wirePhotoInputs } from "./parts.js";
 import { homePlace, setupCard, wireSetup } from "./setup.js";
 
@@ -36,6 +37,7 @@ export default function view(main, _params, ctx) {
     </section>
     ${helpCard("#/report/help")}
     <div id="setup"></div>
+    <div id="notices" class="stack s12"></div>
     <div id="near"></div>
     <div id="queued"></div>
     <div id="recent"></div>
@@ -118,6 +120,13 @@ export default function view(main, _params, ctx) {
     if (mine === nearFor && plowed) paintNear({ ...facts, plowed });
   };
   const paintSetup = () => { const box = main.querySelector("#setup"); if (box) render(box, setupCard()); };
+  // The city's notices sit above the trash day, because many of them change it (a holiday week). A hidden one stays on the City tab.
+  const paintNotices = () => {
+    const box = main.querySelector("#notices");
+    if (!box) return;
+    const hidden = hiddenNotices();
+    render(box, html`${currentNotices().filter((n) => !hidden.includes(String(n.id))).slice(0, 3).map((n) => noticeCard(n, { hide: true }))}`);
+  };
 
   // The passkey card stays until the person saves or closes it. With reports,
   // the Home Screen card joins it; with none yet, a restore from a passkey does.
@@ -131,6 +140,9 @@ export default function view(main, _params, ctx) {
   paintRecent();
   paintKeep();
   paintSetup();
+  paintNotices();
+  loadNotices();
+  off(listen("notices", paintNotices), wireNotices(main));
   off(listen("queue", paintQueued), listen("mine", paintRecent), listen("detail", paintRecent), listen("mine", paintKeep),
     listen("setup", () => { paintSetup(); if (spot(homePlace()) !== nearFor) loadNear(); }),
     wireKeep(main, paintKeep), wireInstallCard(main, paintKeep), wireSetup(main));

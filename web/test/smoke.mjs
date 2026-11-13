@@ -76,6 +76,12 @@ await check("meetings (from Common Lot)", async () => {
   meeting = o.meetings.find((m) => m.bodyId) || o.meetings[0];
   return `${o.meetings.length} meetings, Legistar read ${o.fetched?.legistar}`;
 });
+await check("city notices", async () => {
+  const o = await ok(await fetch(`${base}/api/notices`));
+  if (!Array.isArray(o.notices)) throw new Error("no list");
+  for (const n of o.notices) if (/<[a-z/]/i.test(`${n.title}${n.text}`) || n.links.some((l) => !l.url.startsWith("https://"))) throw new Error("markup or a bad link in a notice");
+  return `${o.notices.length} in the past 30 days${o.notices[0] ? `, newest: ${o.notices[0].title.slice(0, 50)}` : ""}`;
+});
 await check("board descriptions", async () => { const o = await (await fetch(`${base}/api/bodies`)).json(); if (!(o.length > 10)) throw new Error("too few"); return `${o.length} boards`; });
 for (const path of ["/cal/all.ics", meeting?.bodyId && `/cal/body/${meeting.bodyId}.ics`, meeting && `/cal/meeting/${meeting.id}.ics`].filter(Boolean)) {
   await check(`calendar feed ${path.replace(/\/\d+|\/[\w-]+\.ics$/, (x) => x.endsWith(".ics") ? "/<id>.ics" : "/<id>")}`, async () => {

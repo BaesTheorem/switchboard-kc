@@ -11,7 +11,7 @@
 //   sends the update request that the app kept on this device, then shows
 //   what it did (worker/asks.js has the full sequence).
 
-const VERSION = "20261113T0033";
+const VERSION = "20261113T0040";
 const CACHE = `switchboard-${VERSION}`;
 const SHELL = [
   "/", "/manifest.webmanifest", "/css/app.css",
@@ -24,7 +24,7 @@ const SHELL = [
   "/js/views/report.js", "/js/views/services.js", "/js/views/section.js", "/js/views/all.js", "/js/views/directory.js",
   "/js/views/form.js", "/js/views/picker.js", "/js/views/done.js", "/js/views/parts.js", "/js/views/alerts.js",
   "/js/views/reports.js", "/js/views/detail.js", "/js/views/updates.js", "/js/views/settings.js", "/js/robot.js", "/js/install.js", "/js/passkey.js", "/js/views/keep.js", "/js/startup.js", "/js/views/setup.js", "/js/police.js", "/js/views/police.js", "/js/pay.js", "/js/views/pay.js",
-  "/js/views/city.js", "/js/views/help.js", "/js/views/places.js", "/js/views/licenses.js", "/js/views/transit.js", "/js/views/meetings.js",
+  "/js/views/city.js", "/js/views/notices.js", "/js/views/help.js", "/js/views/places.js", "/js/views/licenses.js", "/js/views/transit.js", "/js/views/meetings.js",
   "/js/views/streetcar.js", "/js/workers/gtfs.js", "/data/health-centers.json", "/vendor/icons.json",
 ];
 

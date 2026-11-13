@@ -25,6 +25,7 @@ export const S = {
   mapError: null,
   mapCenter: local.get("mapCenter"),
   details: {},               // id → { at, issue }
+  notices: local.get("notices", []),   // the city's notices: [{ id, title, text, links, at }]
 };
 
 // ---------- events ----------
@@ -122,6 +123,31 @@ export async function refreshCatalog(force = false) {
     if (!S.categories.length) S.catalogError = e.message;
   }
   emit("catalog");
+}
+
+// ---------- city notices ----------
+
+let noticesAt = 0;
+/** Reads the city's notices from the server, at most one time in ten minutes. The saved copy shows until then, and offline. */
+export async function loadNotices() {
+  if (Date.now() - noticesAt < 600e3) return S.notices;
+  noticesAt = Date.now();
+  try {
+    const o = await api("notices");
+    S.notices = Array.isArray(o.notices) ? o.notices : [];
+    local.set("notices", S.notices);
+    emit("notices");
+  } catch {
+    noticesAt = 0;
+  }
+  return S.notices;
+}
+
+/** The ids of the notices that the person took off the Report tab. */
+export const hiddenNotices = () => local.get("noticesHidden", []).map(String);
+export function hideNotice(id) {
+  local.set("noticesHidden", [...new Set([...hiddenNotices(), String(id)])].slice(-50));
+  emit("notices");
 }
 
 // ---------- my reports ----------

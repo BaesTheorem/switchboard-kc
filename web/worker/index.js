@@ -7,6 +7,7 @@ import { isAskFor, makeTicket, readTicket, TICKET_LIFE } from "./asks.js";
 import { burst, gate, getMode, isAdmin, ledger, refund, reserve, setMode, sweepCounts, turnstile } from "./auth.js";
 import { accepts, API_VERSION, baseFields, civic, civicJSON, getConfig, KANSAS_CITY, markKey, MENU_REPORT, myReports, readKeyState, reportDetail, addNote } from "./civic.js";
 import { relayApk, setKey, testCandidates } from "./keys.js";
+import { notices } from "./notices.js";
 import { calendarFeed, gtfs, hud, meetings } from "./open.js";
 import { poll, subscribe, test as pushTest, unsubscribe, vapid } from "./push.js";
 import { ratingBlock, ratingDetails, STARS } from "./rating.js";
@@ -247,6 +248,7 @@ async function route(req, env, ctx, url) {
   await burst(env, "READS", g.who);
 
   if (p === "/api/catalog" && req.method === "GET") return catalog(env);
+  if (p === "/api/notices" && req.method === "GET") return notices(env);
   if (p === "/api/open/hud" && req.method === "GET") return hud(url);
   if (p === "/api/open/gtfs" && req.method === "GET") return gtfs();
   if (p === "/api/meetings" && req.method === "GET") return meetings(env, "meetings");

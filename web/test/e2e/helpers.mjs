@@ -49,7 +49,7 @@ export function jpegWithGps(lat, lng) {
  * a fresh test reports id and a KC position. Returns { page, submits } where
  * submits collects every report the app tried to file.
  */
-export async function ownerPage(context, { device = TEST_DEVICE, contact = null, duplicate = { level: "0", message: "" }, visitor = false } = {}) {
+export async function ownerPage(context, { device = TEST_DEVICE, contact = null, duplicate = { level: "0", message: "" }, visitor = false, notices = [] } = {}) {
   await context.grantPermissions(["geolocation"]);
   await context.setGeolocation(KC);
   await context.addInitScript(([owner, dev, c]) => {
@@ -83,6 +83,8 @@ export async function ownerPage(context, { device = TEST_DEVICE, contact = null,
   await page.route("**/api/map", (route) => ((route.request().postDataJSON()?.types || []).length === 1
     ? route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, response_status: { response_data: [] } }) })
     : route.fallback()));
+  // The city's notices change from week to week. The tests get a fixed list (none, unless a test gives its own).
+  await page.route("**/api/notices", (route) => route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({ ok: true, notices, read: Date.now() }) }));
   await page.route("**/api/key/**", (route) => route.fulfill({ status: 429, contentType: "application/json", body: '{"ok":false,"error":"test"}' }));
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));

@@ -740,7 +740,42 @@ rating only for a report in that list that is resolved or closed and has `hasRat
   registration and ignores the result. It is only needed for push notifications [guess].
 - `delete_report_from_device` (writes): flat `city_id, api_version, device_id, issue_id`
   (= `city_report_id`). It removes the report from this device's list.
-- `notification_history`, `update_notification_status`: push inbox (not documented here).
+- `notification_history`, `update_notification_status`: the notices behind the bell
+  (section 10.1).
+
+### 10.1 `notification_history` (the city's notices)
+
+The app's "Notifications" screen (`NotificationFragment`). The city writes a notice and
+sends it to every phone; this call gives the list to a phone that opens the screen.
+
+`POST {base}notification_history`, flat parts
+[code: `FetchNotificationAPIController.createRequest`]: `city_id`, `device_id`,
+`api_version=6.0`, `timestamp` (the time of the newest notice that the app has, `0` for
+all), and `session_key` only if logged in.
+
+Response [probe, 2026-11-12]:
+
+```json
+{"response_code":0,"response_status":"success","timestamp":"1794528113","response_data":[
+  {"id":"18566","title":"Veteran's Day Holiday Trash & Recycling Collection Delay",
+   "description":"<p>In observance of ... please visit <a href=\"http://www.kcmo.gov/trash\" target=\"_blank\" rel=\"noopener noreferrer\">HERE</a></p>",
+   "timestamp":1794340847,"is_read":0}]}
+```
+
+- The list is the same for each device: an id that the city never saw got the same one
+  notice [probe]. No `register_device` call is necessary.
+- `description` is HTML. The app shows it in a WebView and opens each link outside the app
+  [code: `NotificationDetailFragment`].
+- The app keeps the list on the phone, shows the past 30 days, and counts the rows with
+  `is_read` `"0"` for its badge [code].
+- A second call with the response's `timestamp` gave the same row again [probe], so the
+  server does not use `timestamp` as a strict "newer than".
+
+`update_notification_status` (writes a read mark): flat parts `city_id`, `notification_id`,
+`device_id` (+ `session_key`) [code: `UpdateNotificationStatusAPIController`]. Not called.
+
+The Switchboard server reads the list with an unused id, keeps it ten minutes, and gives
+the app plain text and links (`web/worker/notices.js`). It never marks a notice as read.
 
 ---
 

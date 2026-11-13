@@ -1,4 +1,4 @@
-// The City tab: Health and help, the Pay card, the city's phone numbers,
+// The City tab: Health and help, the Pay card, the city's notices, its phone numbers,
 // license offices and transit, and the city pages that no Report section
 // claims. The search field filters all of it. Ported from CityTab in
 // OtherTabs.swift.
@@ -7,9 +7,10 @@ import { generalLinks, PHONES_MORE, PHONES_PINNED, phoneHref } from "../catalog.
 import { isPayLink, PAYMENTS } from "../pay.js";
 import { $, bag, html, icon, on, render, safeUrl } from "../lib/html.js";
 import { linkIcon, linkName } from "../models.js";
-import { listen, S } from "../state.js";
+import { listen, loadNotices, S } from "../state.js";
 import { label } from "../ui.js";
 import { follow, helpCard } from "./help.js";
+import { currentNotices, noticeCard } from "./notices.js";
 
 // Kept while the app runs, as the iPhone tab keeps its state when a screen opens on top of it.
 let query = "";
@@ -55,15 +56,20 @@ function list() {
   const more = PHONES_MORE.filter(phone);
   const travel = matches(query, TRAVEL);
   const pay = matches(query, PAY_WORDS);
+  const notices = currentNotices().filter((n) => matches(query, `city notices ${n.title} ${n.text}`));
   const links = generalLinks(S.links).filter((l) => !isPayLink(l) && matches(query, linkName(l.name)));
   // Open while searching, so the matches show.
   const open = showMore || query !== "";
-  const count = pinned.length + more.length + (travel ? 2 : 0) + (pay ? 1 : 0) + links.length;
+  const count = pinned.length + more.length + (travel ? 2 : 0) + (pay ? 1 : 0) + notices.length + links.length;
   return {
     count,
     tpl: html`
     ${helpCard("#/city/help")}
     ${pay ? payCard() : ""}
+    ${notices.length ? html`<section class="stack s8">
+      ${label("City notices")}
+      ${notices.map((n) => noticeCard(n))}
+    </section>` : ""}
     ${pinned.length || more.length ? html`<section class="stack s8">
       ${label("Phone numbers")}
       <div class="rows">
@@ -128,6 +134,8 @@ export default function cityView(main, _params, ctx) {
     on(main, "click", "details.more > summary", (_e, s) => { showMore = !s.parentElement.open; }),
     follow(main, ctx.go),
     listen("catalog", paint),
+    listen("notices", paint),
   );
+  loadNotices();
   return add.run;
 }
