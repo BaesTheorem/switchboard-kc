@@ -112,6 +112,14 @@ device sends the request that it kept. Your email or phone stays on the
 device and goes to the city only inside a request. `web/worker/asks.js` has
 the sequence.
 
+## Home Screen
+
+In a phone or tablet browser, the app opens with an offer to add it to the
+Home Screen, with the steps for that browser. On an iPhone, add it before you
+file a first report: Safari and the Home Screen app keep their data apart,
+and Safari deletes a site's data after 7 days with no visit. "Not now" closes
+the offer for 90 days. Settings > Install has the same steps.
+
 ## Ticket alerts
 
 Settings > Ticket alerts turns on a notification for each change that city

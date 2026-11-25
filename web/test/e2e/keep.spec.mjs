@@ -53,13 +53,13 @@ test("the Report tab offers a restore when there are no reports, and Report sent
   await homeCard("Keep your reports if you lose this phone").getByRole("button", { name: "Not now" }).click();
   await expect(homeCard("Keep your reports if you lose this phone")).toBeHidden();
   await expect(page.locator("#snack")).toHaveText("You can save it anytime in Settings, under My reports.");
-  // The install card on the Report sent screen: the iPhone steps name Safari's Share button.
+  // The install card on the Report sent screen: the steps are the ones for this browser.
   await page.evaluate(() => sessionStorage.setItem("done:report", JSON.stringify({ wo: "123456" })));
   await page.goto("/#/report/done");
   const card = page.locator("#keep, #alerts").getByRole("heading", { name: /Home Screen/ });
   await expect(card).toBeVisible();
-  if (browserName === "webkit") await expect(page.getByText(/Tap the Share button/)).toBeVisible();
-  else await expect(page.getByText(/Tap the menu button/)).toBeVisible();
+  if (browserName === "webkit") await expect(page.getByText(/in Safari's toolbar, then tap Share/)).toBeVisible();
+  else await expect(page.getByText(/at the right of Chrome's address bar/)).toBeVisible();
   expect(await axe(page)).toEqual([]);
   await page.getByRole("button", { name: "Not now" }).first().click();
   expect(page.errors).toEqual([]);

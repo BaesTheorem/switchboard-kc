@@ -18,6 +18,7 @@ for (const scheme of ["light", "dark"]) {
     localStorage.setItem("ownerToken", JSON.stringify(o));
     localStorage.setItem("deviceUID", JSON.stringify("5c5c5c5c5c5c5c5c"));
     localStorage.setItem("reportsList", "false");   // the Reports tab opens on the list; the "map" screen is the map
+    localStorage.setItem("installAsked", String(Date.now()));   // keeps the Home Screen sheet off the screenshots
   }, [env.ADMIN_TOKEN]);
   const p = await ctx.newPage();
   const shot = async (name, hash, wait, after) => {

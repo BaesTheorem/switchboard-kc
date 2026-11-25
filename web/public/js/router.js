@@ -14,6 +14,9 @@ const scrollAt = new Map();
 let cleanup = null;
 let currentPath = "";
 let seq = 0;
+let drawn;
+/** Resolves when the first screen is on the page. */
+export const firstScreen = new Promise((resolve) => { drawn = resolve; });
 
 /** Registers a route. `pattern` like "/services/section/:id"; `load` returns the view module. */
 export function route(pattern, load, opts = {}) {
@@ -85,6 +88,7 @@ async function run() {
   if (mine !== seq) return;
   window.scrollTo(0, history.state?.restore === false ? 0 : scrollAt.get(p) || 0);
   if (document.activeElement === document.body || !main.contains(document.activeElement)) main.focus({ preventScroll: true });
+  drawn();
 }
 
 export function start() {

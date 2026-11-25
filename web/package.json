@@ -20,6 +20,7 @@
     "@playwright/test": "1.60.0",
     "axe-core": "4.14.0",
     "beercss": "5.0.3",
+    "inapp-spy": "5.0.10",
     "maplibre-gl": "6.15.0",
     "wrangler": "4.151.3"
   },

@@ -7,6 +7,9 @@
 // This test needs two versions, so it does not use the deployed server: a
 // local server gives out web/public and can change the worker's VERSION. The
 // city API is not there (each call fails, as when offline).
+//
+// The page is a first visit in a phone browser, so the Home Screen offer is
+// open in front of it. That sheet must not hold the new version back.
 
 import { expect, test } from "@playwright/test";
 import { existsSync, readFileSync, statSync } from "node:fs";
@@ -49,6 +52,8 @@ test("a new version takes over: the page loads again one time, never in a loop, 
     await page.waitForFunction(() => !!navigator.serviceWorker.controller);
     await page.waitForTimeout(1500);
     expect(loads).toBe(1);
+    const offer = page.locator("dialog#sheet[open]").getByRole("heading", { name: "Add to Home Screen" });
+    await expect(offer).toBeVisible();
 
     // A deploy, then the person comes back one time. The app loads the page again by itself, and only one cache is left.
     version = "TEST-2";
@@ -59,10 +64,15 @@ test("a new version takes over: the page loads again one time, never in a loop, 
     await expect(page.getByRole("heading", { name: "Report a problem" })).toBeVisible();
     await page.waitForTimeout(5000);
     expect(loads).toBe(2);   // no loop
+    // The offer was open each time, it did not hold the load back, and nobody answered it, so it is open again.
+    await expect(offer).toBeVisible();
+    expect(await page.evaluate(() => localStorage.getItem("installAsked"))).toBeNull();
 
     // The next deploy arrives while a form is open: the page waits, and loads again at the next screen.
+    // (The move to the form closes the offer, which counts as its answer.)
     await page.goto(`${base}/#/services/streetcar`);
     await expect(page.locator("#title")).toHaveText("Streetcar");
+    await expect(page.locator("dialog#sheet[open]")).toHaveCount(0);
     version = "TEST-3";
     loads = 0;
     await page.evaluate(async () => (await navigator.serviceWorker.getRegistration()).update());

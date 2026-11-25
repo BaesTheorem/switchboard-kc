@@ -8,12 +8,12 @@ import { $ } from "./lib/html.js";
 import { DOWNTOWN, currentIfAllowed } from "./lib/geo.js";
 import { local, persist } from "./lib/store.js";
 import { reportScope } from "./models.js";
-import { route, start } from "./router.js";
+import { firstScreen, route, start } from "./router.js";
 import {
   autoRequestUpdates, deviceId, flushQueue, listen, loadConfig, loadMap, loadMyReports, loadQueue, loadSavedCatalog,
   loadSavedMaps, loadSavedMine, prepareAsks, recoverDeviceId, refreshCatalog, S, visibleReports,
 } from "./state.js";
-import "./install.js";   // listens for the install prompt from the start
+import { launchDue } from "./install.js";   // it also listens for the install prompt from the start
 import { recordStart } from "./startup.js";
 import { applyAppearance } from "./theme.js";
 
@@ -26,6 +26,8 @@ const marks = { files: performance.now() };
 // with no route for it, which sent a tap to the home screen on 2026-11-12).
 // So the page loads again, one time, when a new worker takes over. It waits
 // while a person fills a form or has a sheet open, until the next screen.
+// The Home Screen offer at launch is no such sheet: the page loads again
+// under it, and the offer opens again.
 if ("serviceWorker" in navigator) {
   let worker = navigator.serviceWorker.controller, waiting = false;
   navigator.serviceWorker.addEventListener("controllerchange", () => {
@@ -33,7 +35,7 @@ if ("serviceWorker" in navigator) {
     worker = navigator.serviceWorker.controller;
     if (first || waiting) return;
     const again = () => { sessionStorage.setItem("workerReload", String(Date.now())); location.reload(); };
-    const busy = /\/(form|streetcar)\b/.test(location.hash) || !!document.querySelector("dialog[open], .picker")
+    const busy = /\/(form|streetcar)\b/.test(location.hash) || !!document.querySelector("dialog[open]:not([data-launch]), .picker")
       || ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
     // After a reload a moment ago, the next one also waits for the person. So a worker file that changes at each read cannot make a loop.
     const recent = Date.now() - Number(sessionStorage.getItem("workerReload") || 0) < 15000;
@@ -71,6 +73,16 @@ route("/:tab/help", v("help"), { title: "Health and help", parent: (p) => `/${p.
 route("/:tab/help/:kind", v("places"), { parent: (p) => p.split("/").slice(0, 3).join("/") });
 
 $("#cog").addEventListener("click", async () => (await import("./views/settings.js")).openSettings());
+
+// A phone or tablet browser tab gets the Home Screen offer in front of its
+// first screen (views/addhome.js). A form does not: a page that loads again
+// in the middle of a report keeps the person's place.
+firstScreen.then(async () => {
+  if (!launchDue() || /\/(form|streetcar|police|done)\b/.test(location.hash)) return;
+  try {
+    (await import("./views/addhome.js")).openAddHome();
+  } catch { /* the sheet's file did not load (no connection): the next start offers again */ }
+});
 addEventListener("scroll", () => $("#appbar").classList.toggle("scrolled", scrollY > 4), { passive: true });
 
 onApiError((e) => {

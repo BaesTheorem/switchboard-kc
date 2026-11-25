@@ -12,7 +12,7 @@ import { deviceId, listen, loadMyReports, S, useDeviceId } from "../state.js";
 import { seconds, startLog, startParts } from "../startup.js";
 import { applyAppearance } from "../theme.js";
 import { closeSheet, sheet, snack } from "../ui.js";
-import { canPrompt, installed, onInstallChange, promptInstall, stepsList } from "../install.js";
+import { installed, installWays, stepsList, wireInstallCard } from "../install.js";
 import { passkeysSupported, savedToPasskey } from "../passkey.js";
 import { alertState, reportsIdChanged, sendTest, turnOff, turnOn } from "./alerts.js";
 import { restoreNow, saveNow } from "./keep.js";
@@ -54,7 +54,7 @@ export function openSettings() {
 
     ${installed() ? "" : html`<section class="stack s8" aria-labelledby="in-h"><h3 class="label" id="in-h">Install</h3>
       <div class="card stack s8"><p class="sub">Install this app to open it from your Home Screen, keep your reports id safe, and get alerts.</p>
-        ${canPrompt() ? html`<button class="btn tonal" type="button" data-install>${icon("install_mobile")}<span>Install the app</span></button>` : stepsList()}</div></section>`}
+        ${installWays()}</div></section>`}
 
     <section class="stack s8" aria-labelledby="al-h"><h3 class="label" id="al-h">Ticket alerts</h3>
       <div class="rows">
@@ -149,8 +149,7 @@ export function openSettings() {
         closeSheet();
         if (await setHome()) snack("Saved on this device.");
       });
-      h("[data-install]", async () => { await promptInstall(); paint(); });
-      offs.push(onInstallChange(paint));
+      offs.push(wireInstallCard(el, paint));
       h("[data-pk-save]", async () => { if (await saveNow()) paint(); });
       h("[data-pk-restore]", async () => {
         if (await restoreNow()) { restoreNote = "Restored. Your reports now shows the reports filed under this id."; paint(); }

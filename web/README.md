@@ -65,11 +65,18 @@ passkey (`public/js/passkey.js`) is storage, not a login: the id is its user
 handle, so a password manager syncs it to the person's other devices, and a
 restore reads it back. The server sees none of this.
 
-**Home Screen.** Report sent, the Report tab and Settings show how to add the
-app to the Home Screen (`public/js/install.js`): the browser's install prompt
-where there is one, else the steps for this device. An installed app keeps its
-storage (Safari deletes a site's storage after 7 days with no visit), and on
-iPhone and iPad it is the only way to get alerts.
+**Home Screen.** A phone or tablet browser tab opens with a sheet that offers
+to add the app to the Home Screen (`public/js/views/addhome.js`). "Not now"
+closes it for 90 days, the time Chrome waits before it shows its own install
+banner a second time. Report sent, the Report tab and Settings keep the same
+offer as a card. Each shows the browser's install prompt where there is one,
+else the steps for that browser (`public/js/install.js`,
+`public/js/lib/platform.js`). Safari's steps depend on its version: iOS 26
+moved Share behind the More button, and iOS 27 moved it behind the Page Menu
+button. A browser inside another app (Facebook, Instagram) cannot install, so
+it gets the way to Safari or Chrome. An installed app keeps its storage
+(Safari deletes a site's storage after 7 days with no visit), and on iPhone
+and iPad it is the only way to get alerts.
 
 **Meetings.** The Meetings tab lists the meetings of the City
 Council, its committees and the city's boards, from the Worker of
@@ -187,4 +194,5 @@ request mocks do not see a page that a service worker controls.
 Maps: [MapLibre GL JS](https://maplibre.org) with tiles from
 [OpenFreeMap](https://openfreemap.org), © OpenMapTiles, © OpenStreetMap
 contributors. Interface: [Beer CSS](https://www.beercss.com) and Material
-Symbols. Provided by [Kansas City Effective Altruism](https://www.eakansascity.org).
+Symbols. In-app browser detection:
+[inapp-spy](https://github.com/shalanah/inapp-spy). Provided by [Kansas City Effective Altruism](https://www.eakansascity.org).

@@ -34,6 +34,12 @@ for (const f of ["maplibre-gl.mjs", "maplibre-gl-worker.mjs", "maplibre-gl-share
   copy(join(nm, "maplibre-gl/dist", f), join(pub, "vendor/maplibre", f));
 }
 copy(join(nm, "maplibre-gl/LICENSE.txt"), join(pub, "vendor/maplibre/LICENSE.txt"));
+// inapp-spy tells a browser inside another app (Facebook, Instagram) from a
+// real browser, for the Home Screen steps (public/js/lib/platform.js). Its
+// source map stays behind, so the last line that names the map goes too.
+mkdirSync(join(pub, "vendor/inapp-spy"), { recursive: true });
+writeFileSync(join(pub, "vendor/inapp-spy/index.mjs"), readFileSync(join(nm, "inapp-spy/dist/index.mjs"), "utf8").replace(/\n\/\/# sourceMappingURL=.*\s*$/, "\n"));
+copy(join(nm, "inapp-spy/LICENSE"), join(pub, "vendor/inapp-spy/LICENSE"));
 
 // ---------- icons ----------
 
@@ -72,4 +78,4 @@ if (!woff) {
 const font = new Uint8Array(await (await fetch(woff, { headers: { "user-agent": ua } })).arrayBuffer());
 writeFileSync(join(pub, "vendor/beercss/material-symbols-outlined.woff2"), font);
 writeFileSync(join(pub, "vendor/icons.json"), JSON.stringify(sorted, null, 1));
-console.log(`vendor: beer.css, maplibre, ${sorted.length} icons (${(font.length / 1024).toFixed(1)} KB font)`);
+console.log(`vendor: beer.css, maplibre, inapp-spy, ${sorted.length} icons (${(font.length / 1024).toFixed(1)} KB font)`);
